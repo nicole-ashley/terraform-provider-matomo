@@ -6,8 +6,6 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	_ "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	_ "github.com/hashicorp/terraform-plugin-testing/knownvalue"
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/provider"
 )
