@@ -77,10 +77,19 @@ matomo_site                      id = "{site_id}"                       (root)
 
 Rules:
 
-- `matomo_site` is the only resource with a plain numeric `id` (it has no
-  parent in this tree). `site_id` is required only here.
+- `matomo_site`'s `id` is plain numeric and **computed only** — Matomo
+  assigns it on creation (`addSite`'s return value) and it cannot be set as
+  input. There is no `site_id` (or any other) attribute on `matomo_site`
+  itself for picking which site it represents; it's the root of the tree
+  precisely because it's the one resource whose identity Matomo, not the
+  user, originates. To bring a site that already exists in Matomo under
+  this tree, either `terraform import` it into a `matomo_site` resource or
+  reference it read-only via `data "matomo_site"` (§8) — never hardcode a
+  literal numeric ID where a `site_id` reference is expected elsewhere in
+  the tree.
 - `matomo_custom_dimension` and `matomo_tagmanager_container` take a single
-  `site_id` attribute set to `matomo_site.x.id`.
+  `site_id` attribute set to `matomo_site.x.id` (or
+  `data.matomo_site.x.id`).
 - `matomo_tagmanager_{tag,trigger,variable}` take a single `container_id`
   attribute set to `matomo_tagmanager_container.x.id` (the composite
   `"{site_id}/{container_id}"` string) — no `site_id` field exists on these
