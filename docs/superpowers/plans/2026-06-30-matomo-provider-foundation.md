@@ -3932,12 +3932,44 @@ pause/resume.
 - Consumes: `matomo.Client.{AddContainerTag,UpdateContainerTag,DeleteContainerTag,GetContainerTag,PauseContainerTag,ResumeContainerTag}` (Task 7); `resolveDraftVersionID` (Task 15); `buildEntityID`/`parseEntityID`, `parseContainerID` (Task 10).
 - Produces: `func NewTagManagerTagResource() resource.Resource`; the same `entityIDsFromComposite`/`compositeIDsFromEntity` helper pair this task adds to `internal/provider/ids.go` is reused unmodified by Tasks 17-18 for trigger/variable cross-references.
 
-- [ ] **Step 1: Add composite trigger-ID helpers to `ids.go`**
+- [ ] **Step 1: Write the failing test for the new ID helpers**
 
-These convert between a tag's `fire_trigger_ids`/`block_trigger_ids` (each
-a full composite trigger `.id`, e.g. `"3/abc123/7"`) and the bare IDs
+These helpers convert between a tag's `fire_trigger_ids`/`block_trigger_ids`
+(each a full composite trigger `.id`, e.g. `"3/abc123/7"`) and the bare IDs
 (`"7"`) Matomo's API expects, validating every referenced entity belongs to
 the same container as the tag itself.
+
+Append to `internal/provider/ids_test.go`:
+```go
+func TestBareCompositeEntityIDs_roundTrip(t *testing.T) {
+	composite := []string{buildEntityID(3, "abc123", "7"), buildEntityID(3, "abc123", "8")}
+	bare, err := bareEntityIDs(3, "abc123", composite)
+	if err != nil {
+		t.Fatalf("bareEntityIDs() error = %v", err)
+	}
+	if len(bare) != 2 || bare[0] != "7" || bare[1] != "8" {
+		t.Errorf("bare = %v, want [7 8]", bare)
+	}
+	roundTripped := compositeEntityIDs(3, "abc123", bare)
+	if roundTripped[0] != composite[0] || roundTripped[1] != composite[1] {
+		t.Errorf("roundTripped = %v, want %v", roundTripped, composite)
+	}
+}
+
+func TestBareEntityIDs_wrongContainer(t *testing.T) {
+	_, err := bareEntityIDs(3, "abc123", []string{buildEntityID(3, "other-container", "7")})
+	if err == nil {
+		t.Fatal("bareEntityIDs() error = nil, want error (cross-container reference)")
+	}
+}
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `go test ./internal/provider/... -run 'TestBareCompositeEntityIDs|TestBareEntityIDs' -v`
+Expected: FAIL — compile error, `bareEntityIDs`/`compositeEntityIDs` do not exist yet.
+
+- [ ] **Step 3: Implement the ID helpers**
 
 Append to `internal/provider/ids.go`:
 ```go
@@ -3971,37 +4003,12 @@ func compositeEntityIDs(siteID int, idContainer string, bareIDs []string) []stri
 Add `"fmt"` to `internal/provider/ids.go`'s imports if not already present
 (it is, from Task 10).
 
-- [ ] **Step 2: Write a unit test for the new ID helpers**
-
-Append to `internal/provider/ids_test.go`:
-```go
-func TestBareCompositeEntityIDs_roundTrip(t *testing.T) {
-	composite := []string{buildEntityID(3, "abc123", "7"), buildEntityID(3, "abc123", "8")}
-	bare, err := bareEntityIDs(3, "abc123", composite)
-	if err != nil {
-		t.Fatalf("bareEntityIDs() error = %v", err)
-	}
-	if len(bare) != 2 || bare[0] != "7" || bare[1] != "8" {
-		t.Errorf("bare = %v, want [7 8]", bare)
-	}
-	roundTripped := compositeEntityIDs(3, "abc123", bare)
-	if roundTripped[0] != composite[0] || roundTripped[1] != composite[1] {
-		t.Errorf("roundTripped = %v, want %v", roundTripped, composite)
-	}
-}
-
-func TestBareEntityIDs_wrongContainer(t *testing.T) {
-	_, err := bareEntityIDs(3, "abc123", []string{buildEntityID(3, "other-container", "7")})
-	if err == nil {
-		t.Fatal("bareEntityIDs() error = nil, want error (cross-container reference)")
-	}
-}
-```
+- [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `go test ./internal/provider/... -run 'TestBareCompositeEntityIDs|TestBareEntityIDs' -v`
-Expected: both `PASS` (this is testing already-written code from Step 1, so no red-green cycle here — the helpers are simple enough to write straight through, but still need their own coverage).
+Expected: both `PASS`.
 
-- [ ] **Step 3: Write the failing resource test**
+- [ ] **Step 5: Write the failing resource test**
 
 `internal/provider/resource_tagmanager_tag_test.go`:
 ```go
@@ -4106,12 +4113,12 @@ resource "matomo_tagmanager_tag" "test" {
 
 ```
 
-- [ ] **Step 4: Run the test to verify it fails**
+- [ ] **Step 6: Run the test to verify it fails**
 
 Run: `go test ./internal/provider/... -run TestAccTagManagerTagResource_basic -v`
 Expected: FAIL — compile error, `resource_tagmanager_tag.go` does not exist yet.
 
-- [ ] **Step 5: Implement the resource**
+- [ ] **Step 7: Implement the resource**
 
 `internal/provider/resource_tagmanager_tag.go`:
 ```go
@@ -4454,17 +4461,17 @@ func (r *tagManagerTagResource) ImportState(ctx context.Context, req resource.Im
 }
 ```
 
-- [ ] **Step 6: Register the resource in the provider**
+- [ ] **Step 8: Register the resource in the provider**
 
 In `internal/provider/provider.go`, add `NewTagManagerTagResource` to the
 slice returned by `Resources()`.
 
-- [ ] **Step 7: Run the test to verify it passes**
+- [ ] **Step 9: Run the test to verify it passes**
 
 Run: `go test ./internal/provider/... -run TestAccTagManagerTagResource_basic -v`
 Expected: `PASS` (both steps — create with status=active, update to status=paused).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add internal/provider/ids.go internal/provider/ids_test.go internal/provider/provider.go internal/provider/resource_tagmanager_tag.go internal/provider/resource_tagmanager_tag_test.go
