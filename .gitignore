@@ -30,3 +30,9 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Git worktrees
+.worktrees/
+
+# subagent-driven-development scratch state
+.superpowers/
