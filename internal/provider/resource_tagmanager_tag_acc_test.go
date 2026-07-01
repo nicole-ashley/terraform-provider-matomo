@@ -126,24 +126,16 @@ resource "matomo_tagmanager_tag" "test" {
   name             = "Acceptance Multi-Param Tag"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
-    name  = "alpha"
-    value = "1"
+    name  = "customHtml"
+    value = "<script>console.log('multi-param acceptance test')</script>"
   }
   parameter {
-    name  = "bravo"
-    value = "2"
-  }
-  parameter {
-    name  = "charlie"
-    value = "3"
-  }
-  parameter {
-    name  = "delta"
-    value = "4"
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
-				Check: resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "parameter.#", "4"),
+				Check: resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "parameter.#", "2"),
 			},
 		},
 	})

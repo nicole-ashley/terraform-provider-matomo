@@ -8,7 +8,7 @@ import (
 
 // Variable is a Matomo Tag Manager variable within a container version.
 type Variable struct {
-	IDVariable   string            `json:"idvariable"`
+	IDVariable   int               `json:"idvariable"`
 	Name         string            `json:"name"`
 	Type         string            `json:"type"`
 	Parameters   map[string]string `json:"parameters"`

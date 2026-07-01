@@ -8,7 +8,7 @@ import (
 
 // Tag is a Matomo Tag Manager tag within a container version.
 type Tag struct {
-	IDTag           string            `json:"idtag"`
+	IDTag           int               `json:"idtag"`
 	Name            string            `json:"name"`
 	Type            string            `json:"type"`
 	Status          string            `json:"status"`
