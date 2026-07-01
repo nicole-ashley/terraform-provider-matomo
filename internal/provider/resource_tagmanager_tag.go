@@ -260,8 +260,8 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 	state.Type = types.StringValue(tag.Type)
 	state.Name = types.StringValue(tag.Name)
 	state.Status = types.StringValue(tag.Status)
-	state.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, tag.FireTriggerIDs))
-	state.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, tag.BlockTriggerIDs))
+	state.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.FireTriggerIDs)))
+	state.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
 
 	params := make([]tagParameterModel, 0, len(tag.Parameters))
 	for name, value := range tag.Parameters {

@@ -16,9 +16,11 @@ type Tag struct {
 	// Confirmed against Matomo's own TagTest.php fixture: the response keys
 	// are fire_trigger_ids/block_trigger_ids (snake_case), unlike the
 	// fireTriggerIds/blockTriggerIds (camelCase) request parameters used to
-	// set them.
-	FireTriggerIDs  []string `json:"fire_trigger_ids"`
-	BlockTriggerIDs []string `json:"block_trigger_ids"`
+	// set them. Confirmed against a live instance: unlike most other
+	// Matomo ids, these array elements are unquoted JSON numbers, not
+	// strings.
+	FireTriggerIDs  []int `json:"fire_trigger_ids"`
+	BlockTriggerIDs []int `json:"block_trigger_ids"`
 }
 
 // TagParams holds the fields accepted by addContainerTag/updateContainerTag.

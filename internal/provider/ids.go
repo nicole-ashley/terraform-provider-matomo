@@ -8,6 +8,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 )
 
+// intsToStrings converts each element to its decimal string form, e.g. for
+// wire-format fields Matomo returns as arrays of raw JSON numbers (like
+// Tag.FireTriggerIDs) that this provider otherwise treats as opaque string
+// entity ids.
+func intsToStrings(ints []int) []string {
+	out := make([]string, len(ints))
+	for i, n := range ints {
+		out[i] = strconv.Itoa(n)
+	}
+	return out
+}
+
 func buildContainerID(siteID int, idContainer string) string {
 	return fmt.Sprintf("%d/%s", siteID, idContainer)
 }
