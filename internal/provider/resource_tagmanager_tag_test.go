@@ -102,7 +102,7 @@ resource "matomo_tagmanager_tag" "test" {
 	})
 }
 
-// TestAccTagManagerTagResource_multipleParameters exercises a tag with
+// TestUnitTagManagerTagResource_multipleParameters exercises a tag with
 // several parameter blocks. tag.Parameters is a map[string]string in the
 // Matomo client, and Read() used to build state.Parameter by iterating that
 // map directly with no sort — since Go randomizes map iteration order per

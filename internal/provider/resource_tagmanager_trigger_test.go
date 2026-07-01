@@ -77,7 +77,7 @@ resource "matomo_tagmanager_trigger" "test" {
 	})
 }
 
-// TestAccTagManagerTriggerResource_multipleParameters exercises a trigger
+// TestUnitTagManagerTriggerResource_multipleParameters exercises a trigger
 // with several parameter blocks. Trigger.Parameters is a map[string]string
 // in the Matomo client (unlike Trigger.Conditions, which is a real ordered
 // []Condition slice from the JSON array response and needs no sorting).

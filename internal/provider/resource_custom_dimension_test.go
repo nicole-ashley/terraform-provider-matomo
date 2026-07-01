@@ -122,7 +122,7 @@ resource "matomo_custom_dimension" "test" {
 	}
 }
 
-// TestAccCustomDimensionResource_idAndIndexDiffer guards against a Critical
+// TestUnitCustomDimensionResource_idAndIndexDiffer guards against a Critical
 // bug where the resource used Matomo's per-scope "index" as if it were the
 // per-site "id" (idDimension) required by
 // CustomDimensions.configureExistingCustomDimension. A site with one
