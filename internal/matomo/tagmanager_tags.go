@@ -8,13 +8,17 @@ import (
 
 // Tag is a Matomo Tag Manager tag within a container version.
 type Tag struct {
-	IDTag           int       `json:"idtag"`
-	Name            string    `json:"name"`
-	Type            string    `json:"type"`
-	Status          string    `json:"status"`
-	Parameters      stringMap `json:"parameters"`
-	FireTriggerIDs  []string  `json:"fireTriggerIds"`
-	BlockTriggerIDs []string  `json:"blockTriggerIds"`
+	IDTag      int       `json:"idtag"`
+	Name       string    `json:"name"`
+	Type       string    `json:"type"`
+	Status     string    `json:"status"`
+	Parameters stringMap `json:"parameters"`
+	// Confirmed against Matomo's own TagTest.php fixture: the response keys
+	// are fire_trigger_ids/block_trigger_ids (snake_case), unlike the
+	// fireTriggerIds/blockTriggerIds (camelCase) request parameters used to
+	// set them.
+	FireTriggerIDs  []string `json:"fire_trigger_ids"`
+	BlockTriggerIDs []string `json:"block_trigger_ids"`
 }
 
 // TagParams holds the fields accepted by addContainerTag/updateContainerTag.

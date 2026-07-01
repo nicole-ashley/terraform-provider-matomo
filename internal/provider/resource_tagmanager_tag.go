@@ -86,6 +86,9 @@ func (r *tagManagerTagResource) Schema(_ context.Context, _ resource.SchemaReque
 				Validators: []validator.String{
 					stringvalidator.OneOf("active", "paused"),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"fire_trigger_ids": schema.ListAttribute{
 				Required:    true,
