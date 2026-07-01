@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -16,6 +18,18 @@ import (
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
+
+// configureNewCustomDimensionMu serializes CustomDimensions.
+// configureNewCustomDimension calls across the whole provider process.
+// Matomo assigns a new dimension's id via a non-atomic "SELECT
+// MAX(idcustomdimension)+1 THEN INSERT" (confirmed against Matomo's own
+// CustomDimensions Dao source) - Terraform applies independent resources
+// concurrently by default, so two matomo_custom_dimension resources on the
+// same site (e.g. a "visit" and an "action" scoped dimension with no
+// dependency between them) can both compute the same next id and collide on
+// insert. A single global mutex trades a little unnecessary serialization
+// (across different sites too) for correctness against this real race.
+var configureNewCustomDimensionMu sync.Mutex
 
 var (
 	_ resource.Resource                = &customDimensionResource{}
@@ -49,7 +63,7 @@ func (r *customDimensionResource) Schema(_ context.Context, _ resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
-				Description: "Composite \"site_id/index\".",
+				Description: "Composite \"site_id/scope/index\".",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -64,12 +78,18 @@ func (r *customDimensionResource) Schema(_ context.Context, _ resource.SchemaReq
 			"index": schema.Int64Attribute{
 				Required:    true,
 				Description: "The dimension's slot number within its scope. You choose this; Matomo does not support picking a slot on creation, so Create verifies the slot it assigns matches this value.",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
 			},
 			"scope": schema.StringAttribute{
 				Required:    true,
 				Description: "\"visit\" or \"action\".",
 				Validators: []validator.String{
 					stringvalidator.OneOf("visit", "action"),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -137,15 +157,15 @@ func (r *customDimensionResource) Create(ctx context.Context, req resource.Creat
 			return
 		}
 	} else {
+		configureNewCustomDimensionMu.Lock()
 		newID, err := r.client.ConfigureNewCustomDimension(ctx, siteID, name, scope, active)
+		var afterCreate []matomo.CustomDimension
+		if err == nil {
+			afterCreate, err = r.client.GetConfiguredCustomDimensions(ctx, siteID)
+		}
+		configureNewCustomDimensionMu.Unlock()
 		if err != nil {
 			resp.Diagnostics.AddError("Error creating Matomo custom dimension", err.Error())
-			return
-		}
-
-		afterCreate, err := r.client.GetConfiguredCustomDimensions(ctx, siteID)
-		if err != nil {
-			resp.Diagnostics.AddError("Error listing Matomo custom dimensions", err.Error())
 			return
 		}
 		var created *matomo.CustomDimension
@@ -175,7 +195,7 @@ func (r *customDimensionResource) Create(ctx context.Context, req resource.Creat
 		}
 	}
 
-	plan.ID = types.StringValue(buildDimensionID(siteID, declaredIndex))
+	plan.ID = types.StringValue(buildDimensionID(siteID, scope, declaredIndex))
 	plan.Active = types.BoolValue(active)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -187,7 +207,7 @@ func (r *customDimensionResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	siteID, index, err := parseDimensionID(state.ID.ValueString())
+	siteID, scope, index, err := parseDimensionID(state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid id in state", err.Error())
 		return
@@ -199,7 +219,6 @@ func (r *customDimensionResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	scope := state.Scope.ValueString()
 	var found *matomo.CustomDimension
 	for i := range dims {
 		if dims[i].Index == index && dims[i].Scope == scope {
@@ -227,12 +246,11 @@ func (r *customDimensionResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	siteID, index, err := parseDimensionID(plan.ID.ValueString())
+	siteID, scope, index, err := parseDimensionID(plan.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid id in state", err.Error())
 		return
 	}
-	scope := plan.Scope.ValueString()
 
 	active := true
 	if !plan.Active.IsUnknown() && !plan.Active.IsNull() {
@@ -275,12 +293,11 @@ func (r *customDimensionResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	siteID, index, err := parseDimensionID(state.ID.ValueString())
+	siteID, scope, index, err := parseDimensionID(state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid id in state", err.Error())
 		return
 	}
-	scope := state.Scope.ValueString()
 
 	dims, err := r.client.GetConfiguredCustomDimensions(ctx, siteID)
 	if err != nil {
@@ -295,10 +312,10 @@ func (r *customDimensionResource) Delete(ctx context.Context, req resource.Delet
 		}
 	}
 	if found == nil {
-		resp.Diagnostics.AddError(
-			"Custom dimension not found",
-			fmt.Sprintf("No custom dimension found at index %d, scope %q for site %d. It may have already been deleted or reconfigured outside Terraform.", index, scope, siteID),
-		)
+		// Nothing to deactivate - same end state as a successful delete, and
+		// Matomo has no real delete for custom dimensions to make this path
+		// unreachable in practice, so treat it the same as the idempotent
+		// delete behavior other resources have (already gone is success).
 		return
 	}
 

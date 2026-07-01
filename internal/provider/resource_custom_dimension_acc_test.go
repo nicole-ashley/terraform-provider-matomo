@@ -117,7 +117,7 @@ resource "matomo_custom_dimension" "test" {
 					if !ok {
 						return fmt.Errorf("matomo_custom_dimension.test not found in state")
 					}
-					siteID, index, err := parseDimensionID(rs.Primary.ID)
+					siteID, scope, index, err := parseDimensionID(rs.Primary.ID)
 					if err != nil {
 						return fmt.Errorf("invalid custom dimension id %q: %w", rs.Primary.ID, err)
 					}
@@ -128,7 +128,7 @@ resource "matomo_custom_dimension" "test" {
 						return err
 					}
 					for _, d := range dims {
-						if d.Index == index && d.Scope == "visit" {
+						if d.Index == index && d.Scope == scope {
 							return client.ConfigureExistingCustomDimension(ctx, d.ID, siteID, d.Name, false)
 						}
 					}
@@ -178,7 +178,7 @@ resource "matomo_custom_dimension" "action_dim" {
 					if !ok {
 						return fmt.Errorf("matomo_custom_dimension.action_dim not found in state")
 					}
-					siteID, _, err := parseDimensionID(visit.Primary.ID)
+					siteID, _, _, err := parseDimensionID(visit.Primary.ID)
 					if err != nil {
 						return err
 					}

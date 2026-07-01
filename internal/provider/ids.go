@@ -24,24 +24,29 @@ func parseContainerID(id string) (siteID int, idContainer string, err error) {
 	return siteID, parts[1], nil
 }
 
-func buildDimensionID(siteID int, index int) string {
-	return fmt.Sprintf("%d/%d", siteID, index)
+// buildDimensionID/parseDimensionID include scope because index alone is
+// ambiguous - it's a per-scope slot number (confirmed both by Matomo's own
+// source and by a real ImportState acceptance test failure: without scope
+// in the id, Read() has no way to know which of a "visit" or "action"
+// dimension at the same index the id refers to).
+func buildDimensionID(siteID int, scope string, index int) string {
+	return fmt.Sprintf("%d/%s/%d", siteID, scope, index)
 }
 
-func parseDimensionID(id string) (siteID int, index int, err error) {
+func parseDimensionID(id string) (siteID int, scope string, index int, err error) {
 	parts := strings.Split(id, "/")
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return 0, 0, fmt.Errorf("invalid custom dimension id %q, expected format \"site_id/index\"", id)
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		return 0, "", 0, fmt.Errorf("invalid custom dimension id %q, expected format \"site_id/scope/index\"", id)
 	}
 	siteID, err = strconv.Atoi(parts[0])
 	if err != nil {
-		return 0, 0, fmt.Errorf("invalid custom dimension id %q: site_id segment is not numeric: %w", id, err)
+		return 0, "", 0, fmt.Errorf("invalid custom dimension id %q: site_id segment is not numeric: %w", id, err)
 	}
-	index, err = strconv.Atoi(parts[1])
+	index, err = strconv.Atoi(parts[2])
 	if err != nil {
-		return 0, 0, fmt.Errorf("invalid custom dimension id %q: index segment is not numeric: %w", id, err)
+		return 0, "", 0, fmt.Errorf("invalid custom dimension id %q: index segment is not numeric: %w", id, err)
 	}
-	return siteID, index, nil
+	return siteID, parts[1], index, nil
 }
 
 func buildEntityID(siteID int, idContainer, entityID string) string {

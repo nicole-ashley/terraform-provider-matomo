@@ -2,7 +2,6 @@ package matomo
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 	"strconv"
 )
@@ -25,7 +24,7 @@ type VariableParams struct {
 	DefaultValue *string
 }
 
-func variableParamsToValues(idSite int, idContainer, idContainerVersion string, p VariableParams) (url.Values, error) {
+func variableParamsToValues(idSite int, idContainer, idContainerVersion string, p VariableParams) url.Values {
 	v := url.Values{
 		"idSite":             {strconv.Itoa(idSite)},
 		"idContainer":        {idContainer},
@@ -33,30 +32,19 @@ func variableParamsToValues(idSite int, idContainer, idContainerVersion string, 
 		"type":               {p.Type},
 		"name":               {p.Name},
 	}
-	params := p.Parameters
-	if params == nil {
-		params = map[string]string{}
-	}
-	paramsJSON, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
-	}
-	v.Set("parameters", string(paramsJSON))
+	addMapParam(v, "parameters", p.Parameters)
 
 	if p.DefaultValue != nil {
 		v.Set("defaultValue", *p.DefaultValue)
 	}
 
-	return v, nil
+	return v
 }
 
 // AddContainerVariable creates a variable in a container's version and
 // returns its ID.
 func (c *Client) AddContainerVariable(ctx context.Context, idSite int, idContainer, idContainerVersion string, p VariableParams) (string, error) {
-	v, err := variableParamsToValues(idSite, idContainer, idContainerVersion, p)
-	if err != nil {
-		return "", err
-	}
+	v := variableParamsToValues(idSite, idContainer, idContainerVersion, p)
 	var out struct {
 		IDVariable string `json:"idvariable"`
 	}
@@ -68,10 +56,7 @@ func (c *Client) AddContainerVariable(ctx context.Context, idSite int, idContain
 
 // UpdateContainerVariable updates an existing variable.
 func (c *Client) UpdateContainerVariable(ctx context.Context, idSite int, idContainer, idContainerVersion, idVariable string, p VariableParams) error {
-	v, err := variableParamsToValues(idSite, idContainer, idContainerVersion, p)
-	if err != nil {
-		return err
-	}
+	v := variableParamsToValues(idSite, idContainer, idContainerVersion, p)
 	v.Set("idVariable", idVariable)
 	return c.call(ctx, "TagManager.updateContainerVariable", v, nil)
 }
