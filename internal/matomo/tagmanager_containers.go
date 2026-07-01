@@ -24,12 +24,12 @@ func (c *Client) AddContainer(ctx context.Context, idSite int, tmContext, name, 
 		"description": {description},
 	}
 	var out struct {
-		IDContainer string `json:"idcontainer"`
+		Value string `json:"value"`
 	}
 	if err := c.call(ctx, "TagManager.addContainer", v, &out); err != nil {
 		return "", err
 	}
-	return out.IDContainer, nil
+	return out.Value, nil
 }
 
 // UpdateContainer updates a container's name and description.

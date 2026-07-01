@@ -19,7 +19,7 @@ type DimensionExtraction struct {
 type CustomDimension struct {
 	ID            int                   `json:"id"`
 	Name          string                `json:"name"`
-	Index         int                   `json:"index"`
+	Index         int                   `json:"index,string"`
 	Scope         string                `json:"scope"`
 	Active        bool                  `json:"active"`
 	CaseSensitive bool                  `json:"case_sensitive"`
