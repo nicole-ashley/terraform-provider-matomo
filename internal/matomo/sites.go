@@ -83,7 +83,7 @@ func boolToIntString(b bool) string {
 // AddSite creates a website and returns its new site ID.
 func (c *Client) AddSite(ctx context.Context, p AddSiteParams) (int, error) {
 	var out struct {
-		Value int `json:"value,string"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "SitesManager.addSite", p.toValues(), &out); err != nil {
 		return 0, err

@@ -44,7 +44,7 @@ func TestUnitSiteResource_basic(t *testing.T) {
 				"urls":     []string(r.URL.Query()["urls[]"]),
 				"timezone": "UTC", "currency": "USD",
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"value": idStr})
+			_ = json.NewEncoder(w).Encode(map[string]any{"value": id})
 		case "SitesManager.updateSite":
 			id := r.URL.Query().Get("idSite")
 			sites[id]["name"] = r.URL.Query().Get("siteName")

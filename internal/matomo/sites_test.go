@@ -20,7 +20,7 @@ func TestClient_AddSite(t *testing.T) {
 			t.Errorf("urls[] = %v, want [https://example.com]", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"value": "3"})
+		_ = json.NewEncoder(w).Encode(map[string]any{"value": 3})
 	}))
 	defer srv.Close()
 
