@@ -11,7 +11,6 @@
 # and fix flag names/order here if they've changed.
 set -euo pipefail
 
-MATOMO_CONTAINER="${MATOMO_CONTAINER:-$(docker compose ps -q matomo)}"
 SUPERUSER_LOGIN="acceptance-admin"
 SUPERUSER_PASSWORD="acceptance-password-not-a-secret"
 SUPERUSER_EMAIL="acceptance@example.com"
