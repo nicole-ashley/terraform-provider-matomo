@@ -106,6 +106,7 @@ func (p *MatomoProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *MatomoProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewSiteResource,
+		NewCustomDimensionResource,
 	}
 }
 
