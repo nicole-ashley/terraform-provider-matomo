@@ -86,8 +86,8 @@ func TestClient_GetContainerTag(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"idtag": "5", "name": "My tag", "type": "CustomHtml", "status": "active",
-			"parameters": map[string]any{"customHtml": "<script></script>"},
-			"fireTriggerIds": []string{"1"},
+			"parameters":      map[string]any{"customHtml": "<script></script>"},
+			"fireTriggerIds":  []string{"1"},
 			"blockTriggerIds": []string{},
 		})
 	}))
