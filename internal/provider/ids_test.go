@@ -61,3 +61,25 @@ func TestParseEntityID_invalid(t *testing.T) {
 		}
 	}
 }
+
+func TestBareCompositeEntityIDs_roundTrip(t *testing.T) {
+	composite := []string{buildEntityID(3, "abc123", "7"), buildEntityID(3, "abc123", "8")}
+	bare, err := bareEntityIDs(3, "abc123", composite)
+	if err != nil {
+		t.Fatalf("bareEntityIDs() error = %v", err)
+	}
+	if len(bare) != 2 || bare[0] != "7" || bare[1] != "8" {
+		t.Errorf("bare = %v, want [7 8]", bare)
+	}
+	roundTripped := compositeEntityIDs(3, "abc123", bare)
+	if roundTripped[0] != composite[0] || roundTripped[1] != composite[1] {
+		t.Errorf("roundTripped = %v, want %v", roundTripped, composite)
+	}
+}
+
+func TestBareEntityIDs_wrongContainer(t *testing.T) {
+	_, err := bareEntityIDs(3, "abc123", []string{buildEntityID(3, "other-container", "7")})
+	if err == nil {
+		t.Fatal("bareEntityIDs() error = nil, want error (cross-container reference)")
+	}
+}

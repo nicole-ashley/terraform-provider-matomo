@@ -63,3 +63,30 @@ func parseEntityID(id string) (siteID int, idContainer, entityID string, err err
 func stringAttrPath(name string) path.Expression {
 	return path.MatchRoot(name)
 }
+
+// bareEntityIDs converts composite entity ids (site/container/entity) to
+// bare entity ids, verifying every one belongs to the given container.
+func bareEntityIDs(siteID int, idContainer string, compositeIDs []string) ([]string, error) {
+	bare := make([]string, 0, len(compositeIDs))
+	for _, composite := range compositeIDs {
+		entitySiteID, entityContainer, entityID, err := parseEntityID(composite)
+		if err != nil {
+			return nil, fmt.Errorf("invalid reference %q: %w", composite, err)
+		}
+		if entitySiteID != siteID || entityContainer != idContainer {
+			return nil, fmt.Errorf("reference %q belongs to a different container than site %d / container %q", composite, siteID, idContainer)
+		}
+		bare = append(bare, entityID)
+	}
+	return bare, nil
+}
+
+// compositeEntityIDs is the inverse of bareEntityIDs, used when reading
+// Matomo's response back into state.
+func compositeEntityIDs(siteID int, idContainer string, bareIDs []string) []string {
+	composite := make([]string, 0, len(bareIDs))
+	for _, id := range bareIDs {
+		composite = append(composite, buildEntityID(siteID, idContainer, id))
+	}
+	return composite
+}
