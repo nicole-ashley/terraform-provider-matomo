@@ -8,13 +8,13 @@ import (
 
 // Tag is a Matomo Tag Manager tag within a container version.
 type Tag struct {
-	IDTag           int               `json:"idtag"`
-	Name            string            `json:"name"`
-	Type            string            `json:"type"`
-	Status          string            `json:"status"`
-	Parameters      map[string]string `json:"parameters"`
-	FireTriggerIDs  []string          `json:"fireTriggerIds"`
-	BlockTriggerIDs []string          `json:"blockTriggerIds"`
+	IDTag           int       `json:"idtag"`
+	Name            string    `json:"name"`
+	Type            string    `json:"type"`
+	Status          string    `json:"status"`
+	Parameters      stringMap `json:"parameters"`
+	FireTriggerIDs  []string  `json:"fireTriggerIds"`
+	BlockTriggerIDs []string  `json:"blockTriggerIds"`
 }
 
 // TagParams holds the fields accepted by addContainerTag/updateContainerTag.

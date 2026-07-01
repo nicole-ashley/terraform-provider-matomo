@@ -15,11 +15,11 @@ type Condition struct {
 
 // Trigger is a Matomo Tag Manager trigger within a container version.
 type Trigger struct {
-	IDTrigger  int               `json:"idtrigger"`
-	Name       string            `json:"name"`
-	Type       string            `json:"type"`
-	Parameters map[string]string `json:"parameters"`
-	Conditions []Condition       `json:"conditions"`
+	IDTrigger  int         `json:"idtrigger"`
+	Name       string      `json:"name"`
+	Type       string      `json:"type"`
+	Parameters stringMap   `json:"parameters"`
+	Conditions []Condition `json:"conditions"`
 }
 
 // TriggerParams holds the fields accepted by

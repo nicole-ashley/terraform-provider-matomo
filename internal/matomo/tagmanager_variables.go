@@ -8,11 +8,14 @@ import (
 
 // Variable is a Matomo Tag Manager variable within a container version.
 type Variable struct {
-	IDVariable   int               `json:"idvariable"`
-	Name         string            `json:"name"`
-	Type         string            `json:"type"`
-	Parameters   map[string]string `json:"parameters"`
-	DefaultValue string            `json:"defaultValue"`
+	IDVariable int       `json:"idvariable"`
+	Name       string    `json:"name"`
+	Type       string    `json:"type"`
+	Parameters stringMap `json:"parameters"`
+	// Confirmed against Matomo's own VariableTest.php fixture: the response
+	// key is default_value (snake_case), unlike the defaultValue (camelCase)
+	// request parameter used to set it.
+	DefaultValue string `json:"default_value"`
 }
 
 // VariableParams holds the fields accepted by

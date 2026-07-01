@@ -1,9 +1,32 @@
 package matomo
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 )
+
+// stringMap decodes a field Matomo sometimes returns as an empty JSON array
+// ([]) instead of an object ({}) - confirmed against a live instance for
+// Trigger/Tag/Variable's "parameters" field. PHP's json_encode of an empty
+// PHP array always produces [], since an empty array can't be distinguished
+// from an empty list; a non-empty parameters map always serializes as a
+// real object.
+type stringMap map[string]string
+
+func (m *stringMap) UnmarshalJSON(data []byte) error {
+	var obj map[string]string
+	if err := json.Unmarshal(data, &obj); err == nil {
+		*m = obj
+		return nil
+	}
+	var empty []any
+	if err := json.Unmarshal(data, &empty); err != nil {
+		return err
+	}
+	*m = map[string]string{}
+	return nil
+}
 
 // Matomo's API dispatcher builds PHP arrays for array-typed parameters from
 // the raw query string itself (PHP's native name[]=x&name[]=y / nested
