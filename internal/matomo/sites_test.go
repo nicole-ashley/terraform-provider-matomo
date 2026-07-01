@@ -95,6 +95,7 @@ func TestClient_GetSiteFromID(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"idsite": "3", "name": "Example", "timezone": "UTC", "currency": "USD",
+			"urls": []string{"https://example.com"}, "excluded_ips": []string{"192.168.1.1"},
 		})
 	}))
 	defer srv.Close()
@@ -107,6 +108,12 @@ func TestClient_GetSiteFromID(t *testing.T) {
 	if site.IDSite != 3 || site.Name != "Example" {
 		t.Errorf("site = %+v, want IDSite=3 Name=Example", site)
 	}
+	if len(site.URLs) != 1 || site.URLs[0] != "https://example.com" {
+		t.Errorf("site.URLs = %v, want [https://example.com]", site.URLs)
+	}
+	if len(site.ExcludedIPs) != 1 || site.ExcludedIPs[0] != "192.168.1.1" {
+		t.Errorf("site.ExcludedIPs = %v, want [192.168.1.1]", site.ExcludedIPs)
+	}
 }
 
 func TestClient_GetAllSites(t *testing.T) {
@@ -116,8 +123,8 @@ func TestClient_GetAllSites(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"idsite": "1", "name": "A"},
-			{"idsite": "2", "name": "B"},
+			{"idsite": "1", "name": "A", "urls": []string{"https://a.com"}, "excluded_ips": []string{}},
+			{"idsite": "2", "name": "B", "urls": []string{"https://b.com"}, "excluded_ips": []string{"10.0.0.1"}},
 		})
 	}))
 	defer srv.Close()
@@ -129,5 +136,11 @@ func TestClient_GetAllSites(t *testing.T) {
 	}
 	if len(sites) != 2 {
 		t.Fatalf("len(sites) = %d, want 2", len(sites))
+	}
+	if len(sites[0].URLs) != 1 || sites[0].URLs[0] != "https://a.com" {
+		t.Errorf("sites[0].URLs = %v, want [https://a.com]", sites[0].URLs)
+	}
+	if len(sites[1].ExcludedIPs) != 1 || sites[1].ExcludedIPs[0] != "10.0.0.1" {
+		t.Errorf("sites[1].ExcludedIPs = %v, want [10.0.0.1]", sites[1].ExcludedIPs)
 	}
 }

@@ -9,16 +9,16 @@ import (
 // Site is a Matomo website as returned by SitesManager.getSiteFromId /
 // getAllSites.
 type Site struct {
-	IDSite              int      `json:"idsite,string"`
-	Name                string   `json:"name"`
-	Timezone            string   `json:"timezone"`
-	Currency            string   `json:"currency"`
-	URLs                []string `json:"-"`
-	Ecommerce           bool     `json:"-"`
-	ExcludedIPs         string   `json:"excluded_ips"`
-	ExcludeUnknownUrls  bool     `json:"-"`
-	Type                string   `json:"type"`
-	Group               string   `json:"group"`
+	IDSite             int      `json:"idsite,string"`
+	Name               string   `json:"name"`
+	Timezone           string   `json:"timezone"`
+	Currency           string   `json:"currency"`
+	URLs               []string `json:"urls"`
+	Ecommerce          bool     `json:"-"`
+	ExcludedIPs        []string `json:"excluded_ips"`
+	ExcludeUnknownUrls bool     `json:"-"`
+	Type               string   `json:"type"`
+	Group              string   `json:"group"`
 }
 
 // AddSiteParams holds the subset of SitesManager.addSite's parameters this
