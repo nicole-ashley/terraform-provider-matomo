@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -88,12 +89,12 @@ func (r *tagManagerTagResource) Schema(_ context.Context, _ resource.SchemaReque
 			"fire_trigger_ids": schema.ListAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
-				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that fire this tag.",
+				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that fire this tag. Note: writing an explicit empty list (`[]`) rather than omitting this attribute will produce a one-time diff to null on the first refresh after apply; this is harmless and converges after one plan/apply cycle.",
 			},
 			"block_trigger_ids": schema.ListAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
-				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that block this tag from firing.",
+				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that block this tag from firing. Note: writing an explicit empty list (`[]`) rather than omitting this attribute will produce a one-time diff to null on the first refresh after apply; this is harmless and converges after one plan/apply cycle.",
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -252,6 +253,15 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 	for name, value := range tag.Parameters {
 		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(value)})
 	}
+	// tag.Parameters is a map, so Go's iteration order above is randomized
+	// per-process. Sort by name so Read's output is deterministic across
+	// runs, which is what avoids perpetual plan diffs on parameter (a
+	// order-sensitive ListNestedBlock) — otherwise the resulting slice order
+	// would vary from refresh to refresh even when the underlying data is
+	// unchanged.
+	sort.Slice(params, func(i, j int) bool {
+		return params[i].Name.ValueString() < params[j].Name.ValueString()
+	})
 	state.Parameter = params
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
