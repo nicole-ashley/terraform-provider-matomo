@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-framework/path"
 )
 
 func buildContainerID(siteID int, idContainer string) string {
@@ -56,4 +58,8 @@ func parseEntityID(id string) (siteID int, idContainer, entityID string, err err
 		return 0, "", "", fmt.Errorf("invalid id %q: site_id segment is not numeric: %w", id, err)
 	}
 	return siteID, parts[1], parts[2], nil
+}
+
+func stringAttrPath(name string) path.Expression {
+	return path.MatchRoot(name)
 }
