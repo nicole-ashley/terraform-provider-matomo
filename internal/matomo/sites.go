@@ -2,23 +2,47 @@ package matomo
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Site is a Matomo website as returned by SitesManager.getSiteFromId /
 // getAllSites.
 type Site struct {
-	IDSite             int      `json:"idsite"`
-	Name               string   `json:"name"`
-	Timezone           string   `json:"timezone"`
-	Currency           string   `json:"currency"`
-	URLs               []string `json:"urls"`
-	Ecommerce          bool     `json:"-"`
-	ExcludedIPs        []string `json:"excluded_ips"`
-	ExcludeUnknownUrls bool     `json:"-"`
-	Type               string   `json:"type"`
-	Group              string   `json:"group"`
+	IDSite             int                `json:"idsite"`
+	Name               string             `json:"name"`
+	Timezone           string             `json:"timezone"`
+	Currency           string             `json:"currency"`
+	URLs               []string           `json:"urls"`
+	Ecommerce          bool               `json:"-"`
+	ExcludedIPs        commaSeparatedList `json:"excluded_ips"`
+	ExcludeUnknownUrls bool               `json:"-"`
+	Type               string             `json:"type"`
+	Group              string             `json:"group"`
+}
+
+// commaSeparatedList decodes a field Matomo returns as a single
+// comma-separated string (e.g. Site.excluded_ips - confirmed against a real
+// instance) into a []string, treating an empty string as an empty list.
+type commaSeparatedList []string
+
+func (l *commaSeparatedList) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	if s == "" {
+		*l = nil
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	for i, p := range parts {
+		parts[i] = strings.TrimSpace(p)
+	}
+	*l = parts
+	return nil
 }
 
 // AddSiteParams holds the subset of SitesManager.addSite's parameters this
