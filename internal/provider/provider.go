@@ -2,11 +2,17 @@ package provider
 
 import (
 	"context"
+	"crypto/tls"
+	"net/http"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 var _ provider.Provider = &MatomoProvider{}
@@ -46,11 +52,61 @@ func (p *MatomoProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 	}
 }
 
-func (p *MatomoProvider) Configure(_ context.Context, _ provider.ConfigureRequest, _ *provider.ConfigureResponse) {
+type matomoProviderModel struct {
+	BaseURL            types.String `tfsdk:"base_url"`
+	APIToken           types.String `tfsdk:"api_token"`
+	InsecureSkipVerify types.Bool   `tfsdk:"insecure_skip_verify"`
+}
+
+func (p *MatomoProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var config matomoProviderModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	baseURL := config.BaseURL.ValueString()
+	if baseURL == "" {
+		baseURL = os.Getenv("MATOMO_BASE_URL")
+	}
+	if baseURL == "" {
+		resp.Diagnostics.AddError(
+			"Missing Matomo base URL",
+			"Set base_url in the provider configuration or the MATOMO_BASE_URL environment variable.",
+		)
+	}
+
+	apiToken := config.APIToken.ValueString()
+	if apiToken == "" {
+		apiToken = os.Getenv("MATOMO_API_TOKEN")
+	}
+	if apiToken == "" {
+		resp.Diagnostics.AddError(
+			"Missing Matomo API token",
+			"Set api_token in the provider configuration or the MATOMO_API_TOKEN environment variable.",
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	httpClient := &http.Client{}
+	if config.InsecureSkipVerify.ValueBool() {
+		httpClient.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // explicit opt-in via provider config
+		}
+	}
+
+	client := matomo.NewClient(baseURL, apiToken, httpClient)
+	resp.ResourceData = client
+	resp.DataSourceData = client
 }
 
 func (p *MatomoProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewSiteResource,
+	}
 }
 
 func (p *MatomoProvider) DataSources(_ context.Context) []func() datasource.DataSource {
