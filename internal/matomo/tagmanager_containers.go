@@ -13,6 +13,15 @@ type Container struct {
 	Context     string `json:"context"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	// Draft is the container's mutable draft version, always present on a
+	// real container (confirmed against Matomo's own TagManager source:
+	// TagManager.getContainer's response nests it as draft.idcontainerversion
+	// - there is no dedicated API method to fetch just the draft, and
+	// getContainerVersions' entries have no boolean "isDraft" field to pick
+	// it out from the version list).
+	Draft *struct {
+		IDContainerVersion string `json:"idcontainerversion"`
+	} `json:"draft"`
 }
 
 // AddContainer creates a new Tag Manager container and returns its ID.

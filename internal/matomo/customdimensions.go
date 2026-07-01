@@ -17,7 +17,11 @@ type DimensionExtraction struct {
 // slot number within its Scope and is what other Matomo API calls
 // (including Tag Manager's MatomoConfiguration variable) refer to it by.
 type CustomDimension struct {
-	ID            int                   `json:"id"`
+	// Confirmed against a real instance: getConfiguredCustomDimensions
+	// returns the raw custom_dimensions DB row unrenamed, so the row's own
+	// column name (idcustomdimension) is used here, not "id" - and like
+	// Index below, it comes back as a quoted string.
+	ID            int                   `json:"idcustomdimension,string"`
 	Name          string                `json:"name"`
 	Index         int                   `json:"index,string"`
 	Scope         string                `json:"scope"`

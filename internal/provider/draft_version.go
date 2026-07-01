@@ -11,14 +11,12 @@ import (
 // version. matomo_tagmanager_tag/_trigger/_variable resources always write
 // to the draft; users never see or set a version id directly.
 func resolveDraftVersionID(ctx context.Context, client *matomo.Client, siteID int, idContainer string) (string, error) {
-	versions, err := client.GetContainerVersions(ctx, siteID, idContainer)
+	ct, err := client.GetContainer(ctx, siteID, idContainer)
 	if err != nil {
-		return "", fmt.Errorf("listing container versions: %w", err)
+		return "", fmt.Errorf("getting container: %w", err)
 	}
-	for _, v := range versions {
-		if v.IsDraft {
-			return v.IDContainerVersion, nil
-		}
+	if ct.Draft == nil || ct.Draft.IDContainerVersion == "" {
+		return "", fmt.Errorf("no draft version found for container %q (site %d) — every Tag Manager container should have one; this likely indicates the container was deleted out of band", idContainer, siteID)
 	}
-	return "", fmt.Errorf("no draft version found for container %q (site %d) — every Tag Manager container should have one; this likely indicates the container was deleted out of band", idContainer, siteID)
+	return ct.Draft.IDContainerVersion, nil
 }
