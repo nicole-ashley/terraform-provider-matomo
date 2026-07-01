@@ -25,15 +25,15 @@ type Site struct {
 // provider exposes. Pointer fields are optional; nil means "let Matomo use
 // its default."
 type AddSiteParams struct {
-	Name                string
-	URLs                []string
-	Timezone            *string
-	Currency            *string
-	Group               *string
-	Type                *string
-	Ecommerce           *bool
-	ExcludeUnknownUrls  *bool
-	ExcludedIPs         []string
+	Name               string
+	URLs               []string
+	Timezone           *string
+	Currency           *string
+	Group              *string
+	Type               *string
+	Ecommerce          *bool
+	ExcludeUnknownUrls *bool
+	ExcludedIPs        []string
 }
 
 // UpdateSiteParams mirrors AddSiteParams; all fields apply to
