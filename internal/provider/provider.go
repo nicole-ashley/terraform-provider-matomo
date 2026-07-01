@@ -110,6 +110,7 @@ func (p *MatomoProvider) Resources(_ context.Context) []func() resource.Resource
 		NewTagManagerContainerResource,
 		NewTagManagerTagResource,
 		NewTagManagerTriggerResource,
+		NewTagManagerVariableResource,
 	}
 }
 
