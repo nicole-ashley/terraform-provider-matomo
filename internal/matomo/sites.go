@@ -135,6 +135,11 @@ func (c *Client) GetSiteFromID(ctx context.Context, idSite int) (*Site, error) {
 	if err := c.call(ctx, "SitesManager.getSiteFromId", v, &site); err != nil {
 		return nil, err
 	}
+	urls, err := c.getSiteURLsFromID(ctx, idSite)
+	if err != nil {
+		return nil, err
+	}
+	site.URLs = urls
 	return &site, nil
 }
 
@@ -144,5 +149,26 @@ func (c *Client) GetAllSites(ctx context.Context) ([]Site, error) {
 	if err := c.call(ctx, "SitesManager.getAllSites", nil, &sites); err != nil {
 		return nil, err
 	}
+	for i := range sites {
+		urls, err := c.getSiteURLsFromID(ctx, sites[i].IDSite)
+		if err != nil {
+			return nil, err
+		}
+		sites[i].URLs = urls
+	}
 	return sites, nil
+}
+
+// getSiteURLsFromID fetches a site's full URL list (main URL first, then
+// aliases). SitesManager.getSiteFromId/getAllSites only return a site's
+// main_url - confirmed against a real Matomo instance, where the "urls"
+// field this provider previously expected on those responses simply isn't
+// present - so the full list always requires this separate call.
+func (c *Client) getSiteURLsFromID(ctx context.Context, idSite int) ([]string, error) {
+	v := url.Values{"idSite": {strconv.Itoa(idSite)}}
+	var urls []string
+	if err := c.call(ctx, "SitesManager.getSiteUrlsFromId", v, &urls); err != nil {
+		return nil, err
+	}
+	return urls, nil
 }

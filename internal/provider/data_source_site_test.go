@@ -12,13 +12,17 @@ import (
 func TestUnitSiteDataSource_byName(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.URL.Query().Get("method") != "SitesManager.getAllSites" {
+		switch r.URL.Query().Get("method") {
+		case "SitesManager.getAllSites":
+			_ = json.NewEncoder(w).Encode([]map[string]any{
+				{"idsite": 1, "name": "Other", "timezone": "UTC", "currency": "USD"},
+				{"idsite": 2, "name": "Example", "timezone": "UTC", "currency": "USD"},
+			})
+		case "SitesManager.getSiteUrlsFromId":
+			_ = json.NewEncoder(w).Encode([]string{})
+		default:
 			t.Fatalf("unexpected method %q", r.URL.Query().Get("method"))
 		}
-		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"idsite": 1, "name": "Other", "timezone": "UTC", "currency": "USD"},
-			{"idsite": 2, "name": "Example", "timezone": "UTC", "currency": "USD"},
-		})
 	}))
 	defer srv.Close()
 

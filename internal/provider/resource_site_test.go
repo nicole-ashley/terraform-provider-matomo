@@ -61,6 +61,14 @@ func TestUnitSiteResource_basic(t *testing.T) {
 				return
 			}
 			_ = json.NewEncoder(w).Encode(site)
+		case "SitesManager.getSiteUrlsFromId":
+			id := r.URL.Query().Get("idSite")
+			site, ok := sites[id]
+			if !ok {
+				_ = json.NewEncoder(w).Encode(map[string]any{"result": "error", "message": "Website id Not found"})
+				return
+			}
+			_ = json.NewEncoder(w).Encode(site["urls"])
 		default:
 			t.Fatalf("unexpected method %q", method)
 		}

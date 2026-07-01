@@ -89,14 +89,18 @@ func TestClient_DeleteSite(t *testing.T) {
 
 func TestClient_GetSiteFromID(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.URL.Query().Get("method"); got != "SitesManager.getSiteFromId" {
-			t.Errorf("method = %q, want SitesManager.getSiteFromId", got)
-		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"idsite": 3, "name": "Example", "timezone": "UTC", "currency": "USD",
-			"urls": []string{"https://example.com"}, "excluded_ips": "192.168.1.1",
-		})
+		switch r.URL.Query().Get("method") {
+		case "SitesManager.getSiteFromId":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"idsite": 3, "name": "Example", "timezone": "UTC", "currency": "USD",
+				"main_url": "https://example.com", "excluded_ips": "192.168.1.1",
+			})
+		case "SitesManager.getSiteUrlsFromId":
+			_ = json.NewEncoder(w).Encode([]string{"https://example.com"})
+		default:
+			t.Fatalf("unexpected method %q", r.URL.Query().Get("method"))
+		}
 	}))
 	defer srv.Close()
 
@@ -118,14 +122,25 @@ func TestClient_GetSiteFromID(t *testing.T) {
 
 func TestClient_GetAllSites(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.URL.Query().Get("method"); got != "SitesManager.getAllSites" {
-			t.Errorf("method = %q, want SitesManager.getAllSites", got)
-		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"idsite": 1, "name": "A", "urls": []string{"https://a.com"}, "excluded_ips": ""},
-			{"idsite": 2, "name": "B", "urls": []string{"https://b.com"}, "excluded_ips": "10.0.0.1"},
-		})
+		switch r.URL.Query().Get("method") {
+		case "SitesManager.getAllSites":
+			_ = json.NewEncoder(w).Encode([]map[string]any{
+				{"idsite": 1, "name": "A", "main_url": "https://a.com", "excluded_ips": ""},
+				{"idsite": 2, "name": "B", "main_url": "https://b.com", "excluded_ips": "10.0.0.1"},
+			})
+		case "SitesManager.getSiteUrlsFromId":
+			switch r.URL.Query().Get("idSite") {
+			case "1":
+				_ = json.NewEncoder(w).Encode([]string{"https://a.com"})
+			case "2":
+				_ = json.NewEncoder(w).Encode([]string{"https://b.com"})
+			default:
+				t.Fatalf("unexpected idSite %q", r.URL.Query().Get("idSite"))
+			}
+		default:
+			t.Fatalf("unexpected method %q", r.URL.Query().Get("method"))
+		}
 	}))
 	defer srv.Close()
 
