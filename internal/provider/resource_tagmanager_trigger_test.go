@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccTagManagerTriggerResource_basic(t *testing.T) {
+func TestUnitTagManagerTriggerResource_basic(t *testing.T) {
 	triggers := map[string]map[string]any{}
 	nextID := 1
 
@@ -89,7 +89,7 @@ resource "matomo_tagmanager_trigger" "test" {
 // underlying data had changed. This resource's Read() sorts the parameters
 // by name before returning them from the start, so this test should pass
 // deterministically across repeated runs (see -count=N invocations).
-func TestAccTagManagerTriggerResource_multipleParameters(t *testing.T) {
+func TestUnitTagManagerTriggerResource_multipleParameters(t *testing.T) {
 	triggers := map[string]map[string]any{}
 	nextID := 1
 

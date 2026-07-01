@@ -67,7 +67,7 @@ func newCustomDimensionTestServer(t *testing.T, dims map[int]*fakeDimension) *ht
 	}))
 }
 
-func TestAccCustomDimensionResource_createsNewSlot(t *testing.T) {
+func TestUnitCustomDimensionResource_createsNewSlot(t *testing.T) {
 	dims := map[int]*fakeDimension{}
 	srv := newCustomDimensionTestServer(t, dims)
 	defer srv.Close()
@@ -93,7 +93,7 @@ resource "matomo_custom_dimension" "test" {
 	})
 }
 
-func TestAccCustomDimensionResource_adoptsExistingSlot(t *testing.T) {
+func TestUnitCustomDimensionResource_adoptsExistingSlot(t *testing.T) {
 	dims := map[int]*fakeDimension{
 		1: {ID: 1, Index: 1, Scope: "visit", Name: "Pre-existing", Active: true},
 	}
@@ -132,7 +132,7 @@ resource "matomo_custom_dimension" "test" {
 // instead of the looked-up "id" to Matomo, they will silently mutate the
 // wrong dimension (id=1, the visit-scope one) instead of the intended one
 // (id=2, the action-scope one).
-func TestAccCustomDimensionResource_idAndIndexDiffer(t *testing.T) {
+func TestUnitCustomDimensionResource_idAndIndexDiffer(t *testing.T) {
 	dims := map[int]*fakeDimension{
 		1: {ID: 1, Index: 1, Scope: "visit", Name: "Pre-existing Visit Dim", Active: true},
 	}
