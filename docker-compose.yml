@@ -24,6 +24,6 @@ services:
     ports:
       - "8080:80"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/matomo.php"]
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://localhost/matomo.php') === false ? 1 : 0);"]
       interval: 5s
       retries: 20
