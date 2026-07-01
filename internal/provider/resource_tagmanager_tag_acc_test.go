@@ -30,10 +30,17 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Acceptance Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Test Tag"
+  type         = "PageView"
+  name         = "Tag Acceptance Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Test Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script>console.log('acceptance test')</script>"
@@ -44,6 +51,7 @@ resource "matomo_tagmanager_tag" "test" {
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "name", "Acceptance Test Tag"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "status", "active"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "parameter.0.name", "customHtml"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "fire_trigger_ids.#", "1"),
 				),
 			},
 			{
@@ -61,11 +69,18 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Acceptance Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Test Tag"
-  status       = "paused"
+  type         = "PageView"
+  name         = "Tag Acceptance Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Test Tag"
+  status           = "paused"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script>console.log('acceptance test')</script>"
@@ -99,10 +114,17 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Multi-Param Acceptance Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Multi-Param Tag"
+  type         = "PageView"
+  name         = "Tag Multi-Param Acceptance Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Multi-Param Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "alpha"
     value = "1"
@@ -148,10 +170,17 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Import Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Import Tag"
+  type         = "PageView"
+  name         = "Tag Import Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Import Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script></script>"
@@ -189,10 +218,17 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Disappears Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Disappears Tag"
+  type         = "PageView"
+  name         = "Tag Disappears Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Disappears Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script></script>"

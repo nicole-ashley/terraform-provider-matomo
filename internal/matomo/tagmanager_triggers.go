@@ -10,7 +10,7 @@ import (
 type Condition struct {
 	Comparison            string `json:"comparison"`
 	ActualValueVariableID string `json:"actual"`
-	ExpectedValue         string `json:"value"`
+	ExpectedValue         string `json:"expected"`
 }
 
 // Trigger is a Matomo Tag Manager trigger within a container version.
@@ -50,12 +50,12 @@ func triggerParamsToValues(idSite int, idContainer, idContainerVersion string, p
 func (c *Client) AddContainerTrigger(ctx context.Context, idSite int, idContainer, idContainerVersion string, p TriggerParams) (string, error) {
 	v := triggerParamsToValues(idSite, idContainer, idContainerVersion, p)
 	var out struct {
-		IDTrigger string `json:"idtrigger"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "TagManager.addContainerTrigger", v, &out); err != nil {
 		return "", err
 	}
-	return out.IDTrigger, nil
+	return strconv.Itoa(out.Value), nil
 }
 
 // UpdateContainerTrigger updates an existing trigger.

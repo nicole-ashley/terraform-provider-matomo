@@ -46,12 +46,12 @@ func variableParamsToValues(idSite int, idContainer, idContainerVersion string, 
 func (c *Client) AddContainerVariable(ctx context.Context, idSite int, idContainer, idContainerVersion string, p VariableParams) (string, error) {
 	v := variableParamsToValues(idSite, idContainer, idContainerVersion, p)
 	var out struct {
-		IDVariable string `json:"idvariable"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "TagManager.addContainerVariable", v, &out); err != nil {
 		return "", err
 	}
-	return out.IDVariable, nil
+	return strconv.Itoa(out.Value), nil
 }
 
 // UpdateContainerVariable updates an existing variable.

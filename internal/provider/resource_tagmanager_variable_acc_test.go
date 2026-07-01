@@ -35,6 +35,10 @@ resource "matomo_tagmanager_variable" "test" {
   type          = "Constant"
   name          = "Acceptance Test Variable"
   default_value = "acceptance-default"
+  parameter {
+    name  = "constantValue"
+    value = "acceptance-constant-value"
+  }
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -62,6 +66,10 @@ resource "matomo_tagmanager_variable" "test" {
   type          = "Constant"
   name          = "Acceptance Test Variable Renamed"
   default_value = "acceptance-default"
+  parameter {
+    name  = "constantValue"
+    value = "acceptance-constant-value"
+  }
 }
 `,
 				Check: resource.TestCheckResourceAttr("matomo_tagmanager_variable.test", "name", "Acceptance Test Variable Renamed"),
@@ -96,6 +104,10 @@ resource "matomo_tagmanager_variable" "test" {
   type          = "Constant"
   name          = "Acceptance Import Variable"
   default_value = "n/a"
+  parameter {
+    name  = "constantValue"
+    value = "acceptance-constant-value"
+  }
 }
 `,
 			},
@@ -134,6 +146,10 @@ resource "matomo_tagmanager_variable" "test" {
   type          = "Constant"
   name          = "Acceptance Disappears Variable"
   default_value = "n/a"
+  parameter {
+    name  = "constantValue"
+    value = "acceptance-constant-value"
+  }
 }
 `,
 				Check: func(s *terraform.State) error {

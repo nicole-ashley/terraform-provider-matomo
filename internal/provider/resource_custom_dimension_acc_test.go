@@ -110,6 +110,7 @@ resource "matomo_custom_dimension" "test" {
   index   = 1
   scope   = "visit"
   name    = "Acceptance Disappears Dimension"
+  active  = true
 }
 `,
 				Check: func(s *terraform.State) error {

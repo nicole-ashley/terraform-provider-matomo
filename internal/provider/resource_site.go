@@ -197,13 +197,20 @@ func (r *siteResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 }
 
 // isSiteNotFoundError reports whether err is Matomo's response for an
-// unknown/already-deleted site id. Real Matomo's message (confirmed against
-// a live instance) is `An unexpected website was found in the request:
-// website id was set to '<id>' .` - the id is interpolated, so match on the
-// fixed prefix rather than exact equality.
+// unknown/already-deleted site id. Matomo uses two different messages for
+// this depending on the API method (both confirmed against a live
+// instance): getSiteFromId/getSiteUrlsFromId say `An unexpected website was
+// found in the request: website id was set to '<id>' .`, while deleteSite
+// says `website id = <id> not found` (a plain, untranslated exception
+// message, per Matomo's own SitesManager API source). Both interpolate the
+// id, so match on fixed substrings rather than exact equality.
 func isSiteNotFoundError(err error) bool {
 	apiErr, ok := err.(*matomo.APIError)
-	return ok && strings.HasPrefix(apiErr.Message, "An unexpected website was found in the request")
+	if !ok {
+		return false
+	}
+	return strings.HasPrefix(apiErr.Message, "An unexpected website was found in the request") ||
+		(strings.HasPrefix(apiErr.Message, "website id = ") && strings.HasSuffix(apiErr.Message, " not found"))
 }
 
 func (r *siteResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -87,9 +88,12 @@ func (r *tagManagerTagResource) Schema(_ context.Context, _ resource.SchemaReque
 				},
 			},
 			"fire_trigger_ids": schema.ListAttribute{
-				Optional:    true,
+				Required:    true,
 				ElementType: types.StringType,
-				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that fire this tag. Note: writing an explicit empty list (`[]`) rather than omitting this attribute will produce a one-time diff to null on the first refresh after apply; this is harmless and converges after one plan/apply cycle.",
+				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that fire this tag. Matomo requires at least one.",
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+				},
 			},
 			"block_trigger_ids": schema.ListAttribute{
 				Optional:    true,

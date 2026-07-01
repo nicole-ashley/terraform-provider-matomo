@@ -34,6 +34,6 @@ func addConditionsParam(v url.Values, name string, conditions []Condition) {
 		prefix := fmt.Sprintf("%s[%d]", name, i)
 		v.Set(prefix+"[comparison]", cond.Comparison)
 		v.Set(prefix+"[actual]", cond.ActualValueVariableID)
-		v.Set(prefix+"[value]", cond.ExpectedValue)
+		v.Set(prefix+"[expected]", cond.ExpectedValue)
 	}
 }

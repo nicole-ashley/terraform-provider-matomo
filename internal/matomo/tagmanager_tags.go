@@ -45,12 +45,12 @@ func tagParamsToValues(idSite int, idContainer, idContainerVersion string, p Tag
 func (c *Client) AddContainerTag(ctx context.Context, idSite int, idContainer, idContainerVersion string, p TagParams) (string, error) {
 	v := tagParamsToValues(idSite, idContainer, idContainerVersion, p)
 	var out struct {
-		IDTag string `json:"idtag"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "TagManager.addContainerTag", v, &out); err != nil {
 		return "", err
 	}
-	return out.IDTag, nil
+	return strconv.Itoa(out.Value), nil
 }
 
 // UpdateContainerTag updates an existing tag.
