@@ -28,10 +28,11 @@ type siteResource struct {
 }
 
 type siteResourceModel struct {
-	ID       types.String `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Timezone types.String `tfsdk:"timezone"`
-	Currency types.String `tfsdk:"currency"`
+	ID       types.String   `tfsdk:"id"`
+	Name     types.String   `tfsdk:"name"`
+	URLs     []types.String `tfsdk:"urls"`
+	Timezone types.String   `tfsdk:"timezone"`
+	Currency types.String   `tfsdk:"currency"`
 }
 
 func (r *siteResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -48,6 +49,11 @@ func (r *siteResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			"name": schema.StringAttribute{
 				Required:    true,
 				Description: "The site's name.",
+			},
+			"urls": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "URLs of the site (at least one is required). The first URL is the site's main URL; additional URLs are treated as aliases by Matomo's tracking.",
 			},
 			"timezone": schema.StringAttribute{
 				Optional:    true,
@@ -82,7 +88,7 @@ func (r *siteResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	params := matomo.AddSiteParams{Name: plan.Name.ValueString()}
+	params := matomo.AddSiteParams{Name: plan.Name.ValueString(), URLs: stringSliceFromModel(plan.URLs)}
 	if !plan.Timezone.IsUnknown() && !plan.Timezone.IsNull() {
 		tz := plan.Timezone.ValueString()
 		params.Timezone = &tz
@@ -117,6 +123,14 @@ func (r *siteResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	site, err := r.client.GetSiteFromID(ctx, idSite)
 	if err != nil {
+		// NOTE: "Website id Not found" is the exact error string this provider
+		// has always assumed Matomo's getSiteFromId returns for an unknown
+		// idSite, but it has never been verified against a live Matomo
+		// instance. If Matomo's real wire format differs, a site deleted out
+		// of band (e.g. directly in Matomo) will surface as a hard error here
+		// instead of being silently removed from state. Verifying this string
+		// is a gate for the acceptance-test plan that stands up a real
+		// Matomo fixture.
 		if apiErr, ok := err.(*matomo.APIError); ok && apiErr.Message == "Website id Not found" {
 			resp.State.RemoveResource(ctx)
 			return
@@ -127,6 +141,7 @@ func (r *siteResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	state.ID = types.StringValue(strconv.Itoa(site.IDSite))
 	state.Name = types.StringValue(site.Name)
+	state.URLs = stringModelFromSlice(site.URLs)
 	state.Timezone = types.StringValue(site.Timezone)
 	state.Currency = types.StringValue(site.Currency)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -151,7 +166,7 @@ func (r *siteResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	params := matomo.AddSiteParams{Name: plan.Name.ValueString()}
+	params := matomo.AddSiteParams{Name: plan.Name.ValueString(), URLs: stringSliceFromModel(plan.URLs)}
 	if !plan.Timezone.IsUnknown() && !plan.Timezone.IsNull() {
 		tz := plan.Timezone.ValueString()
 		params.Timezone = &tz
@@ -203,6 +218,7 @@ func (r *siteResource) readIntoModel(ctx context.Context, idSite int, model *sit
 	}
 	model.ID = types.StringValue(strconv.Itoa(site.IDSite))
 	model.Name = types.StringValue(site.Name)
+	model.URLs = stringModelFromSlice(site.URLs)
 	model.Timezone = types.StringValue(site.Timezone)
 	model.Currency = types.StringValue(site.Currency)
 }

@@ -41,12 +41,14 @@ func TestAccSiteResource_basic(t *testing.T) {
 			idStr := strconv.Itoa(id)
 			sites[idStr] = map[string]any{
 				"idsite": idStr, "name": r.URL.Query().Get("siteName"),
+				"urls":     []string(r.URL.Query()["urls[]"]),
 				"timezone": "UTC", "currency": "USD",
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"value": idStr})
 		case "SitesManager.updateSite":
 			id := r.URL.Query().Get("idSite")
 			sites[id]["name"] = r.URL.Query().Get("siteName")
+			sites[id]["urls"] = []string(r.URL.Query()["urls[]"])
 			_ = json.NewEncoder(w).Encode(map[string]any{"value": true})
 		case "SitesManager.deleteSite":
 			delete(sites, r.URL.Query().Get("idSite"))
@@ -72,20 +74,29 @@ func TestAccSiteResource_basic(t *testing.T) {
 				Config: testAccPreCheckConfig(srv) + `
 resource "matomo_site" "test" {
   name = "Example"
+  urls = ["https://example.com"]
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("matomo_site.test", "name", "Example"),
 					resource.TestCheckResourceAttrSet("matomo_site.test", "id"),
+					resource.TestCheckResourceAttr("matomo_site.test", "urls.#", "1"),
+					resource.TestCheckResourceAttr("matomo_site.test", "urls.0", "https://example.com"),
 				),
 			},
 			{
 				Config: testAccPreCheckConfig(srv) + `
 resource "matomo_site" "test" {
   name = "Renamed"
+  urls = ["https://example.com", "https://example.org"]
 }
 `,
-				Check: resource.TestCheckResourceAttr("matomo_site.test", "name", "Renamed"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("matomo_site.test", "name", "Renamed"),
+					resource.TestCheckResourceAttr("matomo_site.test", "urls.#", "2"),
+					resource.TestCheckResourceAttr("matomo_site.test", "urls.0", "https://example.com"),
+					resource.TestCheckResourceAttr("matomo_site.test", "urls.1", "https://example.org"),
+				),
 			},
 		},
 	})
