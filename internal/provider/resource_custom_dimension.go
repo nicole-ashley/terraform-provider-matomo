@@ -137,18 +137,38 @@ func (r *customDimensionResource) Create(ctx context.Context, req resource.Creat
 			return
 		}
 	} else {
-		newIndex, err := r.client.ConfigureNewCustomDimension(ctx, siteID, name, scope, active)
+		newID, err := r.client.ConfigureNewCustomDimension(ctx, siteID, name, scope, active)
 		if err != nil {
 			resp.Diagnostics.AddError("Error creating Matomo custom dimension", err.Error())
 			return
 		}
-		if newIndex != declaredIndex {
+
+		afterCreate, err := r.client.GetConfiguredCustomDimensions(ctx, siteID)
+		if err != nil {
+			resp.Diagnostics.AddError("Error listing Matomo custom dimensions", err.Error())
+			return
+		}
+		var created *matomo.CustomDimension
+		for i := range afterCreate {
+			if afterCreate[i].ID == newID {
+				created = &afterCreate[i]
+				break
+			}
+		}
+		if created == nil {
+			resp.Diagnostics.AddError(
+				"Custom dimension not found after creation",
+				fmt.Sprintf("Matomo reported creating dimension id %d, but it was not found when listing configured custom dimensions for site %d.", newID, siteID),
+			)
+			return
+		}
+		if created.Index != declaredIndex {
 			resp.Diagnostics.AddError(
 				"Custom dimension slot mismatch",
 				fmt.Sprintf(
 					"Declared index %d for scope %q, but Matomo assigned slot %d instead (the next free slot was not %d — likely because a lower slot was consumed outside Terraform). "+
 						"Slot %d has already been created in Matomo and cannot be deleted via its API; either declare index = %d for this resource, or bring slot %d under management with its own matomo_custom_dimension resource.",
-					declaredIndex, scope, newIndex, declaredIndex, newIndex, newIndex, newIndex,
+					declaredIndex, scope, created.Index, declaredIndex, created.Index, created.Index, created.Index,
 				),
 			)
 			return
@@ -179,9 +199,10 @@ func (r *customDimensionResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
+	scope := state.Scope.ValueString()
 	var found *matomo.CustomDimension
 	for i := range dims {
-		if dims[i].Index == index {
+		if dims[i].Index == index && dims[i].Scope == scope {
 			found = &dims[i]
 			break
 		}
@@ -211,13 +232,34 @@ func (r *customDimensionResource) Update(ctx context.Context, req resource.Updat
 		resp.Diagnostics.AddError("Invalid id in state", err.Error())
 		return
 	}
+	scope := plan.Scope.ValueString()
 
 	active := true
 	if !plan.Active.IsUnknown() && !plan.Active.IsNull() {
 		active = plan.Active.ValueBool()
 	}
 
-	if err := r.client.ConfigureExistingCustomDimension(ctx, index, siteID, plan.Name.ValueString(), active); err != nil {
+	dims, err := r.client.GetConfiguredCustomDimensions(ctx, siteID)
+	if err != nil {
+		resp.Diagnostics.AddError("Error listing Matomo custom dimensions", err.Error())
+		return
+	}
+	var found *matomo.CustomDimension
+	for i := range dims {
+		if dims[i].Index == index && dims[i].Scope == scope {
+			found = &dims[i]
+			break
+		}
+	}
+	if found == nil {
+		resp.Diagnostics.AddError(
+			"Custom dimension not found",
+			fmt.Sprintf("No custom dimension found at index %d, scope %q for site %d. It may have been deleted or reconfigured outside Terraform.", index, scope, siteID),
+		)
+		return
+	}
+
+	if err := r.client.ConfigureExistingCustomDimension(ctx, found.ID, siteID, plan.Name.ValueString(), active); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo custom dimension", err.Error())
 		return
 	}
@@ -238,8 +280,29 @@ func (r *customDimensionResource) Delete(ctx context.Context, req resource.Delet
 		resp.Diagnostics.AddError("Invalid id in state", err.Error())
 		return
 	}
+	scope := state.Scope.ValueString()
 
-	if err := r.client.ConfigureExistingCustomDimension(ctx, index, siteID, state.Name.ValueString(), false); err != nil {
+	dims, err := r.client.GetConfiguredCustomDimensions(ctx, siteID)
+	if err != nil {
+		resp.Diagnostics.AddError("Error listing Matomo custom dimensions", err.Error())
+		return
+	}
+	var found *matomo.CustomDimension
+	for i := range dims {
+		if dims[i].Index == index && dims[i].Scope == scope {
+			found = &dims[i]
+			break
+		}
+	}
+	if found == nil {
+		resp.Diagnostics.AddError(
+			"Custom dimension not found",
+			fmt.Sprintf("No custom dimension found at index %d, scope %q for site %d. It may have already been deleted or reconfigured outside Terraform.", index, scope, siteID),
+		)
+		return
+	}
+
+	if err := r.client.ConfigureExistingCustomDimension(ctx, found.ID, siteID, state.Name.ValueString(), false); err != nil {
 		resp.Diagnostics.AddError("Error deactivating Matomo custom dimension", err.Error())
 	}
 }
