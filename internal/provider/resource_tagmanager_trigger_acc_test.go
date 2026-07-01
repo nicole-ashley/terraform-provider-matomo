@@ -105,7 +105,11 @@ resource "matomo_tagmanager_trigger" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.#", "2"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.0.comparison", "equals"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.0.actual", "url_path"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.0.value", "/checkout"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.1.comparison", "contains"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.1.actual", "url_domain"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.1.value", "example.com"),
 				),
 			},
 		},
