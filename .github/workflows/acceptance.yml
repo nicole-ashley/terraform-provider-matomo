@@ -17,6 +17,7 @@ jobs:
         with:
           terraform_wrapper: false
       - run: docker compose up -d --wait
+      - run: docker compose exec -T matomo php console list
       - run: ./scripts/bootstrap-matomo.sh >> "$GITHUB_ENV"
       - run: TF_ACC=1 go test ./... -run TestAcc -v -count=1 -timeout 20m
       - if: always()
