@@ -138,13 +138,7 @@ func (r *tagManagerContainerResource) Read(ctx context.Context, req resource.Rea
 
 	ct, err := r.client.GetContainer(ctx, siteID, idContainer)
 	if err != nil {
-		// Real Matomo's message (confirmed against a live instance) is
-		// `The requested container "<id>" does not exist.` - the id is
-		// interpolated, so match on the fixed prefix/suffix rather than
-		// exact equality.
-		if apiErr, ok := err.(*matomo.APIError); ok &&
-			strings.HasPrefix(apiErr.Message, "The requested container ") &&
-			strings.HasSuffix(apiErr.Message, "does not exist.") {
+		if isContainerNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -199,9 +193,21 @@ func (r *tagManagerContainerResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	if err := r.client.DeleteContainer(ctx, siteID, idContainer); err != nil {
+	if err := r.client.DeleteContainer(ctx, siteID, idContainer); err != nil && !isContainerNotFoundError(err) {
 		resp.Diagnostics.AddError("Error deleting Matomo Tag Manager container", err.Error())
 	}
+}
+
+// isContainerNotFoundError reports whether err is Matomo's response for an
+// unknown/already-deleted container. Real Matomo's message (confirmed
+// against a live instance) is `The requested container "<id>" does not
+// exist.` - the id is interpolated, so match on the fixed prefix/suffix
+// rather than exact equality.
+func isContainerNotFoundError(err error) bool {
+	apiErr, ok := err.(*matomo.APIError)
+	return ok &&
+		strings.HasPrefix(apiErr.Message, "The requested container ") &&
+		strings.HasSuffix(apiErr.Message, "does not exist.")
 }
 
 func (r *tagManagerContainerResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

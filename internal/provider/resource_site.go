@@ -124,12 +124,7 @@ func (r *siteResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	site, err := r.client.GetSiteFromID(ctx, idSite)
 	if err != nil {
-		// Real Matomo's message (confirmed against a live instance) is
-		// `An unexpected website was found in the request: website id was
-		// set to '<id>' .` - the id is interpolated, so match on the fixed
-		// prefix rather than exact equality.
-		if apiErr, ok := err.(*matomo.APIError); ok &&
-			strings.HasPrefix(apiErr.Message, "An unexpected website was found in the request") {
+		if isSiteNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -196,9 +191,19 @@ func (r *siteResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteSite(ctx, idSite); err != nil {
+	if err := r.client.DeleteSite(ctx, idSite); err != nil && !isSiteNotFoundError(err) {
 		resp.Diagnostics.AddError("Error deleting Matomo site", err.Error())
 	}
+}
+
+// isSiteNotFoundError reports whether err is Matomo's response for an
+// unknown/already-deleted site id. Real Matomo's message (confirmed against
+// a live instance) is `An unexpected website was found in the request:
+// website id was set to '<id>' .` - the id is interpolated, so match on the
+// fixed prefix rather than exact equality.
+func isSiteNotFoundError(err error) bool {
+	apiErr, ok := err.(*matomo.APIError)
+	return ok && strings.HasPrefix(apiErr.Message, "An unexpected website was found in the request")
 }
 
 func (r *siteResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
@@ -15,8 +16,8 @@ func resolveDraftVersionID(ctx context.Context, client *matomo.Client, siteID in
 	if err != nil {
 		return "", fmt.Errorf("getting container: %w", err)
 	}
-	if ct.Draft == nil || ct.Draft.IDContainerVersion == "" {
+	if ct.Draft == nil || ct.Draft.IDContainerVersion == 0 {
 		return "", fmt.Errorf("no draft version found for container %q (site %d) — every Tag Manager container should have one; this likely indicates the container was deleted out of band", idContainer, siteID)
 	}
-	return ct.Draft.IDContainerVersion, nil
+	return strconv.Itoa(ct.Draft.IDContainerVersion), nil
 }

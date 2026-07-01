@@ -18,9 +18,11 @@ type Container struct {
 	// TagManager.getContainer's response nests it as draft.idcontainerversion
 	// - there is no dedicated API method to fetch just the draft, and
 	// getContainerVersions' entries have no boolean "isDraft" field to pick
-	// it out from the version list).
+	// it out from the version list). Unlike most other Matomo ids, this one
+	// comes back as an unquoted JSON number, confirmed against a live
+	// instance.
 	Draft *struct {
-		IDContainerVersion string `json:"idcontainerversion"`
+		IDContainerVersion int `json:"idcontainerversion"`
 	} `json:"draft"`
 }
 

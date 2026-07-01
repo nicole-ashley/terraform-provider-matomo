@@ -43,12 +43,12 @@ func (c *Client) ConfigureNewCustomDimension(ctx context.Context, idSite int, na
 		"active": {boolToIntString(active)},
 	}
 	var out struct {
-		ID int `json:"id"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "CustomDimensions.configureNewCustomDimension", v, &out); err != nil {
 		return 0, err
 	}
-	return out.ID, nil
+	return out.Value, nil
 }
 
 // ConfigureExistingCustomDimension updates an already-configured dimension's

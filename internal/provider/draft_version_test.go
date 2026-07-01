@@ -15,7 +15,7 @@ func TestResolveDraftVersionID_found(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"idcontainer": "abc123", "idsite": 3, "context": "web", "name": "Main",
-			"draft": map[string]any{"idcontainerversion": "1"},
+			"draft": map[string]any{"idcontainerversion": 1},
 		})
 	}))
 	defer srv.Close()
