@@ -165,6 +165,13 @@ post_install_step finished \
 log "Activating TagManager plugin"
 docker compose exec -T matomo php console plugin:activate TagManager >&2
 
+# `docker compose exec` runs as the container's default user (root for the
+# matomo:latest apache image), while Apache/PHP itself runs as www-data.
+# plugin:activate touches tmp/cache/ as root, which would otherwise leave
+# files there that www-data can't write to on the next HTTP request (both
+# the token-generation call below and the acceptance tests themselves).
+docker compose exec -T matomo chown -R www-data:www-data /var/www/html/tmp >&2
+
 log "Generating superuser API token"
 token_response_file="$(mktemp)"
 token_code=$(curl -sS -o "$token_response_file" -w '%{http_code}' \
