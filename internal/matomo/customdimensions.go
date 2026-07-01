@@ -27,8 +27,10 @@ type CustomDimension struct {
 }
 
 // ConfigureNewCustomDimension creates a new custom dimension in the next
-// available slot for the given scope ("visit" or "action") and returns the
-// slot index Matomo assigned it.
+// available slot for the given scope ("visit" or "action") and returns
+// Matomo's internal id for it (a per-site row id, distinct from the
+// dimension's Index — re-fetch via GetConfiguredCustomDimensions and match
+// on this id to find which slot Matomo actually assigned).
 func (c *Client) ConfigureNewCustomDimension(ctx context.Context, idSite int, name, scope string, active bool) (int, error) {
 	v := url.Values{
 		"idSite": {strconv.Itoa(idSite)},

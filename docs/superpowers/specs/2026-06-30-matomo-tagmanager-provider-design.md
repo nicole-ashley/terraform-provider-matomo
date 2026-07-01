@@ -141,21 +141,33 @@ Schema mirrors `addSite`'s parameters (`name`, `urls`, `timezone`,
   - **Create**: call `getConfiguredCustomDimensions(site_id)`. If a
     dimension already exists at the declared `index`+`scope`, adopt it via
     `configureExistingCustomDimension` (claims and updates it in place). If
-    none exists, call `configureNewCustomDimension` and compare the slot
-    Matomo assigned against the declared `index`; mismatch is a hard error
+    none exists, call `configureNewCustomDimension`, then re-fetch
+    `getConfiguredCustomDimensions` and find the entry whose `id` matches
+    what `configureNewCustomDimension` returned; compare *that entry's*
+    `index` against the declared `index` — mismatch is a hard error
     (surfaces when slots were consumed outside Terraform, or out of order),
-    not a silent misconfiguration.
-  - **Update**: `configureExistingCustomDimension` for `name`, `active`,
-    `extractions`, `case_sensitive` (everything except `index`/`scope`,
-    which force replacement).
-  - **Delete**: `configureExistingCustomDimension` with `active = false`.
-    Matomo has no delete API for custom dimensions — the slot stays
-    permanently reserved at that index regardless of what Terraform does.
-    This is documented as a Matomo platform constraint on the resource's
-    registry docs page, not glossed over.
-- No separate computed ID field: `index` *is* the dimension's real Matomo ID
-  by construction (Create verifies this, see above), so other resources
-  reference it directly — e.g.
+    not a silent misconfiguration. (Matomo's `id` and `index` are distinct:
+    `id` is a per-site row ID auto-incremented across both scopes,
+    `configureNewCustomDimension`'s return value; `index` is the
+    separately-stored per-scope slot number. They are not interchangeable
+    beyond the first dimension ever created on a site — verified against
+    Matomo's `CustomDimensions` plugin source.)
+  - **Update**: resolve the dimension's real `id` via
+    `getConfiguredCustomDimensions(site_id)`, matched on `(index, scope)`,
+    then call `configureExistingCustomDimension` with that `id` for `name`,
+    `active`, `extractions`, `case_sensitive` (everything except
+    `index`/`scope`, which force replacement).
+  - **Delete**: same `(index, scope)` → `id` resolution as Update, then
+    `configureExistingCustomDimension` with `active = false`. Matomo has no
+    delete API for custom dimensions — the slot stays permanently reserved
+    at that index regardless of what Terraform does. This is documented as
+    a Matomo platform constraint on the resource's registry docs page, not
+    glossed over.
+- No separate computed ID field is exposed in the schema: the resource is
+  always addressed by the user-declared `index` (`+scope`), with Matomo's
+  internal `id` resolved internally wherever the API requires it (see
+  above) — never surfaced to HCL. Other resources reference `index`
+  directly — e.g.
   `index = matomo_custom_dimension.product_category.index` in a Tag Manager
   variable's config — instead of a hardcoded literal.
 
