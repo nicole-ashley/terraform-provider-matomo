@@ -27,7 +27,7 @@ provider "matomo" {
 `
 }
 
-func TestAccSiteResource_basic(t *testing.T) {
+func TestUnitSiteResource_basic(t *testing.T) {
 	sites := map[string]map[string]any{}
 	nextID := 1
 

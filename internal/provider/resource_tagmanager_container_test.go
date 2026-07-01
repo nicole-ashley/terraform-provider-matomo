@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccTagManagerContainerResource_basic(t *testing.T) {
+func TestUnitTagManagerContainerResource_basic(t *testing.T) {
 	containers := map[string]map[string]any{}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

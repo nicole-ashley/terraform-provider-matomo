@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccTagManagerTagResource_basic(t *testing.T) {
+func TestUnitTagManagerTagResource_basic(t *testing.T) {
 	tags := map[string]map[string]any{}
 	nextID := 1
 
@@ -102,7 +102,7 @@ resource "matomo_tagmanager_tag" "test" {
 	})
 }
 
-// TestAccTagManagerTagResource_multipleParameters exercises a tag with
+// TestUnitTagManagerTagResource_multipleParameters exercises a tag with
 // several parameter blocks. tag.Parameters is a map[string]string in the
 // Matomo client, and Read() used to build state.Parameter by iterating that
 // map directly with no sort — since Go randomizes map iteration order per
@@ -111,7 +111,7 @@ resource "matomo_tagmanager_tag" "test" {
 // though nothing about the underlying data had changed. Read() now sorts
 // the parameters by name before returning them, so this test should pass
 // deterministically across repeated runs (see -count=N invocations).
-func TestAccTagManagerTagResource_multipleParameters(t *testing.T) {
+func TestUnitTagManagerTagResource_multipleParameters(t *testing.T) {
 	tags := map[string]map[string]any{}
 	nextID := 1
 
