@@ -39,3 +39,31 @@ data "matomo_site" "smoke" {
 		},
 	})
 }
+
+func TestAccSiteDataSource_byID(t *testing.T) {
+	testAccPreCheck(t)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "matomo" {}
+
+resource "matomo_site" "test" {
+  name = "Acceptance Data Source Test Site"
+  urls = ["https://acc-ds-test.example.com"]
+}
+
+data "matomo_site" "test" {
+  id = matomo_site.test.id
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.matomo_site.test", "name", "Acceptance Data Source Test Site"),
+					resource.TestCheckResourceAttrPair("data.matomo_site.test", "id", "matomo_site.test", "id"),
+				),
+			},
+		},
+	})
+}

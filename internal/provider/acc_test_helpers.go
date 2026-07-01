@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 // testAccPreCheck skips the calling test unless a real Matomo instance is
@@ -32,4 +33,12 @@ func testAccPreCheck(t *testing.T) {
 // required in test configs — an empty `provider "matomo" {}` is enough.
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"matomo": providerserver.NewProtocol6WithError(New("test")()),
+}
+
+// testAccMatomoClient builds a *matomo.Client from the same environment
+// variables the provider itself reads, for use in "disappears" tests that
+// need to mutate Matomo directly, bypassing Terraform.
+func testAccMatomoClient(t *testing.T) *matomo.Client {
+	t.Helper()
+	return matomo.NewClient(os.Getenv("MATOMO_BASE_URL"), os.Getenv("MATOMO_API_TOKEN"), nil)
 }
