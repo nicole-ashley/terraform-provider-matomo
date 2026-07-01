@@ -70,7 +70,7 @@ func TestClient_GetContainer(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"idcontainer": "abc123", "idsite": "3", "context": "web", "name": "Main", "description": "",
+			"idcontainer": "abc123", "idsite": 3, "context": "web", "name": "Main", "description": "",
 		})
 	}))
 	defer srv.Close()

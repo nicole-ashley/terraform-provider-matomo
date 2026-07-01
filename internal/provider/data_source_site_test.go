@@ -16,8 +16,8 @@ func TestUnitSiteDataSource_byName(t *testing.T) {
 			t.Fatalf("unexpected method %q", r.URL.Query().Get("method"))
 		}
 		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"idsite": "1", "name": "Other", "timezone": "UTC", "currency": "USD"},
-			{"idsite": "2", "name": "Example", "timezone": "UTC", "currency": "USD"},
+			{"idsite": 1, "name": "Other", "timezone": "UTC", "currency": "USD"},
+			{"idsite": 2, "name": "Example", "timezone": "UTC", "currency": "USD"},
 		})
 	}))
 	defer srv.Close()

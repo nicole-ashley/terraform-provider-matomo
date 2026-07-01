@@ -94,7 +94,7 @@ func TestClient_GetSiteFromID(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"idsite": "3", "name": "Example", "timezone": "UTC", "currency": "USD",
+			"idsite": 3, "name": "Example", "timezone": "UTC", "currency": "USD",
 			"urls": []string{"https://example.com"}, "excluded_ips": []string{"192.168.1.1"},
 		})
 	}))
@@ -123,8 +123,8 @@ func TestClient_GetAllSites(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"idsite": "1", "name": "A", "urls": []string{"https://a.com"}, "excluded_ips": []string{}},
-			{"idsite": "2", "name": "B", "urls": []string{"https://b.com"}, "excluded_ips": []string{"10.0.0.1"}},
+			{"idsite": 1, "name": "A", "urls": []string{"https://a.com"}, "excluded_ips": []string{}},
+			{"idsite": 2, "name": "B", "urls": []string{"https://b.com"}, "excluded_ips": []string{"10.0.0.1"}},
 		})
 	}))
 	defer srv.Close()

@@ -17,9 +17,9 @@ type DimensionExtraction struct {
 // slot number within its Scope and is what other Matomo API calls
 // (including Tag Manager's MatomoConfiguration variable) refer to it by.
 type CustomDimension struct {
-	ID            int                   `json:"id,string"`
+	ID            int                   `json:"id"`
 	Name          string                `json:"name"`
-	Index         int                   `json:"index,string"`
+	Index         int                   `json:"index"`
 	Scope         string                `json:"scope"`
 	Active        bool                  `json:"active"`
 	CaseSensitive bool                  `json:"case_sensitive"`
@@ -39,7 +39,7 @@ func (c *Client) ConfigureNewCustomDimension(ctx context.Context, idSite int, na
 		"active": {boolToIntString(active)},
 	}
 	var out struct {
-		ID int `json:"id,string"`
+		ID int `json:"id"`
 	}
 	if err := c.call(ctx, "CustomDimensions.configureNewCustomDimension", v, &out); err != nil {
 		return 0, err

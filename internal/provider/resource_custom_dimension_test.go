@@ -26,7 +26,7 @@ func newCustomDimensionTestServer(t *testing.T, dims map[int]*fakeDimension) *ht
 			out := []map[string]any{}
 			for _, d := range dims {
 				out = append(out, map[string]any{
-					"id": strconv.Itoa(d.ID), "index": strconv.Itoa(d.Index),
+					"id": d.ID, "index": d.Index,
 					"scope": d.Scope, "name": d.Name, "active": d.Active, "case_sensitive": d.CaseSensitive,
 				})
 			}
@@ -50,7 +50,7 @@ func newCustomDimensionTestServer(t *testing.T, dims map[int]*fakeDimension) *ht
 				ID: id, Index: index, Scope: scope,
 				Name: r.URL.Query().Get("name"), Active: r.URL.Query().Get("active") == "1",
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"id": strconv.Itoa(id)})
+			_ = json.NewEncoder(w).Encode(map[string]any{"id": id})
 		case "CustomDimensions.configureExistingCustomDimension":
 			id, _ := strconv.Atoi(r.URL.Query().Get("idDimension"))
 			d, ok := dims[id]

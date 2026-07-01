@@ -9,7 +9,7 @@ import (
 // Site is a Matomo website as returned by SitesManager.getSiteFromId /
 // getAllSites.
 type Site struct {
-	IDSite             int      `json:"idsite,string"`
+	IDSite             int      `json:"idsite"`
 	Name               string   `json:"name"`
 	Timezone           string   `json:"timezone"`
 	Currency           string   `json:"currency"`

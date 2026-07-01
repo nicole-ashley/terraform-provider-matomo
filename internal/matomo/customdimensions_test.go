@@ -17,7 +17,7 @@ func TestClient_ConfigureNewCustomDimension(t *testing.T) {
 			t.Errorf("scope = %q, want visit", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"id": "1"})
+		_ = json.NewEncoder(w).Encode(map[string]any{"id": 1})
 	}))
 	defer srv.Close()
 
@@ -61,7 +61,7 @@ func TestClient_GetConfiguredCustomDimensions(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"id": "1", "name": "Product Category", "index": "1", "scope": "visit", "active": true, "case_sensitive": false},
+			{"id": 1, "name": "Product Category", "index": 1, "scope": "visit", "active": true, "case_sensitive": false},
 		})
 	}))
 	defer srv.Close()

@@ -9,7 +9,7 @@ import (
 // Container is a Matomo Tag Manager container.
 type Container struct {
 	IDContainer string `json:"idcontainer"`
-	IDSite      int    `json:"idsite,string"`
+	IDSite      int    `json:"idsite"`
 	Context     string `json:"context"`
 	Name        string `json:"name"`
 	Description string `json:"description"`

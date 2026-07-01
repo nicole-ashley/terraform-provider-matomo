@@ -40,7 +40,7 @@ func TestUnitSiteResource_basic(t *testing.T) {
 			nextID++
 			idStr := strconv.Itoa(id)
 			sites[idStr] = map[string]any{
-				"idsite": idStr, "name": r.URL.Query().Get("siteName"),
+				"idsite": id, "name": r.URL.Query().Get("siteName"),
 				"urls":     []string(r.URL.Query()["urls[]"]),
 				"timezone": "UTC", "currency": "USD",
 			}

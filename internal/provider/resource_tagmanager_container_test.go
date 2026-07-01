@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -17,8 +18,9 @@ func TestUnitTagManagerContainerResource_basic(t *testing.T) {
 		switch r.URL.Query().Get("method") {
 		case "TagManager.addContainer":
 			id := "abc123"
+			idSite, _ := strconv.Atoi(r.URL.Query().Get("idSite"))
 			containers[id] = map[string]any{
-				"idcontainer": id, "idsite": r.URL.Query().Get("idSite"),
+				"idcontainer": id, "idsite": idSite,
 				"context": r.URL.Query().Get("context"), "name": r.URL.Query().Get("name"),
 				"description": r.URL.Query().Get("description"),
 			}
