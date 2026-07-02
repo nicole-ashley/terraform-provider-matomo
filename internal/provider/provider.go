@@ -135,5 +135,7 @@ func (p *MatomoProvider) Actions(_ context.Context) []func() action.Action {
 	return []func() action.Action{
 		NewCreateContainerVersionAction,
 		NewPublishContainerVersionAction,
+		NewEnablePreviewModeAction,
+		NewDisablePreviewModeAction,
 	}
 }
