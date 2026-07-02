@@ -120,5 +120,6 @@ func (p *MatomoProvider) DataSources(_ context.Context) []func() datasource.Data
 		NewSiteDataSource,
 		NewTagManagerContextsDataSource,
 		NewTagManagerEnvironmentsDataSource,
+		NewTagManagerTagTypesDataSource,
 	}
 }
