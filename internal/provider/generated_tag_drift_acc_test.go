@@ -57,7 +57,9 @@ resource "matomo_tagmanager_tag_drift" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-drift"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  drift_id = "test-value"
+  // DriftTag.php requires a minimum 12-character driftId (confirmed live:
+  // "test-value" (10 chars) was rejected).
+  drift_id = "test-value-1"
 }
 `
 }

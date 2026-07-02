@@ -57,8 +57,15 @@ resource "matomo_tagmanager_tag_livezilladynamic" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-livezilladynamic"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  livezilla_dynamic_id = "test-value"
-  livezilla_dynamic_domain = "test-value"
+  // LivezillaDynamicTag.php requires a minimum 32-character
+  // LivezillaDynamicID (confirmed live: "test-value" (10 chars) was
+  // rejected).
+  livezilla_dynamic_id = "test-value-123456789012345678901"
+  // LivezillaDynamicTag.php's livezillaDynamicDomain must satisfy
+  // UrlHelper::isLookLikeUrl() (needs a "//" after an optional scheme)
+  // and CharacterLength(11, 60) (confirmed live and by reading the
+  // source).
+  livezilla_dynamic_domain = "https://example.com"
 }
 `
 }

@@ -58,6 +58,12 @@ resource "matomo_tagmanager_tag_emarsys" "test" {
   name         = "generated-test-emarsys"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   merchant_id = "test-value"
+  // command_go (Matomo's commandGo, TYPE_BOOL, no declared validators) is
+  // set explicitly here: leaving it unset previously produced "The value
+  // for the 'go' field in the 'TagManager' plugin is not allowed" at
+  // create time, which EmarsysTag.php's source doesn't explain (no
+  // validator on this field) - setting it removes the ambiguity.
+  command_go = true
 }
 `
 }

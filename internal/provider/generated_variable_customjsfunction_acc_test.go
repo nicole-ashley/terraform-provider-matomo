@@ -50,7 +50,9 @@ resource "matomo_tagmanager_container" "test" {
 resource "matomo_tagmanager_variable_customjsfunction" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-customjsfunction"
-  js_function = "test-value"
+  // CustomJsFunctionVariable.php requires the value to start with the
+  // literal word "function" (confirmed live and by reading the source).
+  js_function = "function() { return 'test-value'; }"
 }
 `
 }

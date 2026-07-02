@@ -51,7 +51,10 @@ resource "matomo_tagmanager_variable_matomoconfiguration" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-matomoconfiguration"
   matomo_url = "test-value"
-  id_site = "test-value"
+  // MatomoConfigurationVariable.php's idSite must be numeric or a
+  // "{{variableName}}" reference (confirmed live and by reading the
+  // source: "The idSite can only include idSites and variables.").
+  id_site = "1"
 }
 `
 }

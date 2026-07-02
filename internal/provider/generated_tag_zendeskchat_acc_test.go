@@ -57,7 +57,9 @@ resource "matomo_tagmanager_tag_zendeskchat" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-zendeskchat"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  zendesk_chat_id = "test-value"
+  // ZendeskChatTag.php requires a minimum 20-character zendeskChatId
+  // (confirmed live: "test-value" (10 chars) was rejected).
+  zendesk_chat_id = "test-value-123456789"
 }
 `
 }
