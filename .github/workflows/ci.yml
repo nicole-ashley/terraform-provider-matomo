@@ -18,6 +18,10 @@ jobs:
           terraform_wrapper: false
       - run: go build -o /dev/null .
       - run: go test ./... -v -count=1
+      - name: Check docs are up to date
+        run: |
+          make docs
+          git diff --exit-code -- docs/ || (echo "::error::docs/ is out of date - run 'make docs' and commit the result" && exit 1)
 
   lint:
     runs-on: ubuntu-latest
