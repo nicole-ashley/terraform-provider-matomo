@@ -56,6 +56,9 @@ func TestBuildTypeSpec(t *testing.T) {
 	if len(p1.AvailableValues) != 2 {
 		t.Errorf("len(spec.Params[1].AvailableValues) = %d, want 2", len(p1.AvailableValues))
 	}
+	if p1.AvailableValues[0] != "bottom" || p1.AvailableValues[1] != "top" {
+		t.Errorf("spec.Params[1].AvailableValues = %v, want [bottom top]", p1.AvailableValues)
+	}
 	ref, ok := p1.Condition.(RefNode)
 	if !ok || ref.Field != "customHtml" {
 		t.Errorf("spec.Params[1].Condition = %#v, want RefNode{Field: customHtml}", p1.Condition)

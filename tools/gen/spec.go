@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
@@ -79,6 +80,7 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 		for value := range p.AvailableValues {
 			availableValues = append(availableValues, value)
 		}
+		sort.Strings(availableValues)
 
 		spec.Params = append(spec.Params, ParamSpec{
 			MatomoName:      p.Name,
