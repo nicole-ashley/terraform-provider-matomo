@@ -25,7 +25,11 @@ type {{.GoModelName}} struct {
 	DefaultValue    types.String   `tfsdk:"default_value"`
 {{- end}}
 {{- range .Params}}
+{{- if eq .GoType "List"}}
+	{{.GoFieldName}} []types.String `tfsdk:"{{.TFName}}"`
+{{- else}}
 	{{.GoFieldName}} types.{{.GoType}} `tfsdk:"{{.TFName}}"`
+{{- end}}
 {{- end}}
 }
 
