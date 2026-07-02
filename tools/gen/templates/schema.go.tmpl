@@ -137,8 +137,17 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p map[string]string) {
 {{- range .Params}}
+{{- if .Required}}
 {{- if eq .GoType "String"}}
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(p[{{printf "%q" .MatomoName}}])
 {{- else if eq .GoType "Bool"}}
@@ -149,6 +158,31 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p map[string]string) {
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Value(paramFloat64Value(p[{{printf "%q" .MatomoName}}]))
 {{- else if eq .GoType "List"}}
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(p[{{printf "%q" .MatomoName}}])
+{{- end}}
+{{- else}}
+	if v, ok := p[{{printf "%q" .MatomoName}}]; ok {
+{{- if eq .GoType "String"}}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(v)
+	} else {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringNull()
+{{- else if eq .GoType "Bool"}}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolValue(paramBoolValue(v))
+	} else {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolNull()
+{{- else if eq .GoType "Int64"}}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Value(paramInt64Value(v))
+	} else {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Null()
+{{- else if eq .GoType "Float64"}}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Value(paramFloat64Value(v))
+	} else {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Null()
+{{- else if eq .GoType "List"}}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(v)
+	} else {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = nil
+{{- end}}
+	}
 {{- end}}
 {{- end}}
 }
