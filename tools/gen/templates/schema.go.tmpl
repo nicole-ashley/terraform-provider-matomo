@@ -97,14 +97,34 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) Meta() typedMeta {
 func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() map[string]string {
 	return map[string]string{
 {{- range .Params}}
+{{- if eq .GoType "String"}}
 		{{printf "%q" .MatomoName}}: {{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString(),
+{{- else if eq .GoType "Bool"}}
+		{{printf "%q" .MatomoName}}: paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool()),
+{{- else if eq .GoType "Int64"}}
+		{{printf "%q" .MatomoName}}: paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64()),
+{{- else if eq .GoType "Float64"}}
+		{{printf "%q" .MatomoName}}: paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64()),
+{{- else if eq .GoType "List"}}
+		{{printf "%q" .MatomoName}}: paramListString({{$.GoModelReceiver}}.{{.GoFieldName}}),
+{{- end}}
 {{- end}}
 	}
 }
 
 func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p map[string]string) {
 {{- range .Params}}
+{{- if eq .GoType "String"}}
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(p[{{printf "%q" .MatomoName}}])
+{{- else if eq .GoType "Bool"}}
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolValue(paramBoolValue(p[{{printf "%q" .MatomoName}}]))
+{{- else if eq .GoType "Int64"}}
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Value(paramInt64Value(p[{{printf "%q" .MatomoName}}]))
+{{- else if eq .GoType "Float64"}}
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Value(paramFloat64Value(p[{{printf "%q" .MatomoName}}]))
+{{- else if eq .GoType "List"}}
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(p[{{printf "%q" .MatomoName}}])
+{{- end}}
 {{- end}}
 }
 

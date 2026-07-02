@@ -31,12 +31,22 @@ type TypeSpec struct {
 	Params       []ParamSpec
 }
 
+// matomoTypeToGoType maps Piwik\Settings\FieldConfig's TYPE_* constants
+// (confirmed against core/Settings/FieldConfig.php: TYPE_INT='integer',
+// TYPE_FLOAT='float', TYPE_STRING='string', TYPE_BOOL='boolean',
+// TYPE_ARRAY='array' - not the shorthand names like "bool"/"int" the
+// original design assumed, corrected against a live discovery response)
+// to the Terraform attribute type used for the generated schema.
 func matomoTypeToGoType(matomoType string) (string, error) {
 	switch matomoType {
 	case "string":
 		return "String", nil
-	case "bool":
+	case "boolean":
 		return "Bool", nil
+	case "integer":
+		return "Int64", nil
+	case "float":
+		return "Float64", nil
 	case "array":
 		return "List", nil
 	default:
