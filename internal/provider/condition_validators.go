@@ -68,19 +68,27 @@ func (v conditionEqualsValidator) ValidateString(ctx context.Context, req valida
 // conditionAnyOfValidator implements the Or case: the attribute it's
 // attached to is valid if at least one wrapped validator reports no
 // error (terraform-plugin-framework has no native "satisfy any of"
-// combinator for validator.String).
+// combinator for validator.String). Not yet referenced by any currently
+// generated resource - no Matomo type discovered so far has an
+// Or-combined condition - but tools/gen's condition parser (Task 3)
+// already produces OrNode, so this stays in place for when one does.
+//
+//nolint:unused // shared runtime helper for a condition shape no discovered type currently uses
 type conditionAnyOfValidator struct {
 	Validators []validator.String
 }
 
+//nolint:unused // shared runtime helper for a condition shape no discovered type currently uses
 func (v conditionAnyOfValidator) Description(ctx context.Context) string {
 	return "must satisfy at least one condition"
 }
 
+//nolint:unused // shared runtime helper for a condition shape no discovered type currently uses
 func (v conditionAnyOfValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
+//nolint:unused // shared runtime helper for a condition shape no discovered type currently uses
 func (v conditionAnyOfValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	for _, inner := range v.Validators {
 		var innerResp validator.StringResponse

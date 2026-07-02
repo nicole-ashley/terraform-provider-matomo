@@ -22,8 +22,8 @@ func CamelToSnake(s string) string {
 	for i, r := range runes {
 		isUpper := r >= 'A' && r <= 'Z'
 		if isUpper {
-			prevLower := i > 0 && !(runes[i-1] >= 'A' && runes[i-1] <= 'Z')
-			nextLower := i+1 < len(runes) && !(runes[i+1] >= 'A' && runes[i+1] <= 'Z')
+			prevLower := i > 0 && (runes[i-1] < 'A' || runes[i-1] > 'Z')
+			nextLower := i+1 < len(runes) && (runes[i+1] < 'A' || runes[i+1] > 'Z')
 			if i > 0 && (prevLower || nextLower) {
 				b.WriteByte('_')
 			}

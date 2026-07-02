@@ -93,10 +93,18 @@ func paramInt64Value(s string) int64 {
 	return n
 }
 
+// paramFloat64String/paramFloat64Value are not yet referenced by any
+// currently generated resource - no Matomo type discovered so far has a
+// Float64-typed parameter - but tools/gen/spec.go maps Matomo's "float"
+// FieldConfig type to GoType "Float64" and schema.go.tmpl already emits
+// calls to these for any type that does, so they stay in place.
+//
+//nolint:unused // shared runtime helper for a param type no discovered type currently uses
 func paramFloat64String(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
+//nolint:unused // shared runtime helper for a param type no discovered type currently uses
 func paramFloat64Value(s string) float64 {
 	f, _ := strconv.ParseFloat(s, 64)
 	return f
