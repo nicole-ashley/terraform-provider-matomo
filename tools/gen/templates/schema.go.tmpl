@@ -92,22 +92,49 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() map[string]string {
-	return map[string]string{
+	p := map[string]string{}
 {{- range .Params}}
+{{- if .Required}}
 {{- if eq .GoType "String"}}
-		{{printf "%q" .MatomoName}}: {{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString(),
+	p[{{printf "%q" .MatomoName}}] = {{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString()
 {{- else if eq .GoType "Bool"}}
-		{{printf "%q" .MatomoName}}: paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool()),
+	p[{{printf "%q" .MatomoName}}] = paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool())
 {{- else if eq .GoType "Int64"}}
-		{{printf "%q" .MatomoName}}: paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64()),
+	p[{{printf "%q" .MatomoName}}] = paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64())
 {{- else if eq .GoType "Float64"}}
-		{{printf "%q" .MatomoName}}: paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64()),
+	p[{{printf "%q" .MatomoName}}] = paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64())
 {{- else if eq .GoType "List"}}
-		{{printf "%q" .MatomoName}}: paramListString({{$.GoModelReceiver}}.{{.GoFieldName}}),
+	p[{{printf "%q" .MatomoName}}] = paramListString({{$.GoModelReceiver}}.{{.GoFieldName}})
 {{- end}}
+{{- else}}
+{{- if eq .GoType "List"}}
+	if {{$.GoModelReceiver}}.{{.GoFieldName}} != nil {
+		p[{{printf "%q" .MatomoName}}] = paramListString({{$.GoModelReceiver}}.{{.GoFieldName}})
+	}
+{{- else}}
+	if !{{$.GoModelReceiver}}.{{.GoFieldName}}.IsNull() && !{{$.GoModelReceiver}}.{{.GoFieldName}}.IsUnknown() {
+{{- if eq .GoType "String"}}
+		p[{{printf "%q" .MatomoName}}] = {{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString()
+{{- else if eq .GoType "Bool"}}
+		p[{{printf "%q" .MatomoName}}] = paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool())
+{{- else if eq .GoType "Int64"}}
+		p[{{printf "%q" .MatomoName}}] = paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64())
+{{- else if eq .GoType "Float64"}}
+		p[{{printf "%q" .MatomoName}}] = paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64())
 {{- end}}
 	}
+{{- end}}
+{{- end}}
+{{- end}}
+	return p
 }
 
 func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p map[string]string) {

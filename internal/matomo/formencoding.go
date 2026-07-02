@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 )
 
 // stringMap decodes a field Matomo sometimes returns as an empty JSON array
@@ -12,6 +13,15 @@ import (
 // PHP array always produces [], since an empty array can't be distinguished
 // from an empty list; a non-empty parameters map always serializes as a
 // real object.
+//
+// Also confirmed against live typed-resource acceptance runs: not every
+// value in that object is a JSON string. A Bool- or Int64/Float64-typed
+// Tag Manager parameter (e.g. a checkbox or number field) round-trips as
+// a real JSON boolean/number, not the string PHP's own admin-UI form
+// submission would send - so a strict map[string]string decode fails for
+// any type with such a parameter. Falls back to a lenient
+// map[string]any decode, stringifying each value, before finally falling
+// back to the empty-array case above.
 type stringMap map[string]string
 
 func (m *stringMap) UnmarshalJSON(data []byte) error {
@@ -20,12 +30,54 @@ func (m *stringMap) UnmarshalJSON(data []byte) error {
 		*m = obj
 		return nil
 	}
+	var objAny map[string]any
+	if err := json.Unmarshal(data, &objAny); err == nil {
+		out := make(map[string]string, len(objAny))
+		for k, v := range objAny {
+			out[k] = stringifyParamValue(v)
+		}
+		*m = out
+		return nil
+	}
 	var empty []any
 	if err := json.Unmarshal(data, &empty); err != nil {
 		return err
 	}
 	*m = map[string]string{}
 	return nil
+}
+
+// stringifyParamValue converts one decoded JSON parameter value (from the
+// map[string]any fallback above) into the flat string representation the
+// rest of this provider works with. Matches the encodings
+// paramBoolString/paramInt64String/paramFloat64String
+// (internal/provider/typed_model.go) produce, so a value read back from
+// Matomo round-trips through FromParams/ToParams unchanged.
+func stringifyParamValue(v any) string {
+	switch x := v.(type) {
+	case string:
+		return x
+	case bool:
+		if x {
+			return "1"
+		}
+		return "0"
+	case float64:
+		return strconv.FormatFloat(x, 'f', -1, 64)
+	case nil:
+		return ""
+	default:
+		// An array/object value (e.g. a genuinely array-typed parameter,
+		// distinct from the whole-field-is-an-empty-array case handled
+		// above) - fall back to its JSON form rather than losing the
+		// value entirely; this is not yet confirmed against a live
+		// example, since no discovered type has hit this path.
+		b, err := json.Marshal(x)
+		if err != nil {
+			return ""
+		}
+		return string(b)
+	}
 }
 
 // Matomo's API dispatcher builds PHP arrays for array-typed parameters from
