@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagLivezilladynamicModel struct {
@@ -110,13 +112,15 @@ func (m *tagLivezilladynamicModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagLivezilladynamicModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["LivezillaDynamicID"] = m.LivezillaDynamicID.ValueString()
-	p["LivezillaDynamicDomain"] = m.LivezillaDynamicDomain.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagLivezilladynamicModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["LivezillaDynamicID"] = matomo.ScalarParam(m.LivezillaDynamicID.ValueString())
+	p["LivezillaDynamicDomain"] = matomo.ScalarParam(m.LivezillaDynamicDomain.ValueString())
 	if !m.LivezillaDynamicDefer.IsNull() && !m.LivezillaDynamicDefer.IsUnknown() {
-		p["LivezillaDynamicDefer"] = paramBoolString(m.LivezillaDynamicDefer.ValueBool())
+		p["LivezillaDynamicDefer"] = matomo.ScalarParam(paramBoolString(m.LivezillaDynamicDefer.ValueBool()))
 	}
 	return p
 }
@@ -129,11 +133,11 @@ func (m *tagLivezilladynamicModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagLivezilladynamicModel) FromParams(p map[string]string) {
-	m.LivezillaDynamicID = types.StringValue(p["LivezillaDynamicID"])
-	m.LivezillaDynamicDomain = types.StringValue(p["LivezillaDynamicDomain"])
+func (m *tagLivezilladynamicModel) FromParams(p matomo.ParamsMap) {
+	m.LivezillaDynamicID = types.StringValue(p["LivezillaDynamicID"].Scalar)
+	m.LivezillaDynamicDomain = types.StringValue(p["LivezillaDynamicDomain"].Scalar)
 	if v, ok := p["LivezillaDynamicDefer"]; ok {
-		m.LivezillaDynamicDefer = types.BoolValue(paramBoolValue(v))
+		m.LivezillaDynamicDefer = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.LivezillaDynamicDefer = types.BoolNull()
 	}

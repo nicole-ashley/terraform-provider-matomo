@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type variableUrlparameterModel struct {
@@ -56,10 +58,12 @@ func (m *variableUrlparameterModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *variableUrlparameterModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["parameterName"] = m.ParameterName.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *variableUrlparameterModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["parameterName"] = matomo.ScalarParam(m.ParameterName.ValueString())
 	return p
 }
 
@@ -71,8 +75,8 @@ func (m *variableUrlparameterModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *variableUrlparameterModel) FromParams(p map[string]string) {
-	m.ParameterName = types.StringValue(p["parameterName"])
+func (m *variableUrlparameterModel) FromParams(p matomo.ParamsMap) {
+	m.ParameterName = types.StringValue(p["parameterName"].Scalar)
 }
 
 func (m *variableUrlparameterModel) Common() *typedVariableCommon {

@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagEmarsysModel struct {
@@ -168,21 +170,23 @@ func (m *tagEmarsysModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagEmarsysModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["merchantId"] = m.MerchantId.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagEmarsysModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["merchantId"] = matomo.ScalarParam(m.MerchantId.ValueString())
 	if !m.CommandCategory.IsNull() && !m.CommandCategory.IsUnknown() {
-		p["commandCategory"] = m.CommandCategory.ValueString()
+		p["commandCategory"] = matomo.ScalarParam(m.CommandCategory.ValueString())
 	}
 	if !m.CommandView.IsNull() && !m.CommandView.IsUnknown() {
-		p["commandView"] = m.CommandView.ValueString()
+		p["commandView"] = matomo.ScalarParam(m.CommandView.ValueString())
 	}
 	if !m.CommandTag.IsNull() && !m.CommandTag.IsUnknown() {
-		p["commandTag"] = m.CommandTag.ValueString()
+		p["commandTag"] = matomo.ScalarParam(m.CommandTag.ValueString())
 	}
 	if !m.CommandGo.IsNull() && !m.CommandGo.IsUnknown() {
-		p["commandGo"] = paramBoolString(m.CommandGo.ValueBool())
+		p["commandGo"] = matomo.ScalarParam(paramBoolString(m.CommandGo.ValueBool()))
 	}
 	return p
 }
@@ -195,25 +199,25 @@ func (m *tagEmarsysModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagEmarsysModel) FromParams(p map[string]string) {
-	m.MerchantId = types.StringValue(p["merchantId"])
+func (m *tagEmarsysModel) FromParams(p matomo.ParamsMap) {
+	m.MerchantId = types.StringValue(p["merchantId"].Scalar)
 	if v, ok := p["commandCategory"]; ok {
-		m.CommandCategory = types.StringValue(v)
+		m.CommandCategory = types.StringValue(v.Scalar)
 	} else {
 		m.CommandCategory = types.StringNull()
 	}
 	if v, ok := p["commandView"]; ok {
-		m.CommandView = types.StringValue(v)
+		m.CommandView = types.StringValue(v.Scalar)
 	} else {
 		m.CommandView = types.StringNull()
 	}
 	if v, ok := p["commandTag"]; ok {
-		m.CommandTag = types.StringValue(v)
+		m.CommandTag = types.StringValue(v.Scalar)
 	} else {
 		m.CommandTag = types.StringNull()
 	}
 	if v, ok := p["commandGo"]; ok {
-		m.CommandGo = types.BoolValue(paramBoolValue(v))
+		m.CommandGo = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.CommandGo = types.BoolNull()
 	}

@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagShareaholicModel struct {
@@ -149,18 +151,20 @@ func (m *tagShareaholicModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagShareaholicModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["shareaholicSiteId"] = m.ShareaholicSiteId.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagShareaholicModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["shareaholicSiteId"] = matomo.ScalarParam(m.ShareaholicSiteId.ValueString())
 	if !m.ShareaholicInPageApp.IsNull() && !m.ShareaholicInPageApp.IsUnknown() {
-		p["shareaholicInPageApp"] = m.ShareaholicInPageApp.ValueString()
+		p["shareaholicInPageApp"] = matomo.ScalarParam(m.ShareaholicInPageApp.ValueString())
 	}
 	if !m.ShareaholicAppId.IsNull() && !m.ShareaholicAppId.IsUnknown() {
-		p["shareaholicAppId"] = m.ShareaholicAppId.ValueString()
+		p["shareaholicAppId"] = matomo.ScalarParam(m.ShareaholicAppId.ValueString())
 	}
 	if !m.ShareaholicParentSelector.IsNull() && !m.ShareaholicParentSelector.IsUnknown() {
-		p["shareaholicParentSelector"] = m.ShareaholicParentSelector.ValueString()
+		p["shareaholicParentSelector"] = matomo.ScalarParam(m.ShareaholicParentSelector.ValueString())
 	}
 	return p
 }
@@ -173,20 +177,20 @@ func (m *tagShareaholicModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagShareaholicModel) FromParams(p map[string]string) {
-	m.ShareaholicSiteId = types.StringValue(p["shareaholicSiteId"])
+func (m *tagShareaholicModel) FromParams(p matomo.ParamsMap) {
+	m.ShareaholicSiteId = types.StringValue(p["shareaholicSiteId"].Scalar)
 	if v, ok := p["shareaholicInPageApp"]; ok {
-		m.ShareaholicInPageApp = types.StringValue(v)
+		m.ShareaholicInPageApp = types.StringValue(v.Scalar)
 	} else {
 		m.ShareaholicInPageApp = types.StringNull()
 	}
 	if v, ok := p["shareaholicAppId"]; ok {
-		m.ShareaholicAppId = types.StringValue(v)
+		m.ShareaholicAppId = types.StringValue(v.Scalar)
 	} else {
 		m.ShareaholicAppId = types.StringNull()
 	}
 	if v, ok := p["shareaholicParentSelector"]; ok {
-		m.ShareaholicParentSelector = types.StringValue(v)
+		m.ShareaholicParentSelector = types.StringValue(v.Scalar)
 	} else {
 		m.ShareaholicParentSelector = types.StringNull()
 	}

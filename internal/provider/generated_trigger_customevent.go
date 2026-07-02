@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type triggerCustomeventModel struct {
@@ -51,10 +53,12 @@ func (m *triggerCustomeventModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *triggerCustomeventModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["eventName"] = m.EventName.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *triggerCustomeventModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["eventName"] = matomo.ScalarParam(m.EventName.ValueString())
 	return p
 }
 
@@ -66,8 +70,8 @@ func (m *triggerCustomeventModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *triggerCustomeventModel) FromParams(p map[string]string) {
-	m.EventName = types.StringValue(p["eventName"])
+func (m *triggerCustomeventModel) FromParams(p matomo.ParamsMap) {
+	m.EventName = types.StringValue(p["eventName"].Scalar)
 }
 
 func (m *triggerCustomeventModel) Common() *typedTriggerCommon {

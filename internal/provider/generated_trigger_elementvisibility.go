@@ -158,22 +158,24 @@ func (m *triggerElementvisibilityModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *triggerElementvisibilityModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["selectionMethod"] = m.SelectionMethod.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *triggerElementvisibilityModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["selectionMethod"] = matomo.ScalarParam(m.SelectionMethod.ValueString())
 	if !m.CssSelector.IsNull() && !m.CssSelector.IsUnknown() {
-		p["cssSelector"] = m.CssSelector.ValueString()
+		p["cssSelector"] = matomo.ScalarParam(m.CssSelector.ValueString())
 	}
 	if !m.ElementId.IsNull() && !m.ElementId.IsUnknown() {
-		p["elementId"] = m.ElementId.ValueString()
+		p["elementId"] = matomo.ScalarParam(m.ElementId.ValueString())
 	}
-	p["fireTriggerWhen"] = m.FireTriggerWhen.ValueString()
+	p["fireTriggerWhen"] = matomo.ScalarParam(m.FireTriggerWhen.ValueString())
 	if !m.MinPercentVisible.IsNull() && !m.MinPercentVisible.IsUnknown() {
-		p["minPercentVisible"] = paramInt64String(m.MinPercentVisible.ValueInt64())
+		p["minPercentVisible"] = matomo.ScalarParam(paramInt64String(m.MinPercentVisible.ValueInt64()))
 	}
 	if !m.ObserveDomChanges.IsNull() && !m.ObserveDomChanges.IsUnknown() {
-		p["observeDomChanges"] = paramBoolString(m.ObserveDomChanges.ValueBool())
+		p["observeDomChanges"] = matomo.ScalarParam(paramBoolString(m.ObserveDomChanges.ValueBool()))
 	}
 	return p
 }
@@ -186,26 +188,26 @@ func (m *triggerElementvisibilityModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *triggerElementvisibilityModel) FromParams(p map[string]string) {
-	m.SelectionMethod = types.StringValue(p["selectionMethod"])
+func (m *triggerElementvisibilityModel) FromParams(p matomo.ParamsMap) {
+	m.SelectionMethod = types.StringValue(p["selectionMethod"].Scalar)
 	if v, ok := p["cssSelector"]; ok {
-		m.CssSelector = types.StringValue(v)
+		m.CssSelector = types.StringValue(v.Scalar)
 	} else {
 		m.CssSelector = types.StringNull()
 	}
 	if v, ok := p["elementId"]; ok {
-		m.ElementId = types.StringValue(v)
+		m.ElementId = types.StringValue(v.Scalar)
 	} else {
 		m.ElementId = types.StringNull()
 	}
-	m.FireTriggerWhen = types.StringValue(p["fireTriggerWhen"])
+	m.FireTriggerWhen = types.StringValue(p["fireTriggerWhen"].Scalar)
 	if v, ok := p["minPercentVisible"]; ok {
-		m.MinPercentVisible = types.Int64Value(paramInt64Value(v))
+		m.MinPercentVisible = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.MinPercentVisible = types.Int64Null()
 	}
 	if v, ok := p["observeDomChanges"]; ok {
-		m.ObserveDomChanges = types.BoolValue(paramBoolValue(v))
+		m.ObserveDomChanges = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.ObserveDomChanges = types.BoolNull()
 	}

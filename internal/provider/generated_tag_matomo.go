@@ -401,55 +401,57 @@ func (m *tagMatomoModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagMatomoModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["matomoConfig"] = m.MatomoConfig.ValueString()
-	p["trackingType"] = m.TrackingType.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagMatomoModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["matomoConfig"] = matomo.ScalarParam(m.MatomoConfig.ValueString())
+	p["trackingType"] = matomo.ScalarParam(m.TrackingType.ValueString())
 	if !m.IdGoal.IsNull() && !m.IdGoal.IsUnknown() {
-		p["idGoal"] = m.IdGoal.ValueString()
+		p["idGoal"] = matomo.ScalarParam(m.IdGoal.ValueString())
 	}
 	if !m.GoalCustomRevenue.IsNull() && !m.GoalCustomRevenue.IsUnknown() {
-		p["goalCustomRevenue"] = m.GoalCustomRevenue.ValueString()
+		p["goalCustomRevenue"] = matomo.ScalarParam(m.GoalCustomRevenue.ValueString())
 	}
 	if !m.DocumentTitle.IsNull() && !m.DocumentTitle.IsUnknown() {
-		p["documentTitle"] = m.DocumentTitle.ValueString()
+		p["documentTitle"] = matomo.ScalarParam(m.DocumentTitle.ValueString())
 	}
 	if !m.CustomUrl.IsNull() && !m.CustomUrl.IsUnknown() {
-		p["customUrl"] = m.CustomUrl.ValueString()
+		p["customUrl"] = matomo.ScalarParam(m.CustomUrl.ValueString())
 	}
 	if !m.IsEcommerceView.IsNull() && !m.IsEcommerceView.IsUnknown() {
-		p["isEcommerceView"] = paramBoolString(m.IsEcommerceView.ValueBool())
+		p["isEcommerceView"] = matomo.ScalarParam(paramBoolString(m.IsEcommerceView.ValueBool()))
 	}
 	if !m.ProductSKU.IsNull() && !m.ProductSKU.IsUnknown() {
-		p["productSKU"] = m.ProductSKU.ValueString()
+		p["productSKU"] = matomo.ScalarParam(m.ProductSKU.ValueString())
 	}
 	if !m.ProductName.IsNull() && !m.ProductName.IsUnknown() {
-		p["productName"] = m.ProductName.ValueString()
+		p["productName"] = matomo.ScalarParam(m.ProductName.ValueString())
 	}
 	if !m.CategoryName.IsNull() && !m.CategoryName.IsUnknown() {
-		p["categoryName"] = m.CategoryName.ValueString()
+		p["categoryName"] = matomo.ScalarParam(m.CategoryName.ValueString())
 	}
 	if !m.Price.IsNull() && !m.Price.IsUnknown() {
-		p["price"] = m.Price.ValueString()
+		p["price"] = matomo.ScalarParam(m.Price.ValueString())
 	}
 	if !m.EventCategory.IsNull() && !m.EventCategory.IsUnknown() {
-		p["eventCategory"] = m.EventCategory.ValueString()
+		p["eventCategory"] = matomo.ScalarParam(m.EventCategory.ValueString())
 	}
 	if !m.EventAction.IsNull() && !m.EventAction.IsUnknown() {
-		p["eventAction"] = m.EventAction.ValueString()
+		p["eventAction"] = matomo.ScalarParam(m.EventAction.ValueString())
 	}
 	if !m.EventName.IsNull() && !m.EventName.IsUnknown() {
-		p["eventName"] = m.EventName.ValueString()
+		p["eventName"] = matomo.ScalarParam(m.EventName.ValueString())
 	}
 	if !m.EventValue.IsNull() && !m.EventValue.IsUnknown() {
-		p["eventValue"] = m.EventValue.ValueString()
+		p["eventValue"] = matomo.ScalarParam(m.EventValue.ValueString())
 	}
 	if m.CustomDimensions != nil {
-		p["customDimensions"] = paramListString(m.CustomDimensions)
+		p["customDimensions"] = matomo.ListParam(stringSliceFromModel(m.CustomDimensions))
 	}
 	if !m.AreCustomDimensionsSticky.IsNull() && !m.AreCustomDimensionsSticky.IsUnknown() {
-		p["areCustomDimensionsSticky"] = paramBoolString(m.AreCustomDimensionsSticky.ValueBool())
+		p["areCustomDimensionsSticky"] = matomo.ScalarParam(paramBoolString(m.AreCustomDimensionsSticky.ValueBool()))
 	}
 	return p
 }
@@ -462,81 +464,81 @@ func (m *tagMatomoModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagMatomoModel) FromParams(p map[string]string) {
-	m.MatomoConfig = types.StringValue(p["matomoConfig"])
-	m.TrackingType = types.StringValue(p["trackingType"])
+func (m *tagMatomoModel) FromParams(p matomo.ParamsMap) {
+	m.MatomoConfig = types.StringValue(p["matomoConfig"].Scalar)
+	m.TrackingType = types.StringValue(p["trackingType"].Scalar)
 	if v, ok := p["idGoal"]; ok {
-		m.IdGoal = types.StringValue(v)
+		m.IdGoal = types.StringValue(v.Scalar)
 	} else {
 		m.IdGoal = types.StringNull()
 	}
 	if v, ok := p["goalCustomRevenue"]; ok {
-		m.GoalCustomRevenue = types.StringValue(v)
+		m.GoalCustomRevenue = types.StringValue(v.Scalar)
 	} else {
 		m.GoalCustomRevenue = types.StringNull()
 	}
 	if v, ok := p["documentTitle"]; ok {
-		m.DocumentTitle = types.StringValue(v)
+		m.DocumentTitle = types.StringValue(v.Scalar)
 	} else {
 		m.DocumentTitle = types.StringNull()
 	}
 	if v, ok := p["customUrl"]; ok {
-		m.CustomUrl = types.StringValue(v)
+		m.CustomUrl = types.StringValue(v.Scalar)
 	} else {
 		m.CustomUrl = types.StringNull()
 	}
 	if v, ok := p["isEcommerceView"]; ok {
-		m.IsEcommerceView = types.BoolValue(paramBoolValue(v))
+		m.IsEcommerceView = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.IsEcommerceView = types.BoolNull()
 	}
 	if v, ok := p["productSKU"]; ok {
-		m.ProductSKU = types.StringValue(v)
+		m.ProductSKU = types.StringValue(v.Scalar)
 	} else {
 		m.ProductSKU = types.StringNull()
 	}
 	if v, ok := p["productName"]; ok {
-		m.ProductName = types.StringValue(v)
+		m.ProductName = types.StringValue(v.Scalar)
 	} else {
 		m.ProductName = types.StringNull()
 	}
 	if v, ok := p["categoryName"]; ok {
-		m.CategoryName = types.StringValue(v)
+		m.CategoryName = types.StringValue(v.Scalar)
 	} else {
 		m.CategoryName = types.StringNull()
 	}
 	if v, ok := p["price"]; ok {
-		m.Price = types.StringValue(v)
+		m.Price = types.StringValue(v.Scalar)
 	} else {
 		m.Price = types.StringNull()
 	}
 	if v, ok := p["eventCategory"]; ok {
-		m.EventCategory = types.StringValue(v)
+		m.EventCategory = types.StringValue(v.Scalar)
 	} else {
 		m.EventCategory = types.StringNull()
 	}
 	if v, ok := p["eventAction"]; ok {
-		m.EventAction = types.StringValue(v)
+		m.EventAction = types.StringValue(v.Scalar)
 	} else {
 		m.EventAction = types.StringNull()
 	}
 	if v, ok := p["eventName"]; ok {
-		m.EventName = types.StringValue(v)
+		m.EventName = types.StringValue(v.Scalar)
 	} else {
 		m.EventName = types.StringNull()
 	}
 	if v, ok := p["eventValue"]; ok {
-		m.EventValue = types.StringValue(v)
+		m.EventValue = types.StringValue(v.Scalar)
 	} else {
 		m.EventValue = types.StringNull()
 	}
 	if v, ok := p["customDimensions"]; ok {
-		m.CustomDimensions = paramListValue(v)
+		m.CustomDimensions = paramListValue(v.List)
 	} else {
 		m.CustomDimensions = nil
 	}
 	if v, ok := p["areCustomDimensionsSticky"]; ok {
-		m.AreCustomDimensionsSticky = types.BoolValue(paramBoolValue(v))
+		m.AreCustomDimensionsSticky = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.AreCustomDimensionsSticky = types.BoolNull()
 	}

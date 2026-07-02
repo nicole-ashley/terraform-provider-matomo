@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type variableReferrerurlModel struct {
@@ -61,10 +63,12 @@ func (m *variableReferrerurlModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *variableReferrerurlModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["urlPart"] = m.UrlPart.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *variableReferrerurlModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["urlPart"] = matomo.ScalarParam(m.UrlPart.ValueString())
 	return p
 }
 
@@ -76,8 +80,8 @@ func (m *variableReferrerurlModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *variableReferrerurlModel) FromParams(p map[string]string) {
-	m.UrlPart = types.StringValue(p["urlPart"])
+func (m *variableReferrerurlModel) FromParams(p matomo.ParamsMap) {
+	m.UrlPart = types.StringValue(p["urlPart"].Scalar)
 }
 
 func (m *variableReferrerurlModel) Common() *typedVariableCommon {

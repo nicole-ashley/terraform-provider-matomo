@@ -132,18 +132,20 @@ func (m *variableDomelementModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *variableDomelementModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["selectionMethod"] = m.SelectionMethod.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *variableDomelementModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["selectionMethod"] = matomo.ScalarParam(m.SelectionMethod.ValueString())
 	if !m.CssSelector.IsNull() && !m.CssSelector.IsUnknown() {
-		p["cssSelector"] = m.CssSelector.ValueString()
+		p["cssSelector"] = matomo.ScalarParam(m.CssSelector.ValueString())
 	}
 	if !m.ElementId.IsNull() && !m.ElementId.IsUnknown() {
-		p["elementId"] = m.ElementId.ValueString()
+		p["elementId"] = matomo.ScalarParam(m.ElementId.ValueString())
 	}
 	if !m.AttributeName.IsNull() && !m.AttributeName.IsUnknown() {
-		p["attributeName"] = m.AttributeName.ValueString()
+		p["attributeName"] = matomo.ScalarParam(m.AttributeName.ValueString())
 	}
 	return p
 }
@@ -156,20 +158,20 @@ func (m *variableDomelementModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *variableDomelementModel) FromParams(p map[string]string) {
-	m.SelectionMethod = types.StringValue(p["selectionMethod"])
+func (m *variableDomelementModel) FromParams(p matomo.ParamsMap) {
+	m.SelectionMethod = types.StringValue(p["selectionMethod"].Scalar)
 	if v, ok := p["cssSelector"]; ok {
-		m.CssSelector = types.StringValue(v)
+		m.CssSelector = types.StringValue(v.Scalar)
 	} else {
 		m.CssSelector = types.StringNull()
 	}
 	if v, ok := p["elementId"]; ok {
-		m.ElementId = types.StringValue(v)
+		m.ElementId = types.StringValue(v.Scalar)
 	} else {
 		m.ElementId = types.StringNull()
 	}
 	if v, ok := p["attributeName"]; ok {
-		m.AttributeName = types.StringValue(v)
+		m.AttributeName = types.StringValue(v.Scalar)
 	} else {
 		m.AttributeName = types.StringNull()
 	}

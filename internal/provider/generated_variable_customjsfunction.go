@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type variableCustomjsfunctionModel struct {
@@ -56,10 +58,12 @@ func (m *variableCustomjsfunctionModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *variableCustomjsfunctionModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["jsFunction"] = m.JsFunction.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *variableCustomjsfunctionModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["jsFunction"] = matomo.ScalarParam(m.JsFunction.ValueString())
 	return p
 }
 
@@ -71,8 +75,8 @@ func (m *variableCustomjsfunctionModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *variableCustomjsfunctionModel) FromParams(p map[string]string) {
-	m.JsFunction = types.StringValue(p["jsFunction"])
+func (m *variableCustomjsfunctionModel) FromParams(p matomo.ParamsMap) {
+	m.JsFunction = types.StringValue(p["jsFunction"].Scalar)
 }
 
 func (m *variableCustomjsfunctionModel) Common() *typedVariableCommon {

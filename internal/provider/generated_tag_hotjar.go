@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagHotjarModel struct {
@@ -88,11 +90,13 @@ func (m *tagHotjarModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagHotjarModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["hjid"] = m.Hjid.ValueString()
-	p["hjsv"] = paramInt64String(m.Hjsv.ValueInt64())
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagHotjarModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["hjid"] = matomo.ScalarParam(m.Hjid.ValueString())
+	p["hjsv"] = matomo.ScalarParam(paramInt64String(m.Hjsv.ValueInt64()))
 	return p
 }
 
@@ -104,9 +108,9 @@ func (m *tagHotjarModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagHotjarModel) FromParams(p map[string]string) {
-	m.Hjid = types.StringValue(p["hjid"])
-	m.Hjsv = types.Int64Value(paramInt64Value(p["hjsv"]))
+func (m *tagHotjarModel) FromParams(p matomo.ParamsMap) {
+	m.Hjid = types.StringValue(p["hjid"].Scalar)
+	m.Hjsv = types.Int64Value(paramInt64Value(p["hjsv"].Scalar))
 }
 
 func (m *tagHotjarModel) Common() *typedTagCommon {

@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagAddthisModel struct {
@@ -104,12 +106,14 @@ func (m *tagAddthisModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagAddthisModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["AddThisPubId"] = m.AddThisPubId.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagAddthisModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["AddThisPubId"] = matomo.ScalarParam(m.AddThisPubId.ValueString())
 	if !m.AddThisParentSelector.IsNull() && !m.AddThisParentSelector.IsUnknown() {
-		p["AddThisParentSelector"] = m.AddThisParentSelector.ValueString()
+		p["AddThisParentSelector"] = matomo.ScalarParam(m.AddThisParentSelector.ValueString())
 	}
 	return p
 }
@@ -122,10 +126,10 @@ func (m *tagAddthisModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagAddthisModel) FromParams(p map[string]string) {
-	m.AddThisPubId = types.StringValue(p["AddThisPubId"])
+func (m *tagAddthisModel) FromParams(p matomo.ParamsMap) {
+	m.AddThisPubId = types.StringValue(p["AddThisPubId"].Scalar)
 	if v, ok := p["AddThisParentSelector"]; ok {
-		m.AddThisParentSelector = types.StringValue(v)
+		m.AddThisParentSelector = types.StringValue(v.Scalar)
 	} else {
 		m.AddThisParentSelector = types.StringNull()
 	}

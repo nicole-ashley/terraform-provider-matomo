@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagGoogletagModel struct {
@@ -83,10 +85,12 @@ func (m *tagGoogletagModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagGoogletagModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["googleTagId"] = m.GoogleTagId.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagGoogletagModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["googleTagId"] = matomo.ScalarParam(m.GoogleTagId.ValueString())
 	return p
 }
 
@@ -98,8 +102,8 @@ func (m *tagGoogletagModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagGoogletagModel) FromParams(p map[string]string) {
-	m.GoogleTagId = types.StringValue(p["googleTagId"])
+func (m *tagGoogletagModel) FromParams(p matomo.ParamsMap) {
+	m.GoogleTagId = types.StringValue(p["googleTagId"].Scalar)
 }
 
 func (m *tagGoogletagModel) Common() *typedTagCommon {

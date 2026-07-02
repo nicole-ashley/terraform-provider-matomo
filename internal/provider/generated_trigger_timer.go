@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type triggerTimerModel struct {
@@ -94,15 +96,17 @@ func (m *triggerTimerModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *triggerTimerModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["triggerInterval"] = paramInt64String(m.TriggerInterval.ValueInt64())
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *triggerTimerModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["triggerInterval"] = matomo.ScalarParam(paramInt64String(m.TriggerInterval.ValueInt64()))
 	if !m.EventName.IsNull() && !m.EventName.IsUnknown() {
-		p["eventName"] = m.EventName.ValueString()
+		p["eventName"] = matomo.ScalarParam(m.EventName.ValueString())
 	}
 	if !m.TriggerLimit.IsNull() && !m.TriggerLimit.IsUnknown() {
-		p["triggerLimit"] = paramInt64String(m.TriggerLimit.ValueInt64())
+		p["triggerLimit"] = matomo.ScalarParam(paramInt64String(m.TriggerLimit.ValueInt64()))
 	}
 	return p
 }
@@ -115,15 +119,15 @@ func (m *triggerTimerModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *triggerTimerModel) FromParams(p map[string]string) {
-	m.TriggerInterval = types.Int64Value(paramInt64Value(p["triggerInterval"]))
+func (m *triggerTimerModel) FromParams(p matomo.ParamsMap) {
+	m.TriggerInterval = types.Int64Value(paramInt64Value(p["triggerInterval"].Scalar))
 	if v, ok := p["eventName"]; ok {
-		m.EventName = types.StringValue(v)
+		m.EventName = types.StringValue(v.Scalar)
 	} else {
 		m.EventName = types.StringNull()
 	}
 	if v, ok := p["triggerLimit"]; ok {
-		m.TriggerLimit = types.Int64Value(paramInt64Value(v))
+		m.TriggerLimit = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.TriggerLimit = types.Int64Null()
 	}

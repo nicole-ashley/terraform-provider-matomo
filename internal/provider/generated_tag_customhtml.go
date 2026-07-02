@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagCustomhtmlModel struct {
@@ -107,12 +109,14 @@ func (m *tagCustomhtmlModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagCustomhtmlModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["customHtml"] = m.CustomHtml.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagCustomhtmlModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["customHtml"] = matomo.ScalarParam(m.CustomHtml.ValueString())
 	if !m.HtmlPosition.IsNull() && !m.HtmlPosition.IsUnknown() {
-		p["htmlPosition"] = m.HtmlPosition.ValueString()
+		p["htmlPosition"] = matomo.ScalarParam(m.HtmlPosition.ValueString())
 	}
 	return p
 }
@@ -125,10 +129,10 @@ func (m *tagCustomhtmlModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagCustomhtmlModel) FromParams(p map[string]string) {
-	m.CustomHtml = types.StringValue(p["customHtml"])
+func (m *tagCustomhtmlModel) FromParams(p matomo.ParamsMap) {
+	m.CustomHtml = types.StringValue(p["customHtml"].Scalar)
 	if v, ok := p["htmlPosition"]; ok {
-		m.HtmlPosition = types.StringValue(v)
+		m.HtmlPosition = types.StringValue(v.Scalar)
 	} else {
 		m.HtmlPosition = types.StringNull()
 	}

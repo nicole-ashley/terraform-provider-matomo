@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagOnetrustModel struct {
@@ -83,10 +85,12 @@ func (m *tagOnetrustModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagOnetrustModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["domain"] = m.Domain.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagOnetrustModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["domain"] = matomo.ScalarParam(m.Domain.ValueString())
 	return p
 }
 
@@ -98,8 +102,8 @@ func (m *tagOnetrustModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagOnetrustModel) FromParams(p map[string]string) {
-	m.Domain = types.StringValue(p["domain"])
+func (m *tagOnetrustModel) FromParams(p matomo.ParamsMap) {
+	m.Domain = types.StringValue(p["domain"].Scalar)
 }
 
 func (m *tagOnetrustModel) Common() *typedTagCommon {

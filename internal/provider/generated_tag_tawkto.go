@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagTawktoModel struct {
@@ -88,11 +90,13 @@ func (m *tagTawktoModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagTawktoModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["tawkToId"] = m.TawkToId.ValueString()
-	p["tawkToWidgetId"] = m.TawkToWidgetId.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagTawktoModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["tawkToId"] = matomo.ScalarParam(m.TawkToId.ValueString())
+	p["tawkToWidgetId"] = matomo.ScalarParam(m.TawkToWidgetId.ValueString())
 	return p
 }
 
@@ -104,9 +108,9 @@ func (m *tagTawktoModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagTawktoModel) FromParams(p map[string]string) {
-	m.TawkToId = types.StringValue(p["tawkToId"])
-	m.TawkToWidgetId = types.StringValue(p["tawkToWidgetId"])
+func (m *tagTawktoModel) FromParams(p matomo.ParamsMap) {
+	m.TawkToId = types.StringValue(p["tawkToId"].Scalar)
+	m.TawkToWidgetId = types.StringValue(p["tawkToWidgetId"].Scalar)
 }
 
 func (m *tagTawktoModel) Common() *typedTagCommon {

@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagGoogleadsconversionModel struct {
@@ -151,19 +153,21 @@ func (m *tagGoogleadsconversionModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagGoogleadsconversionModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["googleAdsConversionId"] = m.GoogleAdsConversionId.ValueString()
-	p["googleAdsConversionLabel"] = m.GoogleAdsConversionLabel.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagGoogleadsconversionModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["googleAdsConversionId"] = matomo.ScalarParam(m.GoogleAdsConversionId.ValueString())
+	p["googleAdsConversionLabel"] = matomo.ScalarParam(m.GoogleAdsConversionLabel.ValueString())
 	if !m.GoogleAdsConversionValue.IsNull() && !m.GoogleAdsConversionValue.IsUnknown() {
-		p["googleAdsConversionValue"] = m.GoogleAdsConversionValue.ValueString()
+		p["googleAdsConversionValue"] = matomo.ScalarParam(m.GoogleAdsConversionValue.ValueString())
 	}
 	if !m.GoogleAdsConversionTransactionId.IsNull() && !m.GoogleAdsConversionTransactionId.IsUnknown() {
-		p["googleAdsConversionTransactionId"] = m.GoogleAdsConversionTransactionId.ValueString()
+		p["googleAdsConversionTransactionId"] = matomo.ScalarParam(m.GoogleAdsConversionTransactionId.ValueString())
 	}
 	if !m.GoogleAdsConversionCurrency.IsNull() && !m.GoogleAdsConversionCurrency.IsUnknown() {
-		p["googleAdsConversionCurrency"] = m.GoogleAdsConversionCurrency.ValueString()
+		p["googleAdsConversionCurrency"] = matomo.ScalarParam(m.GoogleAdsConversionCurrency.ValueString())
 	}
 	return p
 }
@@ -176,21 +180,21 @@ func (m *tagGoogleadsconversionModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagGoogleadsconversionModel) FromParams(p map[string]string) {
-	m.GoogleAdsConversionId = types.StringValue(p["googleAdsConversionId"])
-	m.GoogleAdsConversionLabel = types.StringValue(p["googleAdsConversionLabel"])
+func (m *tagGoogleadsconversionModel) FromParams(p matomo.ParamsMap) {
+	m.GoogleAdsConversionId = types.StringValue(p["googleAdsConversionId"].Scalar)
+	m.GoogleAdsConversionLabel = types.StringValue(p["googleAdsConversionLabel"].Scalar)
 	if v, ok := p["googleAdsConversionValue"]; ok {
-		m.GoogleAdsConversionValue = types.StringValue(v)
+		m.GoogleAdsConversionValue = types.StringValue(v.Scalar)
 	} else {
 		m.GoogleAdsConversionValue = types.StringNull()
 	}
 	if v, ok := p["googleAdsConversionTransactionId"]; ok {
-		m.GoogleAdsConversionTransactionId = types.StringValue(v)
+		m.GoogleAdsConversionTransactionId = types.StringValue(v.Scalar)
 	} else {
 		m.GoogleAdsConversionTransactionId = types.StringNull()
 	}
 	if v, ok := p["googleAdsConversionCurrency"]; ok {
-		m.GoogleAdsConversionCurrency = types.StringValue(v)
+		m.GoogleAdsConversionCurrency = types.StringValue(v.Scalar)
 	} else {
 		m.GoogleAdsConversionCurrency = types.StringNull()
 	}

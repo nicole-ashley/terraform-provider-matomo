@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type triggerWindowleaveModel struct {
@@ -68,11 +70,13 @@ func (m *triggerWindowleaveModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *triggerWindowleaveModel) ToParams() map[string]string {
-	p := map[string]string{}
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *triggerWindowleaveModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
 	if !m.TriggerLimit.IsNull() && !m.TriggerLimit.IsUnknown() {
-		p["triggerLimit"] = paramInt64String(m.TriggerLimit.ValueInt64())
+		p["triggerLimit"] = matomo.ScalarParam(paramInt64String(m.TriggerLimit.ValueInt64()))
 	}
 	return p
 }
@@ -85,9 +89,9 @@ func (m *triggerWindowleaveModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *triggerWindowleaveModel) FromParams(p map[string]string) {
+func (m *triggerWindowleaveModel) FromParams(p matomo.ParamsMap) {
 	if v, ok := p["triggerLimit"]; ok {
-		m.TriggerLimit = types.Int64Value(paramInt64Value(v))
+		m.TriggerLimit = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.TriggerLimit = types.Int64Null()
 	}

@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type variableEtrackerconfigurationModel struct {
@@ -274,42 +276,44 @@ func (m *variableEtrackerconfigurationModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *variableEtrackerconfigurationModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["etrackerID"] = m.EtrackerID.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *variableEtrackerconfigurationModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["etrackerID"] = matomo.ScalarParam(m.EtrackerID.ValueString())
 	if !m.EtrackerBlockCookies.IsNull() && !m.EtrackerBlockCookies.IsUnknown() {
-		p["etrackerBlockCookies"] = paramBoolString(m.EtrackerBlockCookies.ValueBool())
+		p["etrackerBlockCookies"] = matomo.ScalarParam(paramBoolString(m.EtrackerBlockCookies.ValueBool()))
 	}
 	if !m.EtrackerDNT.IsNull() && !m.EtrackerDNT.IsUnknown() {
-		p["etrackerDNT"] = paramBoolString(m.EtrackerDNT.ValueBool())
+		p["etrackerDNT"] = matomo.ScalarParam(paramBoolString(m.EtrackerDNT.ValueBool()))
 	}
 	if !m.Et_pagename.IsNull() && !m.Et_pagename.IsUnknown() {
-		p["et_pagename"] = m.Et_pagename.ValueString()
+		p["et_pagename"] = matomo.ScalarParam(m.Et_pagename.ValueString())
 	}
 	if !m.Et_areas.IsNull() && !m.Et_areas.IsUnknown() {
-		p["et_areas"] = m.Et_areas.ValueString()
+		p["et_areas"] = matomo.ScalarParam(m.Et_areas.ValueString())
 	}
 	if !m.Et_target.IsNull() && !m.Et_target.IsUnknown() {
-		p["et_target"] = m.Et_target.ValueString()
+		p["et_target"] = matomo.ScalarParam(m.Et_target.ValueString())
 	}
 	if !m.Et_tval.IsNull() && !m.Et_tval.IsUnknown() {
-		p["et_tval"] = m.Et_tval.ValueString()
+		p["et_tval"] = matomo.ScalarParam(m.Et_tval.ValueString())
 	}
 	if !m.Et_tonr.IsNull() && !m.Et_tonr.IsUnknown() {
-		p["et_tonr"] = m.Et_tonr.ValueString()
+		p["et_tonr"] = matomo.ScalarParam(m.Et_tonr.ValueString())
 	}
 	if !m.Et_tsale.IsNull() && !m.Et_tsale.IsUnknown() {
-		p["et_tsale"] = m.Et_tsale.ValueString()
+		p["et_tsale"] = matomo.ScalarParam(m.Et_tsale.ValueString())
 	}
 	if !m.Et_basket.IsNull() && !m.Et_basket.IsUnknown() {
-		p["et_basket"] = m.Et_basket.ValueString()
+		p["et_basket"] = matomo.ScalarParam(m.Et_basket.ValueString())
 	}
 	if !m.Et_cust.IsNull() && !m.Et_cust.IsUnknown() {
-		p["et_cust"] = m.Et_cust.ValueString()
+		p["et_cust"] = matomo.ScalarParam(m.Et_cust.ValueString())
 	}
 	if m.CustomDimensions != nil {
-		p["customDimensions"] = paramListString(m.CustomDimensions)
+		p["customDimensions"] = matomo.ListParam(stringSliceFromModel(m.CustomDimensions))
 	}
 	return p
 }
@@ -322,60 +326,60 @@ func (m *variableEtrackerconfigurationModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *variableEtrackerconfigurationModel) FromParams(p map[string]string) {
-	m.EtrackerID = types.StringValue(p["etrackerID"])
+func (m *variableEtrackerconfigurationModel) FromParams(p matomo.ParamsMap) {
+	m.EtrackerID = types.StringValue(p["etrackerID"].Scalar)
 	if v, ok := p["etrackerBlockCookies"]; ok {
-		m.EtrackerBlockCookies = types.BoolValue(paramBoolValue(v))
+		m.EtrackerBlockCookies = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EtrackerBlockCookies = types.BoolNull()
 	}
 	if v, ok := p["etrackerDNT"]; ok {
-		m.EtrackerDNT = types.BoolValue(paramBoolValue(v))
+		m.EtrackerDNT = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EtrackerDNT = types.BoolNull()
 	}
 	if v, ok := p["et_pagename"]; ok {
-		m.Et_pagename = types.StringValue(v)
+		m.Et_pagename = types.StringValue(v.Scalar)
 	} else {
 		m.Et_pagename = types.StringNull()
 	}
 	if v, ok := p["et_areas"]; ok {
-		m.Et_areas = types.StringValue(v)
+		m.Et_areas = types.StringValue(v.Scalar)
 	} else {
 		m.Et_areas = types.StringNull()
 	}
 	if v, ok := p["et_target"]; ok {
-		m.Et_target = types.StringValue(v)
+		m.Et_target = types.StringValue(v.Scalar)
 	} else {
 		m.Et_target = types.StringNull()
 	}
 	if v, ok := p["et_tval"]; ok {
-		m.Et_tval = types.StringValue(v)
+		m.Et_tval = types.StringValue(v.Scalar)
 	} else {
 		m.Et_tval = types.StringNull()
 	}
 	if v, ok := p["et_tonr"]; ok {
-		m.Et_tonr = types.StringValue(v)
+		m.Et_tonr = types.StringValue(v.Scalar)
 	} else {
 		m.Et_tonr = types.StringNull()
 	}
 	if v, ok := p["et_tsale"]; ok {
-		m.Et_tsale = types.StringValue(v)
+		m.Et_tsale = types.StringValue(v.Scalar)
 	} else {
 		m.Et_tsale = types.StringNull()
 	}
 	if v, ok := p["et_basket"]; ok {
-		m.Et_basket = types.StringValue(v)
+		m.Et_basket = types.StringValue(v.Scalar)
 	} else {
 		m.Et_basket = types.StringNull()
 	}
 	if v, ok := p["et_cust"]; ok {
-		m.Et_cust = types.StringValue(v)
+		m.Et_cust = types.StringValue(v.Scalar)
 	} else {
 		m.Et_cust = types.StringNull()
 	}
 	if v, ok := p["customDimensions"]; ok {
-		m.CustomDimensions = paramListValue(v)
+		m.CustomDimensions = paramListValue(v.List)
 	} else {
 		m.CustomDimensions = nil
 	}

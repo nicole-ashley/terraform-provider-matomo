@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagRaygunModel struct {
@@ -105,12 +107,14 @@ func (m *tagRaygunModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagRaygunModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["raygunApiKey"] = m.RaygunApiKey.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagRaygunModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["raygunApiKey"] = matomo.ScalarParam(m.RaygunApiKey.ValueString())
 	if !m.RaygunEnablePulse.IsNull() && !m.RaygunEnablePulse.IsUnknown() {
-		p["raygunEnablePulse"] = paramBoolString(m.RaygunEnablePulse.ValueBool())
+		p["raygunEnablePulse"] = matomo.ScalarParam(paramBoolString(m.RaygunEnablePulse.ValueBool()))
 	}
 	return p
 }
@@ -123,10 +127,10 @@ func (m *tagRaygunModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagRaygunModel) FromParams(p map[string]string) {
-	m.RaygunApiKey = types.StringValue(p["raygunApiKey"])
+func (m *tagRaygunModel) FromParams(p matomo.ParamsMap) {
+	m.RaygunApiKey = types.StringValue(p["raygunApiKey"].Scalar)
 	if v, ok := p["raygunEnablePulse"]; ok {
-		m.RaygunEnablePulse = types.BoolValue(paramBoolValue(v))
+		m.RaygunEnablePulse = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.RaygunEnablePulse = types.BoolNull()
 	}

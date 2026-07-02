@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type variableMatomoconfigurationModel struct {
@@ -1442,211 +1444,213 @@ func (m *variableMatomoconfigurationModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *variableMatomoconfigurationModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["matomoUrl"] = m.MatomoUrl.ValueString()
-	p["idSite"] = m.IdSite.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["matomoUrl"] = matomo.ScalarParam(m.MatomoUrl.ValueString())
+	p["idSite"] = matomo.ScalarParam(m.IdSite.ValueString())
 	if !m.EnableLinkTracking.IsNull() && !m.EnableLinkTracking.IsUnknown() {
-		p["enableLinkTracking"] = paramBoolString(m.EnableLinkTracking.ValueBool())
+		p["enableLinkTracking"] = matomo.ScalarParam(paramBoolString(m.EnableLinkTracking.ValueBool()))
 	}
 	if !m.EnableFileTracking.IsNull() && !m.EnableFileTracking.IsUnknown() {
-		p["enableFileTracking"] = paramBoolString(m.EnableFileTracking.ValueBool())
+		p["enableFileTracking"] = matomo.ScalarParam(paramBoolString(m.EnableFileTracking.ValueBool()))
 	}
 	if !m.EnableCrossDomainLinking.IsNull() && !m.EnableCrossDomainLinking.IsUnknown() {
-		p["enableCrossDomainLinking"] = paramBoolString(m.EnableCrossDomainLinking.ValueBool())
+		p["enableCrossDomainLinking"] = matomo.ScalarParam(paramBoolString(m.EnableCrossDomainLinking.ValueBool()))
 	}
 	if !m.CrossDomainLinkingTimeout.IsNull() && !m.CrossDomainLinkingTimeout.IsUnknown() {
-		p["crossDomainLinkingTimeout"] = paramInt64String(m.CrossDomainLinkingTimeout.ValueInt64())
+		p["crossDomainLinkingTimeout"] = matomo.ScalarParam(paramInt64String(m.CrossDomainLinkingTimeout.ValueInt64()))
 	}
 	if !m.EnableDoNotTrack.IsNull() && !m.EnableDoNotTrack.IsUnknown() {
-		p["enableDoNotTrack"] = paramBoolString(m.EnableDoNotTrack.ValueBool())
+		p["enableDoNotTrack"] = matomo.ScalarParam(paramBoolString(m.EnableDoNotTrack.ValueBool()))
 	}
 	if !m.DisablePerformanceTracking.IsNull() && !m.DisablePerformanceTracking.IsUnknown() {
-		p["disablePerformanceTracking"] = paramBoolString(m.DisablePerformanceTracking.ValueBool())
+		p["disablePerformanceTracking"] = matomo.ScalarParam(paramBoolString(m.DisablePerformanceTracking.ValueBool()))
 	}
 	if !m.EnableJSErrorTracking.IsNull() && !m.EnableJSErrorTracking.IsUnknown() {
-		p["enableJSErrorTracking"] = paramBoolString(m.EnableJSErrorTracking.ValueBool())
+		p["enableJSErrorTracking"] = matomo.ScalarParam(paramBoolString(m.EnableJSErrorTracking.ValueBool()))
 	}
 	if !m.EnableHeartBeatTimer.IsNull() && !m.EnableHeartBeatTimer.IsUnknown() {
-		p["enableHeartBeatTimer"] = paramBoolString(m.EnableHeartBeatTimer.ValueBool())
+		p["enableHeartBeatTimer"] = matomo.ScalarParam(paramBoolString(m.EnableHeartBeatTimer.ValueBool()))
 	}
 	if !m.HeartBeatTime.IsNull() && !m.HeartBeatTime.IsUnknown() {
-		p["heartBeatTime"] = paramInt64String(m.HeartBeatTime.ValueInt64())
+		p["heartBeatTime"] = matomo.ScalarParam(paramInt64String(m.HeartBeatTime.ValueInt64()))
 	}
 	if !m.TrackAllContentImpressions.IsNull() && !m.TrackAllContentImpressions.IsUnknown() {
-		p["trackAllContentImpressions"] = paramBoolString(m.TrackAllContentImpressions.ValueBool())
+		p["trackAllContentImpressions"] = matomo.ScalarParam(paramBoolString(m.TrackAllContentImpressions.ValueBool()))
 	}
 	if !m.TrackVisibleContentImpressions.IsNull() && !m.TrackVisibleContentImpressions.IsUnknown() {
-		p["trackVisibleContentImpressions"] = paramBoolString(m.TrackVisibleContentImpressions.ValueBool())
+		p["trackVisibleContentImpressions"] = matomo.ScalarParam(paramBoolString(m.TrackVisibleContentImpressions.ValueBool()))
 	}
 	if !m.TrackBots.IsNull() && !m.TrackBots.IsUnknown() {
-		p["trackBots"] = paramBoolString(m.TrackBots.ValueBool())
+		p["trackBots"] = matomo.ScalarParam(paramBoolString(m.TrackBots.ValueBool()))
 	}
 	if !m.DisableCookies.IsNull() && !m.DisableCookies.IsUnknown() {
-		p["disableCookies"] = paramBoolString(m.DisableCookies.ValueBool())
+		p["disableCookies"] = matomo.ScalarParam(paramBoolString(m.DisableCookies.ValueBool()))
 	}
 	if !m.RequireConsent.IsNull() && !m.RequireConsent.IsUnknown() {
-		p["requireConsent"] = paramBoolString(m.RequireConsent.ValueBool())
+		p["requireConsent"] = matomo.ScalarParam(paramBoolString(m.RequireConsent.ValueBool()))
 	}
 	if !m.RequireCookieConsent.IsNull() && !m.RequireCookieConsent.IsUnknown() {
-		p["requireCookieConsent"] = paramBoolString(m.RequireCookieConsent.ValueBool())
+		p["requireCookieConsent"] = matomo.ScalarParam(paramBoolString(m.RequireCookieConsent.ValueBool()))
 	}
 	if !m.CustomCookieTimeOutEnable.IsNull() && !m.CustomCookieTimeOutEnable.IsUnknown() {
-		p["customCookieTimeOutEnable"] = paramBoolString(m.CustomCookieTimeOutEnable.ValueBool())
+		p["customCookieTimeOutEnable"] = matomo.ScalarParam(paramBoolString(m.CustomCookieTimeOutEnable.ValueBool()))
 	}
 	if !m.CustomCookieTimeOut.IsNull() && !m.CustomCookieTimeOut.IsUnknown() {
-		p["customCookieTimeOut"] = paramInt64String(m.CustomCookieTimeOut.ValueInt64())
+		p["customCookieTimeOut"] = matomo.ScalarParam(paramInt64String(m.CustomCookieTimeOut.ValueInt64()))
 	}
 	if !m.ReferralCookieTimeOut.IsNull() && !m.ReferralCookieTimeOut.IsUnknown() {
-		p["referralCookieTimeOut"] = paramInt64String(m.ReferralCookieTimeOut.ValueInt64())
+		p["referralCookieTimeOut"] = matomo.ScalarParam(paramInt64String(m.ReferralCookieTimeOut.ValueInt64()))
 	}
 	if !m.SessionCookieTimeOut.IsNull() && !m.SessionCookieTimeOut.IsUnknown() {
-		p["sessionCookieTimeOut"] = paramInt64String(m.SessionCookieTimeOut.ValueInt64())
+		p["sessionCookieTimeOut"] = matomo.ScalarParam(paramInt64String(m.SessionCookieTimeOut.ValueInt64()))
 	}
 	if !m.SetSecureCookie.IsNull() && !m.SetSecureCookie.IsUnknown() {
-		p["setSecureCookie"] = paramBoolString(m.SetSecureCookie.ValueBool())
+		p["setSecureCookie"] = matomo.ScalarParam(paramBoolString(m.SetSecureCookie.ValueBool()))
 	}
 	if !m.CookieDomain.IsNull() && !m.CookieDomain.IsUnknown() {
-		p["cookieDomain"] = m.CookieDomain.ValueString()
+		p["cookieDomain"] = matomo.ScalarParam(m.CookieDomain.ValueString())
 	}
 	if !m.CookieNamePrefix.IsNull() && !m.CookieNamePrefix.IsUnknown() {
-		p["cookieNamePrefix"] = m.CookieNamePrefix.ValueString()
+		p["cookieNamePrefix"] = matomo.ScalarParam(m.CookieNamePrefix.ValueString())
 	}
 	if !m.CookiePath.IsNull() && !m.CookiePath.IsUnknown() {
-		p["cookiePath"] = m.CookiePath.ValueString()
+		p["cookiePath"] = matomo.ScalarParam(m.CookiePath.ValueString())
 	}
 	if !m.CookieSameSite.IsNull() && !m.CookieSameSite.IsUnknown() {
-		p["cookieSameSite"] = m.CookieSameSite.ValueString()
+		p["cookieSameSite"] = matomo.ScalarParam(m.CookieSameSite.ValueString())
 	}
 	if !m.DisableBrowserFeatureDetection.IsNull() && !m.DisableBrowserFeatureDetection.IsUnknown() {
-		p["disableBrowserFeatureDetection"] = paramBoolString(m.DisableBrowserFeatureDetection.ValueBool())
+		p["disableBrowserFeatureDetection"] = matomo.ScalarParam(paramBoolString(m.DisableBrowserFeatureDetection.ValueBool()))
 	}
 	if !m.DisableCampaignParameters.IsNull() && !m.DisableCampaignParameters.IsUnknown() {
-		p["disableCampaignParameters"] = paramBoolString(m.DisableCampaignParameters.ValueBool())
+		p["disableCampaignParameters"] = matomo.ScalarParam(paramBoolString(m.DisableCampaignParameters.ValueBool()))
 	}
 	if m.Domains != nil {
-		p["domains"] = paramListString(m.Domains)
+		p["domains"] = matomo.ListParam(stringSliceFromModel(m.Domains))
 	}
 	if !m.AlwaysUseSendBeacon.IsNull() && !m.AlwaysUseSendBeacon.IsUnknown() {
-		p["alwaysUseSendBeacon"] = paramBoolString(m.AlwaysUseSendBeacon.ValueBool())
+		p["alwaysUseSendBeacon"] = matomo.ScalarParam(paramBoolString(m.AlwaysUseSendBeacon.ValueBool()))
 	}
 	if !m.DisableAlwaysUseSendBeacon.IsNull() && !m.DisableAlwaysUseSendBeacon.IsUnknown() {
-		p["disableAlwaysUseSendBeacon"] = paramBoolString(m.DisableAlwaysUseSendBeacon.ValueBool())
+		p["disableAlwaysUseSendBeacon"] = matomo.ScalarParam(paramBoolString(m.DisableAlwaysUseSendBeacon.ValueBool()))
 	}
 	if !m.UserId.IsNull() && !m.UserId.IsUnknown() {
-		p["userId"] = m.UserId.ValueString()
+		p["userId"] = matomo.ScalarParam(m.UserId.ValueString())
 	}
 	if m.CustomDimensions != nil {
-		p["customDimensions"] = paramListString(m.CustomDimensions)
+		p["customDimensions"] = matomo.ListParam(stringSliceFromModel(m.CustomDimensions))
 	}
 	if !m.RegisterAsDefaultTracker.IsNull() && !m.RegisterAsDefaultTracker.IsUnknown() {
-		p["registerAsDefaultTracker"] = paramBoolString(m.RegisterAsDefaultTracker.ValueBool())
+		p["registerAsDefaultTracker"] = matomo.ScalarParam(paramBoolString(m.RegisterAsDefaultTracker.ValueBool()))
 	}
 	if !m.BundleTracker.IsNull() && !m.BundleTracker.IsUnknown() {
-		p["bundleTracker"] = paramBoolString(m.BundleTracker.ValueBool())
+		p["bundleTracker"] = matomo.ScalarParam(paramBoolString(m.BundleTracker.ValueBool()))
 	}
 	if !m.JsEndpoint.IsNull() && !m.JsEndpoint.IsUnknown() {
-		p["jsEndpoint"] = m.JsEndpoint.ValueString()
+		p["jsEndpoint"] = matomo.ScalarParam(m.JsEndpoint.ValueString())
 	}
 	if !m.JsEndpointCustom.IsNull() && !m.JsEndpointCustom.IsUnknown() {
-		p["jsEndpointCustom"] = m.JsEndpointCustom.ValueString()
+		p["jsEndpointCustom"] = matomo.ScalarParam(m.JsEndpointCustom.ValueString())
 	}
 	if !m.TrackingEndpoint.IsNull() && !m.TrackingEndpoint.IsUnknown() {
-		p["trackingEndpoint"] = m.TrackingEndpoint.ValueString()
+		p["trackingEndpoint"] = matomo.ScalarParam(m.TrackingEndpoint.ValueString())
 	}
 	if !m.TrackingEndpointCustom.IsNull() && !m.TrackingEndpointCustom.IsUnknown() {
-		p["trackingEndpointCustom"] = m.TrackingEndpointCustom.ValueString()
+		p["trackingEndpointCustom"] = matomo.ScalarParam(m.TrackingEndpointCustom.ValueString())
 	}
 	if !m.AppendToTrackingUrl.IsNull() && !m.AppendToTrackingUrl.IsUnknown() {
-		p["appendToTrackingUrl"] = m.AppendToTrackingUrl.ValueString()
+		p["appendToTrackingUrl"] = matomo.ScalarParam(m.AppendToTrackingUrl.ValueString())
 	}
 	if !m.ForceRequestMethod.IsNull() && !m.ForceRequestMethod.IsUnknown() {
-		p["forceRequestMethod"] = paramBoolString(m.ForceRequestMethod.ValueBool())
+		p["forceRequestMethod"] = matomo.ScalarParam(paramBoolString(m.ForceRequestMethod.ValueBool()))
 	}
 	if !m.RequestMethod.IsNull() && !m.RequestMethod.IsUnknown() {
-		p["requestMethod"] = m.RequestMethod.ValueString()
+		p["requestMethod"] = matomo.ScalarParam(m.RequestMethod.ValueString())
 	}
 	if !m.RequestContentType.IsNull() && !m.RequestContentType.IsUnknown() {
-		p["requestContentType"] = m.RequestContentType.ValueString()
+		p["requestContentType"] = matomo.ScalarParam(m.RequestContentType.ValueString())
 	}
 	if !m.CustomRequestProcessing.IsNull() && !m.CustomRequestProcessing.IsUnknown() {
-		p["customRequestProcessing"] = m.CustomRequestProcessing.ValueString()
+		p["customRequestProcessing"] = matomo.ScalarParam(m.CustomRequestProcessing.ValueString())
 	}
 	if m.CustomData != nil {
-		p["customData"] = paramListString(m.CustomData)
+		p["customData"] = matomo.ListParam(stringSliceFromModel(m.CustomData))
 	}
 	if !m.SetDownloadExtensions.IsNull() && !m.SetDownloadExtensions.IsUnknown() {
-		p["setDownloadExtensions"] = m.SetDownloadExtensions.ValueString()
+		p["setDownloadExtensions"] = matomo.ScalarParam(m.SetDownloadExtensions.ValueString())
 	}
 	if !m.AddDownloadExtensions.IsNull() && !m.AddDownloadExtensions.IsUnknown() {
-		p["addDownloadExtensions"] = m.AddDownloadExtensions.ValueString()
+		p["addDownloadExtensions"] = matomo.ScalarParam(m.AddDownloadExtensions.ValueString())
 	}
 	if !m.RemoveDownloadExtensions.IsNull() && !m.RemoveDownloadExtensions.IsUnknown() {
-		p["removeDownloadExtensions"] = m.RemoveDownloadExtensions.ValueString()
+		p["removeDownloadExtensions"] = matomo.ScalarParam(m.RemoveDownloadExtensions.ValueString())
 	}
 	if !m.SetIgnoreClasses.IsNull() && !m.SetIgnoreClasses.IsUnknown() {
-		p["setIgnoreClasses"] = m.SetIgnoreClasses.ValueString()
+		p["setIgnoreClasses"] = matomo.ScalarParam(m.SetIgnoreClasses.ValueString())
 	}
 	if !m.SetReferrerUrl.IsNull() && !m.SetReferrerUrl.IsUnknown() {
-		p["setReferrerUrl"] = m.SetReferrerUrl.ValueString()
+		p["setReferrerUrl"] = matomo.ScalarParam(m.SetReferrerUrl.ValueString())
 	}
 	if !m.SetApiUrl.IsNull() && !m.SetApiUrl.IsUnknown() {
-		p["setApiUrl"] = m.SetApiUrl.ValueString()
+		p["setApiUrl"] = matomo.ScalarParam(m.SetApiUrl.ValueString())
 	}
 	if !m.SetPageViewId.IsNull() && !m.SetPageViewId.IsUnknown() {
-		p["setPageViewId"] = m.SetPageViewId.ValueString()
+		p["setPageViewId"] = matomo.ScalarParam(m.SetPageViewId.ValueString())
 	}
 	if !m.SetExcludedReferrers.IsNull() && !m.SetExcludedReferrers.IsUnknown() {
-		p["setExcludedReferrers"] = m.SetExcludedReferrers.ValueString()
+		p["setExcludedReferrers"] = matomo.ScalarParam(m.SetExcludedReferrers.ValueString())
 	}
 	if !m.SetDownloadClasses.IsNull() && !m.SetDownloadClasses.IsUnknown() {
-		p["setDownloadClasses"] = m.SetDownloadClasses.ValueString()
+		p["setDownloadClasses"] = matomo.ScalarParam(m.SetDownloadClasses.ValueString())
 	}
 	if !m.SetLinkClasses.IsNull() && !m.SetLinkClasses.IsUnknown() {
-		p["setLinkClasses"] = m.SetLinkClasses.ValueString()
+		p["setLinkClasses"] = matomo.ScalarParam(m.SetLinkClasses.ValueString())
 	}
 	if !m.SetCampaignNameKey.IsNull() && !m.SetCampaignNameKey.IsUnknown() {
-		p["setCampaignNameKey"] = m.SetCampaignNameKey.ValueString()
+		p["setCampaignNameKey"] = matomo.ScalarParam(m.SetCampaignNameKey.ValueString())
 	}
 	if !m.SetCampaignKeywordKey.IsNull() && !m.SetCampaignKeywordKey.IsUnknown() {
-		p["setCampaignKeywordKey"] = m.SetCampaignKeywordKey.ValueString()
+		p["setCampaignKeywordKey"] = matomo.ScalarParam(m.SetCampaignKeywordKey.ValueString())
 	}
 	if !m.SetConsentGiven.IsNull() && !m.SetConsentGiven.IsUnknown() {
-		p["setConsentGiven"] = paramBoolString(m.SetConsentGiven.ValueBool())
+		p["setConsentGiven"] = matomo.ScalarParam(paramBoolString(m.SetConsentGiven.ValueBool()))
 	}
 	if !m.RememberConsentGiven.IsNull() && !m.RememberConsentGiven.IsUnknown() {
-		p["rememberConsentGiven"] = paramBoolString(m.RememberConsentGiven.ValueBool())
+		p["rememberConsentGiven"] = matomo.ScalarParam(paramBoolString(m.RememberConsentGiven.ValueBool()))
 	}
 	if !m.RememberConsentGivenForHours.IsNull() && !m.RememberConsentGivenForHours.IsUnknown() {
-		p["rememberConsentGivenForHours"] = m.RememberConsentGivenForHours.ValueString()
+		p["rememberConsentGivenForHours"] = matomo.ScalarParam(m.RememberConsentGivenForHours.ValueString())
 	}
 	if !m.ForgetConsentGiven.IsNull() && !m.ForgetConsentGiven.IsUnknown() {
-		p["forgetConsentGiven"] = paramBoolString(m.ForgetConsentGiven.ValueBool())
+		p["forgetConsentGiven"] = matomo.ScalarParam(paramBoolString(m.ForgetConsentGiven.ValueBool()))
 	}
 	if !m.DiscardHashTag.IsNull() && !m.DiscardHashTag.IsUnknown() {
-		p["discardHashTag"] = paramBoolString(m.DiscardHashTag.ValueBool())
+		p["discardHashTag"] = matomo.ScalarParam(paramBoolString(m.DiscardHashTag.ValueBool()))
 	}
 	if !m.SetExcludedQueryParams.IsNull() && !m.SetExcludedQueryParams.IsUnknown() {
-		p["setExcludedQueryParams"] = m.SetExcludedQueryParams.ValueString()
+		p["setExcludedQueryParams"] = matomo.ScalarParam(m.SetExcludedQueryParams.ValueString())
 	}
 	if !m.SetConversionAttributionFirstReferrer.IsNull() && !m.SetConversionAttributionFirstReferrer.IsUnknown() {
-		p["setConversionAttributionFirstReferrer"] = paramBoolString(m.SetConversionAttributionFirstReferrer.ValueBool())
+		p["setConversionAttributionFirstReferrer"] = matomo.ScalarParam(paramBoolString(m.SetConversionAttributionFirstReferrer.ValueBool()))
 	}
 	if !m.SetDoNotTrack.IsNull() && !m.SetDoNotTrack.IsUnknown() {
-		p["setDoNotTrack"] = paramBoolString(m.SetDoNotTrack.ValueBool())
+		p["setDoNotTrack"] = matomo.ScalarParam(paramBoolString(m.SetDoNotTrack.ValueBool()))
 	}
 	if !m.SetLinkTrackingTimer.IsNull() && !m.SetLinkTrackingTimer.IsUnknown() {
-		p["setLinkTrackingTimer"] = m.SetLinkTrackingTimer.ValueString()
+		p["setLinkTrackingTimer"] = matomo.ScalarParam(m.SetLinkTrackingTimer.ValueString())
 	}
 	if !m.KillFrame.IsNull() && !m.KillFrame.IsUnknown() {
-		p["killFrame"] = paramBoolString(m.KillFrame.ValueBool())
+		p["killFrame"] = matomo.ScalarParam(paramBoolString(m.KillFrame.ValueBool()))
 	}
 	if !m.SetCountPreRendered.IsNull() && !m.SetCountPreRendered.IsUnknown() {
-		p["setCountPreRendered"] = paramBoolString(m.SetCountPreRendered.ValueBool())
+		p["setCountPreRendered"] = matomo.ScalarParam(paramBoolString(m.SetCountPreRendered.ValueBool()))
 	}
 	if !m.SetRequestQueueInterval.IsNull() && !m.SetRequestQueueInterval.IsUnknown() {
-		p["setRequestQueueInterval"] = m.SetRequestQueueInterval.ValueString()
+		p["setRequestQueueInterval"] = matomo.ScalarParam(m.SetRequestQueueInterval.ValueString())
 	}
 	return p
 }
@@ -1659,341 +1663,341 @@ func (m *variableMatomoconfigurationModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *variableMatomoconfigurationModel) FromParams(p map[string]string) {
-	m.MatomoUrl = types.StringValue(p["matomoUrl"])
-	m.IdSite = types.StringValue(p["idSite"])
+func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
+	m.MatomoUrl = types.StringValue(p["matomoUrl"].Scalar)
+	m.IdSite = types.StringValue(p["idSite"].Scalar)
 	if v, ok := p["enableLinkTracking"]; ok {
-		m.EnableLinkTracking = types.BoolValue(paramBoolValue(v))
+		m.EnableLinkTracking = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableLinkTracking = types.BoolNull()
 	}
 	if v, ok := p["enableFileTracking"]; ok {
-		m.EnableFileTracking = types.BoolValue(paramBoolValue(v))
+		m.EnableFileTracking = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableFileTracking = types.BoolNull()
 	}
 	if v, ok := p["enableCrossDomainLinking"]; ok {
-		m.EnableCrossDomainLinking = types.BoolValue(paramBoolValue(v))
+		m.EnableCrossDomainLinking = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableCrossDomainLinking = types.BoolNull()
 	}
 	if v, ok := p["crossDomainLinkingTimeout"]; ok {
-		m.CrossDomainLinkingTimeout = types.Int64Value(paramInt64Value(v))
+		m.CrossDomainLinkingTimeout = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.CrossDomainLinkingTimeout = types.Int64Null()
 	}
 	if v, ok := p["enableDoNotTrack"]; ok {
-		m.EnableDoNotTrack = types.BoolValue(paramBoolValue(v))
+		m.EnableDoNotTrack = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableDoNotTrack = types.BoolNull()
 	}
 	if v, ok := p["disablePerformanceTracking"]; ok {
-		m.DisablePerformanceTracking = types.BoolValue(paramBoolValue(v))
+		m.DisablePerformanceTracking = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.DisablePerformanceTracking = types.BoolNull()
 	}
 	if v, ok := p["enableJSErrorTracking"]; ok {
-		m.EnableJSErrorTracking = types.BoolValue(paramBoolValue(v))
+		m.EnableJSErrorTracking = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableJSErrorTracking = types.BoolNull()
 	}
 	if v, ok := p["enableHeartBeatTimer"]; ok {
-		m.EnableHeartBeatTimer = types.BoolValue(paramBoolValue(v))
+		m.EnableHeartBeatTimer = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableHeartBeatTimer = types.BoolNull()
 	}
 	if v, ok := p["heartBeatTime"]; ok {
-		m.HeartBeatTime = types.Int64Value(paramInt64Value(v))
+		m.HeartBeatTime = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.HeartBeatTime = types.Int64Null()
 	}
 	if v, ok := p["trackAllContentImpressions"]; ok {
-		m.TrackAllContentImpressions = types.BoolValue(paramBoolValue(v))
+		m.TrackAllContentImpressions = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.TrackAllContentImpressions = types.BoolNull()
 	}
 	if v, ok := p["trackVisibleContentImpressions"]; ok {
-		m.TrackVisibleContentImpressions = types.BoolValue(paramBoolValue(v))
+		m.TrackVisibleContentImpressions = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.TrackVisibleContentImpressions = types.BoolNull()
 	}
 	if v, ok := p["trackBots"]; ok {
-		m.TrackBots = types.BoolValue(paramBoolValue(v))
+		m.TrackBots = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.TrackBots = types.BoolNull()
 	}
 	if v, ok := p["disableCookies"]; ok {
-		m.DisableCookies = types.BoolValue(paramBoolValue(v))
+		m.DisableCookies = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.DisableCookies = types.BoolNull()
 	}
 	if v, ok := p["requireConsent"]; ok {
-		m.RequireConsent = types.BoolValue(paramBoolValue(v))
+		m.RequireConsent = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.RequireConsent = types.BoolNull()
 	}
 	if v, ok := p["requireCookieConsent"]; ok {
-		m.RequireCookieConsent = types.BoolValue(paramBoolValue(v))
+		m.RequireCookieConsent = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.RequireCookieConsent = types.BoolNull()
 	}
 	if v, ok := p["customCookieTimeOutEnable"]; ok {
-		m.CustomCookieTimeOutEnable = types.BoolValue(paramBoolValue(v))
+		m.CustomCookieTimeOutEnable = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.CustomCookieTimeOutEnable = types.BoolNull()
 	}
 	if v, ok := p["customCookieTimeOut"]; ok {
-		m.CustomCookieTimeOut = types.Int64Value(paramInt64Value(v))
+		m.CustomCookieTimeOut = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.CustomCookieTimeOut = types.Int64Null()
 	}
 	if v, ok := p["referralCookieTimeOut"]; ok {
-		m.ReferralCookieTimeOut = types.Int64Value(paramInt64Value(v))
+		m.ReferralCookieTimeOut = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.ReferralCookieTimeOut = types.Int64Null()
 	}
 	if v, ok := p["sessionCookieTimeOut"]; ok {
-		m.SessionCookieTimeOut = types.Int64Value(paramInt64Value(v))
+		m.SessionCookieTimeOut = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.SessionCookieTimeOut = types.Int64Null()
 	}
 	if v, ok := p["setSecureCookie"]; ok {
-		m.SetSecureCookie = types.BoolValue(paramBoolValue(v))
+		m.SetSecureCookie = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.SetSecureCookie = types.BoolNull()
 	}
 	if v, ok := p["cookieDomain"]; ok {
-		m.CookieDomain = types.StringValue(v)
+		m.CookieDomain = types.StringValue(v.Scalar)
 	} else {
 		m.CookieDomain = types.StringNull()
 	}
 	if v, ok := p["cookieNamePrefix"]; ok {
-		m.CookieNamePrefix = types.StringValue(v)
+		m.CookieNamePrefix = types.StringValue(v.Scalar)
 	} else {
 		m.CookieNamePrefix = types.StringNull()
 	}
 	if v, ok := p["cookiePath"]; ok {
-		m.CookiePath = types.StringValue(v)
+		m.CookiePath = types.StringValue(v.Scalar)
 	} else {
 		m.CookiePath = types.StringNull()
 	}
 	if v, ok := p["cookieSameSite"]; ok {
-		m.CookieSameSite = types.StringValue(v)
+		m.CookieSameSite = types.StringValue(v.Scalar)
 	} else {
 		m.CookieSameSite = types.StringNull()
 	}
 	if v, ok := p["disableBrowserFeatureDetection"]; ok {
-		m.DisableBrowserFeatureDetection = types.BoolValue(paramBoolValue(v))
+		m.DisableBrowserFeatureDetection = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.DisableBrowserFeatureDetection = types.BoolNull()
 	}
 	if v, ok := p["disableCampaignParameters"]; ok {
-		m.DisableCampaignParameters = types.BoolValue(paramBoolValue(v))
+		m.DisableCampaignParameters = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.DisableCampaignParameters = types.BoolNull()
 	}
 	if v, ok := p["domains"]; ok {
-		m.Domains = paramListValue(v)
+		m.Domains = paramListValue(v.List)
 	} else {
 		m.Domains = nil
 	}
 	if v, ok := p["alwaysUseSendBeacon"]; ok {
-		m.AlwaysUseSendBeacon = types.BoolValue(paramBoolValue(v))
+		m.AlwaysUseSendBeacon = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.AlwaysUseSendBeacon = types.BoolNull()
 	}
 	if v, ok := p["disableAlwaysUseSendBeacon"]; ok {
-		m.DisableAlwaysUseSendBeacon = types.BoolValue(paramBoolValue(v))
+		m.DisableAlwaysUseSendBeacon = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.DisableAlwaysUseSendBeacon = types.BoolNull()
 	}
 	if v, ok := p["userId"]; ok {
-		m.UserId = types.StringValue(v)
+		m.UserId = types.StringValue(v.Scalar)
 	} else {
 		m.UserId = types.StringNull()
 	}
 	if v, ok := p["customDimensions"]; ok {
-		m.CustomDimensions = paramListValue(v)
+		m.CustomDimensions = paramListValue(v.List)
 	} else {
 		m.CustomDimensions = nil
 	}
 	if v, ok := p["registerAsDefaultTracker"]; ok {
-		m.RegisterAsDefaultTracker = types.BoolValue(paramBoolValue(v))
+		m.RegisterAsDefaultTracker = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.RegisterAsDefaultTracker = types.BoolNull()
 	}
 	if v, ok := p["bundleTracker"]; ok {
-		m.BundleTracker = types.BoolValue(paramBoolValue(v))
+		m.BundleTracker = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.BundleTracker = types.BoolNull()
 	}
 	if v, ok := p["jsEndpoint"]; ok {
-		m.JsEndpoint = types.StringValue(v)
+		m.JsEndpoint = types.StringValue(v.Scalar)
 	} else {
 		m.JsEndpoint = types.StringNull()
 	}
 	if v, ok := p["jsEndpointCustom"]; ok {
-		m.JsEndpointCustom = types.StringValue(v)
+		m.JsEndpointCustom = types.StringValue(v.Scalar)
 	} else {
 		m.JsEndpointCustom = types.StringNull()
 	}
 	if v, ok := p["trackingEndpoint"]; ok {
-		m.TrackingEndpoint = types.StringValue(v)
+		m.TrackingEndpoint = types.StringValue(v.Scalar)
 	} else {
 		m.TrackingEndpoint = types.StringNull()
 	}
 	if v, ok := p["trackingEndpointCustom"]; ok {
-		m.TrackingEndpointCustom = types.StringValue(v)
+		m.TrackingEndpointCustom = types.StringValue(v.Scalar)
 	} else {
 		m.TrackingEndpointCustom = types.StringNull()
 	}
 	if v, ok := p["appendToTrackingUrl"]; ok {
-		m.AppendToTrackingUrl = types.StringValue(v)
+		m.AppendToTrackingUrl = types.StringValue(v.Scalar)
 	} else {
 		m.AppendToTrackingUrl = types.StringNull()
 	}
 	if v, ok := p["forceRequestMethod"]; ok {
-		m.ForceRequestMethod = types.BoolValue(paramBoolValue(v))
+		m.ForceRequestMethod = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.ForceRequestMethod = types.BoolNull()
 	}
 	if v, ok := p["requestMethod"]; ok {
-		m.RequestMethod = types.StringValue(v)
+		m.RequestMethod = types.StringValue(v.Scalar)
 	} else {
 		m.RequestMethod = types.StringNull()
 	}
 	if v, ok := p["requestContentType"]; ok {
-		m.RequestContentType = types.StringValue(v)
+		m.RequestContentType = types.StringValue(v.Scalar)
 	} else {
 		m.RequestContentType = types.StringNull()
 	}
 	if v, ok := p["customRequestProcessing"]; ok {
-		m.CustomRequestProcessing = types.StringValue(v)
+		m.CustomRequestProcessing = types.StringValue(v.Scalar)
 	} else {
 		m.CustomRequestProcessing = types.StringNull()
 	}
 	if v, ok := p["customData"]; ok {
-		m.CustomData = paramListValue(v)
+		m.CustomData = paramListValue(v.List)
 	} else {
 		m.CustomData = nil
 	}
 	if v, ok := p["setDownloadExtensions"]; ok {
-		m.SetDownloadExtensions = types.StringValue(v)
+		m.SetDownloadExtensions = types.StringValue(v.Scalar)
 	} else {
 		m.SetDownloadExtensions = types.StringNull()
 	}
 	if v, ok := p["addDownloadExtensions"]; ok {
-		m.AddDownloadExtensions = types.StringValue(v)
+		m.AddDownloadExtensions = types.StringValue(v.Scalar)
 	} else {
 		m.AddDownloadExtensions = types.StringNull()
 	}
 	if v, ok := p["removeDownloadExtensions"]; ok {
-		m.RemoveDownloadExtensions = types.StringValue(v)
+		m.RemoveDownloadExtensions = types.StringValue(v.Scalar)
 	} else {
 		m.RemoveDownloadExtensions = types.StringNull()
 	}
 	if v, ok := p["setIgnoreClasses"]; ok {
-		m.SetIgnoreClasses = types.StringValue(v)
+		m.SetIgnoreClasses = types.StringValue(v.Scalar)
 	} else {
 		m.SetIgnoreClasses = types.StringNull()
 	}
 	if v, ok := p["setReferrerUrl"]; ok {
-		m.SetReferrerUrl = types.StringValue(v)
+		m.SetReferrerUrl = types.StringValue(v.Scalar)
 	} else {
 		m.SetReferrerUrl = types.StringNull()
 	}
 	if v, ok := p["setApiUrl"]; ok {
-		m.SetApiUrl = types.StringValue(v)
+		m.SetApiUrl = types.StringValue(v.Scalar)
 	} else {
 		m.SetApiUrl = types.StringNull()
 	}
 	if v, ok := p["setPageViewId"]; ok {
-		m.SetPageViewId = types.StringValue(v)
+		m.SetPageViewId = types.StringValue(v.Scalar)
 	} else {
 		m.SetPageViewId = types.StringNull()
 	}
 	if v, ok := p["setExcludedReferrers"]; ok {
-		m.SetExcludedReferrers = types.StringValue(v)
+		m.SetExcludedReferrers = types.StringValue(v.Scalar)
 	} else {
 		m.SetExcludedReferrers = types.StringNull()
 	}
 	if v, ok := p["setDownloadClasses"]; ok {
-		m.SetDownloadClasses = types.StringValue(v)
+		m.SetDownloadClasses = types.StringValue(v.Scalar)
 	} else {
 		m.SetDownloadClasses = types.StringNull()
 	}
 	if v, ok := p["setLinkClasses"]; ok {
-		m.SetLinkClasses = types.StringValue(v)
+		m.SetLinkClasses = types.StringValue(v.Scalar)
 	} else {
 		m.SetLinkClasses = types.StringNull()
 	}
 	if v, ok := p["setCampaignNameKey"]; ok {
-		m.SetCampaignNameKey = types.StringValue(v)
+		m.SetCampaignNameKey = types.StringValue(v.Scalar)
 	} else {
 		m.SetCampaignNameKey = types.StringNull()
 	}
 	if v, ok := p["setCampaignKeywordKey"]; ok {
-		m.SetCampaignKeywordKey = types.StringValue(v)
+		m.SetCampaignKeywordKey = types.StringValue(v.Scalar)
 	} else {
 		m.SetCampaignKeywordKey = types.StringNull()
 	}
 	if v, ok := p["setConsentGiven"]; ok {
-		m.SetConsentGiven = types.BoolValue(paramBoolValue(v))
+		m.SetConsentGiven = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.SetConsentGiven = types.BoolNull()
 	}
 	if v, ok := p["rememberConsentGiven"]; ok {
-		m.RememberConsentGiven = types.BoolValue(paramBoolValue(v))
+		m.RememberConsentGiven = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.RememberConsentGiven = types.BoolNull()
 	}
 	if v, ok := p["rememberConsentGivenForHours"]; ok {
-		m.RememberConsentGivenForHours = types.StringValue(v)
+		m.RememberConsentGivenForHours = types.StringValue(v.Scalar)
 	} else {
 		m.RememberConsentGivenForHours = types.StringNull()
 	}
 	if v, ok := p["forgetConsentGiven"]; ok {
-		m.ForgetConsentGiven = types.BoolValue(paramBoolValue(v))
+		m.ForgetConsentGiven = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.ForgetConsentGiven = types.BoolNull()
 	}
 	if v, ok := p["discardHashTag"]; ok {
-		m.DiscardHashTag = types.BoolValue(paramBoolValue(v))
+		m.DiscardHashTag = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.DiscardHashTag = types.BoolNull()
 	}
 	if v, ok := p["setExcludedQueryParams"]; ok {
-		m.SetExcludedQueryParams = types.StringValue(v)
+		m.SetExcludedQueryParams = types.StringValue(v.Scalar)
 	} else {
 		m.SetExcludedQueryParams = types.StringNull()
 	}
 	if v, ok := p["setConversionAttributionFirstReferrer"]; ok {
-		m.SetConversionAttributionFirstReferrer = types.BoolValue(paramBoolValue(v))
+		m.SetConversionAttributionFirstReferrer = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.SetConversionAttributionFirstReferrer = types.BoolNull()
 	}
 	if v, ok := p["setDoNotTrack"]; ok {
-		m.SetDoNotTrack = types.BoolValue(paramBoolValue(v))
+		m.SetDoNotTrack = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.SetDoNotTrack = types.BoolNull()
 	}
 	if v, ok := p["setLinkTrackingTimer"]; ok {
-		m.SetLinkTrackingTimer = types.StringValue(v)
+		m.SetLinkTrackingTimer = types.StringValue(v.Scalar)
 	} else {
 		m.SetLinkTrackingTimer = types.StringNull()
 	}
 	if v, ok := p["killFrame"]; ok {
-		m.KillFrame = types.BoolValue(paramBoolValue(v))
+		m.KillFrame = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.KillFrame = types.BoolNull()
 	}
 	if v, ok := p["setCountPreRendered"]; ok {
-		m.SetCountPreRendered = types.BoolValue(paramBoolValue(v))
+		m.SetCountPreRendered = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.SetCountPreRendered = types.BoolNull()
 	}
 	if v, ok := p["setRequestQueueInterval"]; ok {
-		m.SetRequestQueueInterval = types.StringValue(v)
+		m.SetRequestQueueInterval = types.StringValue(v.Scalar)
 	} else {
 		m.SetRequestQueueInterval = types.StringNull()
 	}

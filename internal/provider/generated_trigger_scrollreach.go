@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type triggerScrollreachModel struct {
@@ -99,15 +101,17 @@ func (m *triggerScrollreachModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *triggerScrollreachModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["scrollType"] = m.ScrollType.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *triggerScrollreachModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["scrollType"] = matomo.ScalarParam(m.ScrollType.ValueString())
 	if !m.Pixels.IsNull() && !m.Pixels.IsUnknown() {
-		p["pixels"] = paramInt64String(m.Pixels.ValueInt64())
+		p["pixels"] = matomo.ScalarParam(paramInt64String(m.Pixels.ValueInt64()))
 	}
 	if !m.Percentage.IsNull() && !m.Percentage.IsUnknown() {
-		p["percentage"] = paramInt64String(m.Percentage.ValueInt64())
+		p["percentage"] = matomo.ScalarParam(paramInt64String(m.Percentage.ValueInt64()))
 	}
 	return p
 }
@@ -120,15 +124,15 @@ func (m *triggerScrollreachModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *triggerScrollreachModel) FromParams(p map[string]string) {
-	m.ScrollType = types.StringValue(p["scrollType"])
+func (m *triggerScrollreachModel) FromParams(p matomo.ParamsMap) {
+	m.ScrollType = types.StringValue(p["scrollType"].Scalar)
 	if v, ok := p["pixels"]; ok {
-		m.Pixels = types.Int64Value(paramInt64Value(v))
+		m.Pixels = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.Pixels = types.Int64Null()
 	}
 	if v, ok := p["percentage"]; ok {
-		m.Percentage = types.Int64Value(paramInt64Value(v))
+		m.Percentage = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.Percentage = types.Int64Null()
 	}

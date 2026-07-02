@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type triggerJavascripterrorModel struct {
@@ -45,9 +47,11 @@ func (m *triggerJavascripterrorModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *triggerJavascripterrorModel) ToParams() map[string]string {
-	p := map[string]string{}
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *triggerJavascripterrorModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
 	return p
 }
 
@@ -59,7 +63,7 @@ func (m *triggerJavascripterrorModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *triggerJavascripterrorModel) FromParams(p map[string]string) {
+func (m *triggerJavascripterrorModel) FromParams(p matomo.ParamsMap) {
 }
 
 func (m *triggerJavascripterrorModel) Common() *typedTriggerCommon {

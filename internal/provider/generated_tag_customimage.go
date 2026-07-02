@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagCustomimageModel struct {
@@ -105,12 +107,14 @@ func (m *tagCustomimageModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagCustomimageModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["customImageSrc"] = m.CustomImageSrc.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagCustomimageModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["customImageSrc"] = matomo.ScalarParam(m.CustomImageSrc.ValueString())
 	if !m.CacheBusterEnabled.IsNull() && !m.CacheBusterEnabled.IsUnknown() {
-		p["cacheBusterEnabled"] = paramBoolString(m.CacheBusterEnabled.ValueBool())
+		p["cacheBusterEnabled"] = matomo.ScalarParam(paramBoolString(m.CacheBusterEnabled.ValueBool()))
 	}
 	return p
 }
@@ -123,10 +127,10 @@ func (m *tagCustomimageModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagCustomimageModel) FromParams(p map[string]string) {
-	m.CustomImageSrc = types.StringValue(p["customImageSrc"])
+func (m *tagCustomimageModel) FromParams(p matomo.ParamsMap) {
+	m.CustomImageSrc = types.StringValue(p["customImageSrc"].Scalar)
 	if v, ok := p["cacheBusterEnabled"]; ok {
-		m.CacheBusterEnabled = types.BoolValue(paramBoolValue(v))
+		m.CacheBusterEnabled = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.CacheBusterEnabled = types.BoolNull()
 	}

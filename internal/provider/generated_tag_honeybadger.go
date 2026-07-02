@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagHoneybadgerModel struct {
@@ -125,15 +127,17 @@ func (m *tagHoneybadgerModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *tagHoneybadgerModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["honeybadgerApiKey"] = m.HoneybadgerApiKey.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *tagHoneybadgerModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["honeybadgerApiKey"] = matomo.ScalarParam(m.HoneybadgerApiKey.ValueString())
 	if !m.HoneybadgerEnvironment.IsNull() && !m.HoneybadgerEnvironment.IsUnknown() {
-		p["honeybadgerEnvironment"] = m.HoneybadgerEnvironment.ValueString()
+		p["honeybadgerEnvironment"] = matomo.ScalarParam(m.HoneybadgerEnvironment.ValueString())
 	}
 	if !m.HoneybadgerRevision.IsNull() && !m.HoneybadgerRevision.IsUnknown() {
-		p["honeybadgerRevision"] = m.HoneybadgerRevision.ValueString()
+		p["honeybadgerRevision"] = matomo.ScalarParam(m.HoneybadgerRevision.ValueString())
 	}
 	return p
 }
@@ -146,15 +150,15 @@ func (m *tagHoneybadgerModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *tagHoneybadgerModel) FromParams(p map[string]string) {
-	m.HoneybadgerApiKey = types.StringValue(p["honeybadgerApiKey"])
+func (m *tagHoneybadgerModel) FromParams(p matomo.ParamsMap) {
+	m.HoneybadgerApiKey = types.StringValue(p["honeybadgerApiKey"].Scalar)
 	if v, ok := p["honeybadgerEnvironment"]; ok {
-		m.HoneybadgerEnvironment = types.StringValue(v)
+		m.HoneybadgerEnvironment = types.StringValue(v.Scalar)
 	} else {
 		m.HoneybadgerEnvironment = types.StringNull()
 	}
 	if v, ok := p["honeybadgerRevision"]; ok {
-		m.HoneybadgerRevision = types.StringValue(v)
+		m.HoneybadgerRevision = types.StringValue(v.Scalar)
 	} else {
 		m.HoneybadgerRevision = types.StringNull()
 	}

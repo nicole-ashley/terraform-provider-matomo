@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type triggerFullscreenModel struct {
@@ -78,12 +80,14 @@ func (m *triggerFullscreenModel) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func (m *triggerFullscreenModel) ToParams() map[string]string {
-	p := map[string]string{}
-	p["triggerAction"] = m.TriggerAction.ValueString()
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func (m *triggerFullscreenModel) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
+	p["triggerAction"] = matomo.ScalarParam(m.TriggerAction.ValueString())
 	if !m.TriggerLimit.IsNull() && !m.TriggerLimit.IsUnknown() {
-		p["triggerLimit"] = paramInt64String(m.TriggerLimit.ValueInt64())
+		p["triggerLimit"] = matomo.ScalarParam(paramInt64String(m.TriggerLimit.ValueInt64()))
 	}
 	return p
 }
@@ -96,10 +100,10 @@ func (m *triggerFullscreenModel) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func (m *triggerFullscreenModel) FromParams(p map[string]string) {
-	m.TriggerAction = types.StringValue(p["triggerAction"])
+func (m *triggerFullscreenModel) FromParams(p matomo.ParamsMap) {
+	m.TriggerAction = types.StringValue(p["triggerAction"].Scalar)
 	if v, ok := p["triggerLimit"]; ok {
-		m.TriggerLimit = types.Int64Value(paramInt64Value(v))
+		m.TriggerLimit = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		m.TriggerLimit = types.Int64Null()
 	}
