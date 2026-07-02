@@ -10,10 +10,8 @@ import (
 )
 
 type triggerCustomeventModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
-	EventName   types.String `tfsdk:"event_name"`
+	typedTriggerCommon
+	EventName types.String `tfsdk:"event_name"`
 }
 
 func triggerCustomeventSchema() schema.Schema {
@@ -57,6 +55,10 @@ func (m *triggerCustomeventModel) FromParams(p map[string]string) {
 	m.EventName = types.StringValue(p["eventName"])
 }
 
-func newTriggerCustomeventModel() typedModel {
+func (m *triggerCustomeventModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerCustomeventModel() typedTriggerModel {
 	return &triggerCustomeventModel{}
 }

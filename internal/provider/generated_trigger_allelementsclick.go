@@ -10,9 +10,7 @@ import (
 )
 
 type triggerAllelementsclickModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerAllelementsclickSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerAllelementsclickModel) ToParams() map[string]string {
 func (m *triggerAllelementsclickModel) FromParams(p map[string]string) {
 }
 
-func newTriggerAllelementsclickModel() typedModel {
+func (m *triggerAllelementsclickModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerAllelementsclickModel() typedTriggerModel {
 	return &triggerAllelementsclickModel{}
 }

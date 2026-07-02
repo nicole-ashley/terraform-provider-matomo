@@ -12,10 +12,7 @@ import (
 )
 
 type variableDomelementModel struct {
-	ID              types.String `tfsdk:"id"`
-	ContainerID     types.String `tfsdk:"container_id"`
-	Name            types.String `tfsdk:"name"`
-	DefaultValue    types.String `tfsdk:"default_value"`
+	typedVariableCommon
 	SelectionMethod types.String `tfsdk:"selection_method"`
 	CssSelector     types.String `tfsdk:"css_selector"`
 	ElementId       types.String `tfsdk:"element_id"`
@@ -88,6 +85,10 @@ func (m *variableDomelementModel) FromParams(p map[string]string) {
 	m.AttributeName = types.StringValue(p["attributeName"])
 }
 
-func newVariableDomelementModel() typedModel {
+func (m *variableDomelementModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableDomelementModel() typedVariableModel {
 	return &variableDomelementModel{}
 }

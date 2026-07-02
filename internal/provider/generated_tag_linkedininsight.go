@@ -12,14 +12,9 @@ import (
 )
 
 type tagLinkedininsightModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	PartnerId       types.String   `tfsdk:"partner_id"`
-	ConversionId    types.String   `tfsdk:"conversion_id"`
+	typedTagCommon
+	PartnerId    types.String `tfsdk:"partner_id"`
+	ConversionId types.String `tfsdk:"conversion_id"`
 }
 
 func tagLinkedininsightSchema() schema.Schema {
@@ -84,6 +79,10 @@ func (m *tagLinkedininsightModel) FromParams(p map[string]string) {
 	m.ConversionId = types.StringValue(p["conversionId"])
 }
 
-func newTagLinkedininsightModel() typedModel {
+func (m *tagLinkedininsightModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagLinkedininsightModel() typedTagModel {
 	return &tagLinkedininsightModel{}
 }

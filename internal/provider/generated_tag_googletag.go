@@ -12,13 +12,8 @@ import (
 )
 
 type tagGoogletagModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	GoogleTagId     types.String   `tfsdk:"google_tag_id"`
+	typedTagCommon
+	GoogleTagId types.String `tfsdk:"google_tag_id"`
 }
 
 func tagGoogletagSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagGoogletagModel) FromParams(p map[string]string) {
 	m.GoogleTagId = types.StringValue(p["googleTagId"])
 }
 
-func newTagGoogletagModel() typedModel {
+func (m *tagGoogletagModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagGoogletagModel() typedTagModel {
 	return &tagGoogletagModel{}
 }

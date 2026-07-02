@@ -10,10 +10,7 @@ import (
 )
 
 type variableUrlparameterModel struct {
-	ID            types.String `tfsdk:"id"`
-	ContainerID   types.String `tfsdk:"container_id"`
-	Name          types.String `tfsdk:"name"`
-	DefaultValue  types.String `tfsdk:"default_value"`
+	typedVariableCommon
 	ParameterName types.String `tfsdk:"parameter_name"`
 }
 
@@ -62,6 +59,10 @@ func (m *variableUrlparameterModel) FromParams(p map[string]string) {
 	m.ParameterName = types.StringValue(p["parameterName"])
 }
 
-func newVariableUrlparameterModel() typedModel {
+func (m *variableUrlparameterModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableUrlparameterModel() typedVariableModel {
 	return &variableUrlparameterModel{}
 }

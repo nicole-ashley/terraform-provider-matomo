@@ -12,12 +12,7 @@ import (
 )
 
 type tagGoogleanalytics4eventModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
+	typedTagCommon
 	EventName       types.String   `tfsdk:"event_name"`
 	EventParameters []types.String `tfsdk:"event_parameters"`
 }
@@ -85,6 +80,10 @@ func (m *tagGoogleanalytics4eventModel) FromParams(p map[string]string) {
 	m.EventParameters = paramListValue(p["eventParameters"])
 }
 
-func newTagGoogleanalytics4eventModel() typedModel {
+func (m *tagGoogleanalytics4eventModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagGoogleanalytics4eventModel() typedTagModel {
 	return &tagGoogleanalytics4eventModel{}
 }

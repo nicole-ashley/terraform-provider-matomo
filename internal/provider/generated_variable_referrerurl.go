@@ -12,11 +12,8 @@ import (
 )
 
 type variableReferrerurlModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	DefaultValue types.String `tfsdk:"default_value"`
-	UrlPart      types.String `tfsdk:"url_part"`
+	typedVariableCommon
+	UrlPart types.String `tfsdk:"url_part"`
 }
 
 func variableReferrerurlSchema() schema.Schema {
@@ -64,6 +61,10 @@ func (m *variableReferrerurlModel) FromParams(p map[string]string) {
 	m.UrlPart = types.StringValue(p["urlPart"])
 }
 
-func newVariableReferrerurlModel() typedModel {
+func (m *variableReferrerurlModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableReferrerurlModel() typedVariableModel {
 	return &variableReferrerurlModel{}
 }

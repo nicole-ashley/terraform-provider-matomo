@@ -12,14 +12,9 @@ import (
 )
 
 type tagTawktoModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	TawkToId        types.String   `tfsdk:"tawk_to_id"`
-	TawkToWidgetId  types.String   `tfsdk:"tawk_to_widget_id"`
+	typedTagCommon
+	TawkToId       types.String `tfsdk:"tawk_to_id"`
+	TawkToWidgetId types.String `tfsdk:"tawk_to_widget_id"`
 }
 
 func tagTawktoSchema() schema.Schema {
@@ -83,6 +78,10 @@ func (m *tagTawktoModel) FromParams(p map[string]string) {
 	m.TawkToWidgetId = types.StringValue(p["tawkToWidgetId"])
 }
 
-func newTagTawktoModel() typedModel {
+func (m *tagTawktoModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagTawktoModel() typedTagModel {
 	return &tagTawktoModel{}
 }

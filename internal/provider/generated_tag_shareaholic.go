@@ -12,16 +12,11 @@ import (
 )
 
 type tagShareaholicModel struct {
-	ID                        types.String   `tfsdk:"id"`
-	ContainerID               types.String   `tfsdk:"container_id"`
-	Name                      types.String   `tfsdk:"name"`
-	Status                    types.String   `tfsdk:"status"`
-	FireTriggerIDs            []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs           []types.String `tfsdk:"block_trigger_ids"`
-	ShareaholicSiteId         types.String   `tfsdk:"shareaholic_site_id"`
-	ShareaholicInPageApp      types.String   `tfsdk:"shareaholic_in_page_app"`
-	ShareaholicAppId          types.String   `tfsdk:"shareaholic_app_id"`
-	ShareaholicParentSelector types.String   `tfsdk:"shareaholic_parent_selector"`
+	typedTagCommon
+	ShareaholicSiteId         types.String `tfsdk:"shareaholic_site_id"`
+	ShareaholicInPageApp      types.String `tfsdk:"shareaholic_in_page_app"`
+	ShareaholicAppId          types.String `tfsdk:"shareaholic_app_id"`
+	ShareaholicParentSelector types.String `tfsdk:"shareaholic_parent_selector"`
 }
 
 func tagShareaholicSchema() schema.Schema {
@@ -101,6 +96,10 @@ func (m *tagShareaholicModel) FromParams(p map[string]string) {
 	m.ShareaholicParentSelector = types.StringValue(p["shareaholicParentSelector"])
 }
 
-func newTagShareaholicModel() typedModel {
+func (m *tagShareaholicModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagShareaholicModel() typedTagModel {
 	return &tagShareaholicModel{}
 }

@@ -10,10 +10,7 @@ import (
 )
 
 type variableConstantModel struct {
-	ID            types.String `tfsdk:"id"`
-	ContainerID   types.String `tfsdk:"container_id"`
-	Name          types.String `tfsdk:"name"`
-	DefaultValue  types.String `tfsdk:"default_value"`
+	typedVariableCommon
 	ConstantValue types.String `tfsdk:"constant_value"`
 }
 
@@ -61,6 +58,10 @@ func (m *variableConstantModel) FromParams(p map[string]string) {
 	m.ConstantValue = types.StringValue(p["constantValue"])
 }
 
-func newVariableConstantModel() typedModel {
+func (m *variableConstantModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableConstantModel() typedVariableModel {
 	return &variableConstantModel{}
 }

@@ -12,12 +12,10 @@ import (
 )
 
 type triggerScrollreachModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
-	ScrollType  types.String `tfsdk:"scroll_type"`
-	Pixels      types.Int64  `tfsdk:"pixels"`
-	Percentage  types.Int64  `tfsdk:"percentage"`
+	typedTriggerCommon
+	ScrollType types.String `tfsdk:"scroll_type"`
+	Pixels     types.Int64  `tfsdk:"pixels"`
+	Percentage types.Int64  `tfsdk:"percentage"`
 }
 
 func triggerScrollreachSchema() schema.Schema {
@@ -76,6 +74,10 @@ func (m *triggerScrollreachModel) FromParams(p map[string]string) {
 	m.Percentage = types.Int64Value(paramInt64Value(p["percentage"]))
 }
 
-func newTriggerScrollreachModel() typedModel {
+func (m *triggerScrollreachModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerScrollreachModel() typedTriggerModel {
 	return &triggerScrollreachModel{}
 }

@@ -10,9 +10,7 @@ import (
 )
 
 type triggerWindowloadedModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerWindowloadedSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerWindowloadedModel) ToParams() map[string]string {
 func (m *triggerWindowloadedModel) FromParams(p map[string]string) {
 }
 
-func newTriggerWindowloadedModel() typedModel {
+func (m *triggerWindowloadedModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerWindowloadedModel() typedTriggerModel {
 	return &triggerWindowloadedModel{}
 }

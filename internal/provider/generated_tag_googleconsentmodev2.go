@@ -12,14 +12,9 @@ import (
 )
 
 type tagGoogleconsentmodev2Model struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	ConsentAction   []types.String `tfsdk:"consent_action"`
-	ConsentTypes    []types.String `tfsdk:"consent_types"`
+	typedTagCommon
+	ConsentAction []types.String `tfsdk:"consent_action"`
+	ConsentTypes  []types.String `tfsdk:"consent_types"`
 }
 
 func tagGoogleconsentmodev2Schema() schema.Schema {
@@ -86,6 +81,10 @@ func (m *tagGoogleconsentmodev2Model) FromParams(p map[string]string) {
 	m.ConsentTypes = paramListValue(p["consentTypes"])
 }
 
-func newTagGoogleconsentmodev2Model() typedModel {
+func (m *tagGoogleconsentmodev2Model) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagGoogleconsentmodev2Model() typedTagModel {
 	return &tagGoogleconsentmodev2Model{}
 }

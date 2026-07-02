@@ -12,13 +12,8 @@ import (
 )
 
 type tagCookieyesModel struct {
-	ID                  types.String   `tfsdk:"id"`
-	ContainerID         types.String   `tfsdk:"container_id"`
-	Name                types.String   `tfsdk:"name"`
-	Status              types.String   `tfsdk:"status"`
-	FireTriggerIDs      []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs     []types.String `tfsdk:"block_trigger_ids"`
-	CookieYesWebsiteKey types.String   `tfsdk:"cookie_yes_website_key"`
+	typedTagCommon
+	CookieYesWebsiteKey types.String `tfsdk:"cookie_yes_website_key"`
 }
 
 func tagCookieyesSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagCookieyesModel) FromParams(p map[string]string) {
 	m.CookieYesWebsiteKey = types.StringValue(p["cookieYesWebsiteKey"])
 }
 
-func newTagCookieyesModel() typedModel {
+func (m *tagCookieyesModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagCookieyesModel() typedTagModel {
 	return &tagCookieyesModel{}
 }

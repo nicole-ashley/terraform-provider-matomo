@@ -12,12 +12,7 @@ import (
 )
 
 type tagMatomoModel struct {
-	ID                        types.String   `tfsdk:"id"`
-	ContainerID               types.String   `tfsdk:"container_id"`
-	Name                      types.String   `tfsdk:"name"`
-	Status                    types.String   `tfsdk:"status"`
-	FireTriggerIDs            []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs           []types.String `tfsdk:"block_trigger_ids"`
+	typedTagCommon
 	MatomoConfig              types.String   `tfsdk:"matomo_config"`
 	TrackingType              types.String   `tfsdk:"tracking_type"`
 	IdGoal                    types.String   `tfsdk:"id_goal"`
@@ -205,6 +200,10 @@ func (m *tagMatomoModel) FromParams(p map[string]string) {
 	m.AreCustomDimensionsSticky = types.BoolValue(paramBoolValue(p["areCustomDimensionsSticky"]))
 }
 
-func newTagMatomoModel() typedModel {
+func (m *tagMatomoModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagMatomoModel() typedTagModel {
 	return &tagMatomoModel{}
 }

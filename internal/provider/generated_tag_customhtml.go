@@ -12,14 +12,9 @@ import (
 )
 
 type tagCustomhtmlModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	CustomHtml      types.String   `tfsdk:"custom_html"`
-	HtmlPosition    types.String   `tfsdk:"html_position"`
+	typedTagCommon
+	CustomHtml   types.String `tfsdk:"custom_html"`
+	HtmlPosition types.String `tfsdk:"html_position"`
 }
 
 func tagCustomhtmlSchema() schema.Schema {
@@ -85,6 +80,10 @@ func (m *tagCustomhtmlModel) FromParams(p map[string]string) {
 	m.HtmlPosition = types.StringValue(p["htmlPosition"])
 }
 
-func newTagCustomhtmlModel() typedModel {
+func (m *tagCustomhtmlModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagCustomhtmlModel() typedTagModel {
 	return &tagCustomhtmlModel{}
 }

@@ -12,10 +12,7 @@ import (
 )
 
 type variableMatomoconfigurationModel struct {
-	ID                                    types.String   `tfsdk:"id"`
-	ContainerID                           types.String   `tfsdk:"container_id"`
-	Name                                  types.String   `tfsdk:"name"`
-	DefaultValue                          types.String   `tfsdk:"default_value"`
+	typedVariableCommon
 	MatomoUrl                             types.String   `tfsdk:"matomo_url"`
 	IdSite                                types.String   `tfsdk:"id_site"`
 	EnableLinkTracking                    types.Bool     `tfsdk:"enable_link_tracking"`
@@ -613,6 +610,10 @@ func (m *variableMatomoconfigurationModel) FromParams(p map[string]string) {
 	m.SetRequestQueueInterval = types.StringValue(p["setRequestQueueInterval"])
 }
 
-func newVariableMatomoconfigurationModel() typedModel {
+func (m *variableMatomoconfigurationModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableMatomoconfigurationModel() typedVariableModel {
 	return &variableMatomoconfigurationModel{}
 }

@@ -12,13 +12,8 @@ import (
 )
 
 type tagAxeptioModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	ProjectId       types.String   `tfsdk:"project_id"`
+	typedTagCommon
+	ProjectId types.String `tfsdk:"project_id"`
 }
 
 func tagAxeptioSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagAxeptioModel) FromParams(p map[string]string) {
 	m.ProjectId = types.StringValue(p["projectId"])
 }
 
-func newTagAxeptioModel() typedModel {
+func (m *tagAxeptioModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagAxeptioModel() typedTagModel {
 	return &tagAxeptioModel{}
 }

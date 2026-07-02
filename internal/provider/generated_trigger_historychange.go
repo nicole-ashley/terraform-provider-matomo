@@ -10,9 +10,7 @@ import (
 )
 
 type triggerHistorychangeModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerHistorychangeSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerHistorychangeModel) ToParams() map[string]string {
 func (m *triggerHistorychangeModel) FromParams(p map[string]string) {
 }
 
-func newTriggerHistorychangeModel() typedModel {
+func (m *triggerHistorychangeModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerHistorychangeModel() typedTriggerModel {
 	return &triggerHistorychangeModel{}
 }

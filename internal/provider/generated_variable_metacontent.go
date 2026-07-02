@@ -12,11 +12,8 @@ import (
 )
 
 type variableMetacontentModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	DefaultValue types.String `tfsdk:"default_value"`
-	MetaName     types.String `tfsdk:"meta_name"`
+	typedVariableCommon
+	MetaName types.String `tfsdk:"meta_name"`
 }
 
 func variableMetacontentSchema() schema.Schema {
@@ -64,6 +61,10 @@ func (m *variableMetacontentModel) FromParams(p map[string]string) {
 	m.MetaName = types.StringValue(p["metaName"])
 }
 
-func newVariableMetacontentModel() typedModel {
+func (m *variableMetacontentModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableMetacontentModel() typedVariableModel {
 	return &variableMetacontentModel{}
 }

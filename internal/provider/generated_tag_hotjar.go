@@ -12,14 +12,9 @@ import (
 )
 
 type tagHotjarModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	Hjid            types.String   `tfsdk:"hjid"`
-	Hjsv            types.Int64    `tfsdk:"hjsv"`
+	typedTagCommon
+	Hjid types.String `tfsdk:"hjid"`
+	Hjsv types.Int64  `tfsdk:"hjsv"`
 }
 
 func tagHotjarSchema() schema.Schema {
@@ -83,6 +78,10 @@ func (m *tagHotjarModel) FromParams(p map[string]string) {
 	m.Hjsv = types.Int64Value(paramInt64Value(p["hjsv"]))
 }
 
-func newTagHotjarModel() typedModel {
+func (m *tagHotjarModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagHotjarModel() typedTagModel {
 	return &tagHotjarModel{}
 }

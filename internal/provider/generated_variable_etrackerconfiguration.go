@@ -10,10 +10,7 @@ import (
 )
 
 type variableEtrackerconfigurationModel struct {
-	ID                   types.String   `tfsdk:"id"`
-	ContainerID          types.String   `tfsdk:"container_id"`
-	Name                 types.String   `tfsdk:"name"`
-	DefaultValue         types.String   `tfsdk:"default_value"`
+	typedVariableCommon
 	EtrackerID           types.String   `tfsdk:"etracker_id"`
 	EtrackerBlockCookies types.Bool     `tfsdk:"etracker_block_cookies"`
 	EtrackerDNT          types.Bool     `tfsdk:"etracker_dnt"`
@@ -150,6 +147,10 @@ func (m *variableEtrackerconfigurationModel) FromParams(p map[string]string) {
 	m.CustomDimensions = paramListValue(p["customDimensions"])
 }
 
-func newVariableEtrackerconfigurationModel() typedModel {
+func (m *variableEtrackerconfigurationModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableEtrackerconfigurationModel() typedVariableModel {
 	return &variableEtrackerconfigurationModel{}
 }

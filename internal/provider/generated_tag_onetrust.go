@@ -12,13 +12,8 @@ import (
 )
 
 type tagOnetrustModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	Domain          types.String   `tfsdk:"domain"`
+	typedTagCommon
+	Domain types.String `tfsdk:"domain"`
 }
 
 func tagOnetrustSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagOnetrustModel) FromParams(p map[string]string) {
 	m.Domain = types.StringValue(p["domain"])
 }
 
-func newTagOnetrustModel() typedModel {
+func (m *tagOnetrustModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagOnetrustModel() typedTagModel {
 	return &tagOnetrustModel{}
 }

@@ -10,9 +10,7 @@ import (
 )
 
 type triggerPageviewModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerPageviewSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerPageviewModel) ToParams() map[string]string {
 func (m *triggerPageviewModel) FromParams(p map[string]string) {
 }
 
-func newTriggerPageviewModel() typedModel {
+func (m *triggerPageviewModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerPageviewModel() typedTriggerModel {
 	return &triggerPageviewModel{}
 }

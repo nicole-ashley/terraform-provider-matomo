@@ -12,14 +12,9 @@ import (
 )
 
 type tagRaygunModel struct {
-	ID                types.String   `tfsdk:"id"`
-	ContainerID       types.String   `tfsdk:"container_id"`
-	Name              types.String   `tfsdk:"name"`
-	Status            types.String   `tfsdk:"status"`
-	FireTriggerIDs    []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs   []types.String `tfsdk:"block_trigger_ids"`
-	RaygunApiKey      types.String   `tfsdk:"raygun_api_key"`
-	RaygunEnablePulse types.Bool     `tfsdk:"raygun_enable_pulse"`
+	typedTagCommon
+	RaygunApiKey      types.String `tfsdk:"raygun_api_key"`
+	RaygunEnablePulse types.Bool   `tfsdk:"raygun_enable_pulse"`
 }
 
 func tagRaygunSchema() schema.Schema {
@@ -84,6 +79,10 @@ func (m *tagRaygunModel) FromParams(p map[string]string) {
 	m.RaygunEnablePulse = types.BoolValue(paramBoolValue(p["raygunEnablePulse"]))
 }
 
-func newTagRaygunModel() typedModel {
+func (m *tagRaygunModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagRaygunModel() typedTagModel {
 	return &tagRaygunModel{}
 }

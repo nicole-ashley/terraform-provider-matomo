@@ -12,14 +12,9 @@ import (
 )
 
 type tagCustomimageModel struct {
-	ID                 types.String   `tfsdk:"id"`
-	ContainerID        types.String   `tfsdk:"container_id"`
-	Name               types.String   `tfsdk:"name"`
-	Status             types.String   `tfsdk:"status"`
-	FireTriggerIDs     []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs    []types.String `tfsdk:"block_trigger_ids"`
-	CustomImageSrc     types.String   `tfsdk:"custom_image_src"`
-	CacheBusterEnabled types.Bool     `tfsdk:"cache_buster_enabled"`
+	typedTagCommon
+	CustomImageSrc     types.String `tfsdk:"custom_image_src"`
+	CacheBusterEnabled types.Bool   `tfsdk:"cache_buster_enabled"`
 }
 
 func tagCustomimageSchema() schema.Schema {
@@ -84,6 +79,10 @@ func (m *tagCustomimageModel) FromParams(p map[string]string) {
 	m.CacheBusterEnabled = types.BoolValue(paramBoolValue(p["cacheBusterEnabled"]))
 }
 
-func newTagCustomimageModel() typedModel {
+func (m *tagCustomimageModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagCustomimageModel() typedTagModel {
 	return &tagCustomimageModel{}
 }

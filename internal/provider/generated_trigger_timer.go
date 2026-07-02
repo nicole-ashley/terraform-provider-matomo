@@ -10,9 +10,7 @@ import (
 )
 
 type triggerTimerModel struct {
-	ID              types.String `tfsdk:"id"`
-	ContainerID     types.String `tfsdk:"container_id"`
-	Name            types.String `tfsdk:"name"`
+	typedTriggerCommon
 	TriggerInterval types.Int64  `tfsdk:"trigger_interval"`
 	EventName       types.String `tfsdk:"event_name"`
 	TriggerLimit    types.Int64  `tfsdk:"trigger_limit"`
@@ -73,6 +71,10 @@ func (m *triggerTimerModel) FromParams(p map[string]string) {
 	m.TriggerLimit = types.Int64Value(paramInt64Value(p["triggerLimit"]))
 }
 
-func newTriggerTimerModel() typedModel {
+func (m *triggerTimerModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerTimerModel() typedTriggerModel {
 	return &triggerTimerModel{}
 }

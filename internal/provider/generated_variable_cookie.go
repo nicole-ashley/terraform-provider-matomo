@@ -10,12 +10,9 @@ import (
 )
 
 type variableCookieModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	DefaultValue types.String `tfsdk:"default_value"`
-	CookieName   types.String `tfsdk:"cookie_name"`
-	UrlDecode    types.Bool   `tfsdk:"url_decode"`
+	typedVariableCommon
+	CookieName types.String `tfsdk:"cookie_name"`
+	UrlDecode  types.Bool   `tfsdk:"url_decode"`
 }
 
 func variableCookieSchema() schema.Schema {
@@ -69,6 +66,10 @@ func (m *variableCookieModel) FromParams(p map[string]string) {
 	m.UrlDecode = types.BoolValue(paramBoolValue(p["urlDecode"]))
 }
 
-func newVariableCookieModel() typedModel {
+func (m *variableCookieModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableCookieModel() typedVariableModel {
 	return &variableCookieModel{}
 }

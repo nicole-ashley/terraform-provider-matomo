@@ -10,10 +10,7 @@ import (
 )
 
 type variableClickdataattributeModel struct {
-	ID            types.String `tfsdk:"id"`
-	ContainerID   types.String `tfsdk:"container_id"`
-	Name          types.String `tfsdk:"name"`
-	DefaultValue  types.String `tfsdk:"default_value"`
+	typedVariableCommon
 	DataAttribute types.String `tfsdk:"data_attribute"`
 }
 
@@ -61,6 +58,10 @@ func (m *variableClickdataattributeModel) FromParams(p map[string]string) {
 	m.DataAttribute = types.StringValue(p["dataAttribute"])
 }
 
-func newVariableClickdataattributeModel() typedModel {
+func (m *variableClickdataattributeModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableClickdataattributeModel() typedVariableModel {
 	return &variableClickdataattributeModel{}
 }

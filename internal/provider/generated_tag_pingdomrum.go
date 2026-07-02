@@ -12,13 +12,8 @@ import (
 )
 
 type tagPingdomrumModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	PingdomROMId    types.String   `tfsdk:"pingdom_rom_id"`
+	typedTagCommon
+	PingdomROMId types.String `tfsdk:"pingdom_rom_id"`
 }
 
 func tagPingdomrumSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagPingdomrumModel) FromParams(p map[string]string) {
 	m.PingdomROMId = types.StringValue(p["pingdomROMId"])
 }
 
-func newTagPingdomrumModel() typedModel {
+func (m *tagPingdomrumModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagPingdomrumModel() typedTagModel {
 	return &tagPingdomrumModel{}
 }

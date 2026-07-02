@@ -12,13 +12,8 @@ import (
 )
 
 type tagFacebookpixelModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	PixelId         types.String   `tfsdk:"pixel_id"`
+	typedTagCommon
+	PixelId types.String `tfsdk:"pixel_id"`
 }
 
 func tagFacebookpixelSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagFacebookpixelModel) FromParams(p map[string]string) {
 	m.PixelId = types.StringValue(p["pixelId"])
 }
 
-func newTagFacebookpixelModel() typedModel {
+func (m *tagFacebookpixelModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagFacebookpixelModel() typedTagModel {
 	return &tagFacebookpixelModel{}
 }

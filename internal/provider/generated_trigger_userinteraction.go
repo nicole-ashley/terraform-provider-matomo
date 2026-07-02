@@ -10,9 +10,7 @@ import (
 )
 
 type triggerUserinteractionModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerUserinteractionSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerUserinteractionModel) ToParams() map[string]string {
 func (m *triggerUserinteractionModel) FromParams(p map[string]string) {
 }
 
-func newTriggerUserinteractionModel() typedModel {
+func (m *triggerUserinteractionModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerUserinteractionModel() typedTriggerModel {
 	return &triggerUserinteractionModel{}
 }

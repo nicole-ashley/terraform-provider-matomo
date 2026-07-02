@@ -10,9 +10,7 @@ import (
 )
 
 type triggerAlldownloadsclickModel struct {
-	ID                 types.String `tfsdk:"id"`
-	ContainerID        types.String `tfsdk:"container_id"`
-	Name               types.String `tfsdk:"name"`
+	typedTriggerCommon
 	DownloadExtensions types.String `tfsdk:"download_extensions"`
 }
 
@@ -57,6 +55,10 @@ func (m *triggerAlldownloadsclickModel) FromParams(p map[string]string) {
 	m.DownloadExtensions = types.StringValue(p["downloadExtensions"])
 }
 
-func newTriggerAlldownloadsclickModel() typedModel {
+func (m *triggerAlldownloadsclickModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerAlldownloadsclickModel() typedTriggerModel {
 	return &triggerAlldownloadsclickModel{}
 }

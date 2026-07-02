@@ -12,9 +12,7 @@ import (
 )
 
 type triggerFullscreenModel struct {
-	ID            types.String `tfsdk:"id"`
-	ContainerID   types.String `tfsdk:"container_id"`
-	Name          types.String `tfsdk:"name"`
+	typedTriggerCommon
 	TriggerAction types.String `tfsdk:"trigger_action"`
 	TriggerLimit  types.Int64  `tfsdk:"trigger_limit"`
 }
@@ -68,6 +66,10 @@ func (m *triggerFullscreenModel) FromParams(p map[string]string) {
 	m.TriggerLimit = types.Int64Value(paramInt64Value(p["triggerLimit"]))
 }
 
-func newTriggerFullscreenModel() typedModel {
+func (m *triggerFullscreenModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerFullscreenModel() typedTriggerModel {
 	return &triggerFullscreenModel{}
 }

@@ -12,13 +12,8 @@ import (
 )
 
 type tagGoogleanalytics4Model struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	MeasurementId   types.String   `tfsdk:"measurement_id"`
+	typedTagCommon
+	MeasurementId types.String `tfsdk:"measurement_id"`
 }
 
 func tagGoogleanalytics4Schema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagGoogleanalytics4Model) FromParams(p map[string]string) {
 	m.MeasurementId = types.StringValue(p["measurementId"])
 }
 
-func newTagGoogleanalytics4Model() typedModel {
+func (m *tagGoogleanalytics4Model) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagGoogleanalytics4Model() typedTagModel {
 	return &tagGoogleanalytics4Model{}
 }

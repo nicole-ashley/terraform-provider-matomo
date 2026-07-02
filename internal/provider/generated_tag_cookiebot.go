@@ -12,13 +12,8 @@ import (
 )
 
 type tagCookiebotModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	CookiebotId     types.String   `tfsdk:"cookiebot_id"`
+	typedTagCommon
+	CookiebotId types.String `tfsdk:"cookiebot_id"`
 }
 
 func tagCookiebotSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagCookiebotModel) FromParams(p map[string]string) {
 	m.CookiebotId = types.StringValue(p["cookiebotId"])
 }
 
-func newTagCookiebotModel() typedModel {
+func (m *tagCookiebotModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagCookiebotModel() typedTagModel {
 	return &tagCookiebotModel{}
 }

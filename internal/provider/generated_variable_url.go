@@ -12,11 +12,8 @@ import (
 )
 
 type variableUrlModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	DefaultValue types.String `tfsdk:"default_value"`
-	UrlPart      types.String `tfsdk:"url_part"`
+	typedVariableCommon
+	UrlPart types.String `tfsdk:"url_part"`
 }
 
 func variableUrlSchema() schema.Schema {
@@ -64,6 +61,10 @@ func (m *variableUrlModel) FromParams(p map[string]string) {
 	m.UrlPart = types.StringValue(p["urlPart"])
 }
 
-func newVariableUrlModel() typedModel {
+func (m *variableUrlModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableUrlModel() typedVariableModel {
 	return &variableUrlModel{}
 }

@@ -10,9 +10,7 @@ import (
 )
 
 type triggerDomreadyModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerDomreadySchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerDomreadyModel) ToParams() map[string]string {
 func (m *triggerDomreadyModel) FromParams(p map[string]string) {
 }
 
-func newTriggerDomreadyModel() typedModel {
+func (m *triggerDomreadyModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerDomreadyModel() typedTriggerModel {
 	return &triggerDomreadyModel{}
 }

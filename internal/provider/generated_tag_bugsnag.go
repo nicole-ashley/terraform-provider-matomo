@@ -12,14 +12,9 @@ import (
 )
 
 type tagBugsnagModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	ApiKey          types.String   `tfsdk:"api_key"`
-	CollectUserIp   types.Bool     `tfsdk:"collect_user_ip"`
+	typedTagCommon
+	ApiKey        types.String `tfsdk:"api_key"`
+	CollectUserIp types.Bool   `tfsdk:"collect_user_ip"`
 }
 
 func tagBugsnagSchema() schema.Schema {
@@ -84,6 +79,10 @@ func (m *tagBugsnagModel) FromParams(p map[string]string) {
 	m.CollectUserIp = types.BoolValue(paramBoolValue(p["collectUserIp"]))
 }
 
-func newTagBugsnagModel() typedModel {
+func (m *tagBugsnagModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagBugsnagModel() typedTagModel {
 	return &tagBugsnagModel{}
 }

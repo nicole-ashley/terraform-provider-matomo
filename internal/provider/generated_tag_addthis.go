@@ -12,14 +12,9 @@ import (
 )
 
 type tagAddthisModel struct {
-	ID                    types.String   `tfsdk:"id"`
-	ContainerID           types.String   `tfsdk:"container_id"`
-	Name                  types.String   `tfsdk:"name"`
-	Status                types.String   `tfsdk:"status"`
-	FireTriggerIDs        []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs       []types.String `tfsdk:"block_trigger_ids"`
-	AddThisPubId          types.String   `tfsdk:"add_this_pub_id"`
-	AddThisParentSelector types.String   `tfsdk:"add_this_parent_selector"`
+	typedTagCommon
+	AddThisPubId          types.String `tfsdk:"add_this_pub_id"`
+	AddThisParentSelector types.String `tfsdk:"add_this_parent_selector"`
 }
 
 func tagAddthisSchema() schema.Schema {
@@ -84,6 +79,10 @@ func (m *tagAddthisModel) FromParams(p map[string]string) {
 	m.AddThisParentSelector = types.StringValue(p["AddThisParentSelector"])
 }
 
-func newTagAddthisModel() typedModel {
+func (m *tagAddthisModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagAddthisModel() typedTagModel {
 	return &tagAddthisModel{}
 }

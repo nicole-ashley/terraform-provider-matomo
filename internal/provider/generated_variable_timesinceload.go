@@ -12,11 +12,8 @@ import (
 )
 
 type variableTimesinceloadModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	DefaultValue types.String `tfsdk:"default_value"`
-	Unit         types.String `tfsdk:"unit"`
+	typedVariableCommon
+	Unit types.String `tfsdk:"unit"`
 }
 
 func variableTimesinceloadSchema() schema.Schema {
@@ -64,6 +61,10 @@ func (m *variableTimesinceloadModel) FromParams(p map[string]string) {
 	m.Unit = types.StringValue(p["unit"])
 }
 
-func newVariableTimesinceloadModel() typedModel {
+func (m *variableTimesinceloadModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableTimesinceloadModel() typedVariableModel {
 	return &variableTimesinceloadModel{}
 }

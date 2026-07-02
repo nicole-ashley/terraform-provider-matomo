@@ -12,13 +12,8 @@ import (
 )
 
 type tagBinguetModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	BingAdID        types.String   `tfsdk:"bing_ad_id"`
+	typedTagCommon
+	BingAdID types.String `tfsdk:"bing_ad_id"`
 }
 
 func tagBinguetSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagBinguetModel) FromParams(p map[string]string) {
 	m.BingAdID = types.StringValue(p["bingAdID"])
 }
 
-func newTagBinguetModel() typedModel {
+func (m *tagBinguetModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagBinguetModel() typedTagModel {
 	return &tagBinguetModel{}
 }

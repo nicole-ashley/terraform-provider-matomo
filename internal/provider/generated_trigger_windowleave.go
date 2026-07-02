@@ -10,10 +10,8 @@ import (
 )
 
 type triggerWindowleaveModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	TriggerLimit types.Int64  `tfsdk:"trigger_limit"`
+	typedTriggerCommon
+	TriggerLimit types.Int64 `tfsdk:"trigger_limit"`
 }
 
 func triggerWindowleaveSchema() schema.Schema {
@@ -58,6 +56,10 @@ func (m *triggerWindowleaveModel) FromParams(p map[string]string) {
 	m.TriggerLimit = types.Int64Value(paramInt64Value(p["triggerLimit"]))
 }
 
-func newTriggerWindowleaveModel() typedModel {
+func (m *triggerWindowleaveModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerWindowleaveModel() typedTriggerModel {
 	return &triggerWindowleaveModel{}
 }

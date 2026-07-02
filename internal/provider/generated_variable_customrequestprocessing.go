@@ -10,11 +10,8 @@ import (
 )
 
 type variableCustomrequestprocessingModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	DefaultValue types.String `tfsdk:"default_value"`
-	JsFunction   types.String `tfsdk:"js_function"`
+	typedVariableCommon
+	JsFunction types.String `tfsdk:"js_function"`
 }
 
 func variableCustomrequestprocessingSchema() schema.Schema {
@@ -61,6 +58,10 @@ func (m *variableCustomrequestprocessingModel) FromParams(p map[string]string) {
 	m.JsFunction = types.StringValue(p["jsFunction"])
 }
 
-func newVariableCustomrequestprocessingModel() typedModel {
+func (m *variableCustomrequestprocessingModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableCustomrequestprocessingModel() typedVariableModel {
 	return &variableCustomrequestprocessingModel{}
 }

@@ -12,17 +12,12 @@ import (
 )
 
 type tagEmarsysModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	MerchantId      types.String   `tfsdk:"merchant_id"`
-	CommandCategory types.String   `tfsdk:"command_category"`
-	CommandView     types.String   `tfsdk:"command_view"`
-	CommandTag      types.String   `tfsdk:"command_tag"`
-	CommandGo       types.Bool     `tfsdk:"command_go"`
+	typedTagCommon
+	MerchantId      types.String `tfsdk:"merchant_id"`
+	CommandCategory types.String `tfsdk:"command_category"`
+	CommandView     types.String `tfsdk:"command_view"`
+	CommandTag      types.String `tfsdk:"command_tag"`
+	CommandGo       types.Bool   `tfsdk:"command_go"`
 }
 
 func tagEmarsysSchema() schema.Schema {
@@ -108,6 +103,10 @@ func (m *tagEmarsysModel) FromParams(p map[string]string) {
 	m.CommandGo = types.BoolValue(paramBoolValue(p["commandGo"]))
 }
 
-func newTagEmarsysModel() typedModel {
+func (m *tagEmarsysModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagEmarsysModel() typedTagModel {
 	return &tagEmarsysModel{}
 }

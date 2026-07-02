@@ -12,40 +12,35 @@ import (
 )
 
 type tagEtrackerModel struct {
-	ID                                    types.String   `tfsdk:"id"`
-	ContainerID                           types.String   `tfsdk:"container_id"`
-	Name                                  types.String   `tfsdk:"name"`
-	Status                                types.String   `tfsdk:"status"`
-	FireTriggerIDs                        []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs                       []types.String `tfsdk:"block_trigger_ids"`
-	TrackingType                          types.String   `tfsdk:"tracking_type"`
-	EtrackerConfig                        types.String   `tfsdk:"etracker_config"`
-	EtrackerWrapperPagename               types.String   `tfsdk:"etracker_wrapper_pagename"`
-	EtrackerWrapperArea                   types.String   `tfsdk:"etracker_wrapper_area"`
-	EtrackerWrapperTarget                 types.String   `tfsdk:"etracker_wrapper_target"`
-	EtrackerWrapperTval                   types.String   `tfsdk:"etracker_wrapper_tval"`
-	EtrackerWrapperTonr                   types.String   `tfsdk:"etracker_wrapper_tonr"`
-	EtrackerWrapperTsale                  types.String   `tfsdk:"etracker_wrapper_tsale"`
-	EtrackerWrapperCust                   types.String   `tfsdk:"etracker_wrapper_cust"`
-	EtrackerWrapperBasket                 types.String   `tfsdk:"etracker_wrapper_basket"`
-	EtrackerEventCategory                 types.String   `tfsdk:"etracker_event_category"`
-	EtrackerEventObject                   types.String   `tfsdk:"etracker_event_object"`
-	EtrackerEventAction                   types.String   `tfsdk:"etracker_event_action"`
-	EtrackerEventType                     types.String   `tfsdk:"etracker_event_type"`
-	EtrackerTransactionType               types.String   `tfsdk:"etracker_transaction_type"`
-	EtrackerTransactionID                 types.String   `tfsdk:"etracker_transaction_id"`
-	EtrackerTransactionValue              types.String   `tfsdk:"etracker_transaction_value"`
-	EtrackerTransactionCurrency           types.String   `tfsdk:"etracker_transaction_currency"`
-	EtrackerTransactionBasket             types.String   `tfsdk:"etracker_transaction_basket"`
-	EtrackerTransactionCustomerGroup      types.String   `tfsdk:"etracker_transaction_customer_group"`
-	EtrackerTransactionDeliveryConditions types.String   `tfsdk:"etracker_transaction_delivery_conditions"`
-	EtrackerTransactionPaymentConditions  types.String   `tfsdk:"etracker_transaction_payment_conditions"`
-	EtrackerTransactionDebugMode          types.Bool     `tfsdk:"etracker_transaction_debug_mode"`
-	EtrackerAddToCartProduct              types.String   `tfsdk:"etracker_add_to_cart_product"`
-	EtrackerAddToCartNumber               types.String   `tfsdk:"etracker_add_to_cart_number"`
-	EtrackerFormType                      types.String   `tfsdk:"etracker_form_type"`
-	EtrackerFormName                      types.String   `tfsdk:"etracker_form_name"`
-	EtrackerFormData                      types.String   `tfsdk:"etracker_form_data"`
+	typedTagCommon
+	TrackingType                          types.String `tfsdk:"tracking_type"`
+	EtrackerConfig                        types.String `tfsdk:"etracker_config"`
+	EtrackerWrapperPagename               types.String `tfsdk:"etracker_wrapper_pagename"`
+	EtrackerWrapperArea                   types.String `tfsdk:"etracker_wrapper_area"`
+	EtrackerWrapperTarget                 types.String `tfsdk:"etracker_wrapper_target"`
+	EtrackerWrapperTval                   types.String `tfsdk:"etracker_wrapper_tval"`
+	EtrackerWrapperTonr                   types.String `tfsdk:"etracker_wrapper_tonr"`
+	EtrackerWrapperTsale                  types.String `tfsdk:"etracker_wrapper_tsale"`
+	EtrackerWrapperCust                   types.String `tfsdk:"etracker_wrapper_cust"`
+	EtrackerWrapperBasket                 types.String `tfsdk:"etracker_wrapper_basket"`
+	EtrackerEventCategory                 types.String `tfsdk:"etracker_event_category"`
+	EtrackerEventObject                   types.String `tfsdk:"etracker_event_object"`
+	EtrackerEventAction                   types.String `tfsdk:"etracker_event_action"`
+	EtrackerEventType                     types.String `tfsdk:"etracker_event_type"`
+	EtrackerTransactionType               types.String `tfsdk:"etracker_transaction_type"`
+	EtrackerTransactionID                 types.String `tfsdk:"etracker_transaction_id"`
+	EtrackerTransactionValue              types.String `tfsdk:"etracker_transaction_value"`
+	EtrackerTransactionCurrency           types.String `tfsdk:"etracker_transaction_currency"`
+	EtrackerTransactionBasket             types.String `tfsdk:"etracker_transaction_basket"`
+	EtrackerTransactionCustomerGroup      types.String `tfsdk:"etracker_transaction_customer_group"`
+	EtrackerTransactionDeliveryConditions types.String `tfsdk:"etracker_transaction_delivery_conditions"`
+	EtrackerTransactionPaymentConditions  types.String `tfsdk:"etracker_transaction_payment_conditions"`
+	EtrackerTransactionDebugMode          types.Bool   `tfsdk:"etracker_transaction_debug_mode"`
+	EtrackerAddToCartProduct              types.String `tfsdk:"etracker_add_to_cart_product"`
+	EtrackerAddToCartNumber               types.String `tfsdk:"etracker_add_to_cart_number"`
+	EtrackerFormType                      types.String `tfsdk:"etracker_form_type"`
+	EtrackerFormName                      types.String `tfsdk:"etracker_form_name"`
+	EtrackerFormData                      types.String `tfsdk:"etracker_form_data"`
 }
 
 func tagEtrackerSchema() schema.Schema {
@@ -295,6 +290,10 @@ func (m *tagEtrackerModel) FromParams(p map[string]string) {
 	m.EtrackerFormData = types.StringValue(p["etrackerFormData"])
 }
 
-func newTagEtrackerModel() typedModel {
+func (m *tagEtrackerModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagEtrackerModel() typedTagModel {
 	return &tagEtrackerModel{}
 }

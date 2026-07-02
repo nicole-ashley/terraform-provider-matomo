@@ -10,9 +10,7 @@ import (
 )
 
 type triggerFormsubmitModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerFormsubmitSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerFormsubmitModel) ToParams() map[string]string {
 func (m *triggerFormsubmitModel) FromParams(p map[string]string) {
 }
 
-func newTriggerFormsubmitModel() typedModel {
+func (m *triggerFormsubmitModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerFormsubmitModel() typedTriggerModel {
 	return &triggerFormsubmitModel{}
 }

@@ -12,9 +12,7 @@ import (
 )
 
 type triggerElementvisibilityModel struct {
-	ID                types.String `tfsdk:"id"`
-	ContainerID       types.String `tfsdk:"container_id"`
-	Name              types.String `tfsdk:"name"`
+	typedTriggerCommon
 	SelectionMethod   types.String `tfsdk:"selection_method"`
 	CssSelector       types.String `tfsdk:"css_selector"`
 	ElementId         types.String `tfsdk:"element_id"`
@@ -100,6 +98,10 @@ func (m *triggerElementvisibilityModel) FromParams(p map[string]string) {
 	m.ObserveDomChanges = types.BoolValue(paramBoolValue(p["observeDomChanges"]))
 }
 
-func newTriggerElementvisibilityModel() typedModel {
+func (m *triggerElementvisibilityModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerElementvisibilityModel() typedTriggerModel {
 	return &triggerElementvisibilityModel{}
 }

@@ -12,13 +12,8 @@ import (
 )
 
 type tagZendeskchatModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	ZendeskChatId   types.String   `tfsdk:"zendesk_chat_id"`
+	typedTagCommon
+	ZendeskChatId types.String `tfsdk:"zendesk_chat_id"`
 }
 
 func tagZendeskchatSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagZendeskchatModel) FromParams(p map[string]string) {
 	m.ZendeskChatId = types.StringValue(p["zendeskChatId"])
 }
 
-func newTagZendeskchatModel() typedModel {
+func (m *tagZendeskchatModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagZendeskchatModel() typedTagModel {
 	return &tagZendeskchatModel{}
 }

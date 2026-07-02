@@ -10,10 +10,7 @@ import (
 )
 
 type variableJavascriptModel struct {
-	ID           types.String `tfsdk:"id"`
-	ContainerID  types.String `tfsdk:"container_id"`
-	Name         types.String `tfsdk:"name"`
-	DefaultValue types.String `tfsdk:"default_value"`
+	typedVariableCommon
 	VariableName types.String `tfsdk:"variable_name"`
 }
 
@@ -61,6 +58,10 @@ func (m *variableJavascriptModel) FromParams(p map[string]string) {
 	m.VariableName = types.StringValue(p["variableName"])
 }
 
-func newVariableJavascriptModel() typedModel {
+func (m *variableJavascriptModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableJavascriptModel() typedVariableModel {
 	return &variableJavascriptModel{}
 }

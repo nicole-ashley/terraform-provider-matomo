@@ -12,13 +12,8 @@ import (
 )
 
 type tagDriftModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	DriftId         types.String   `tfsdk:"drift_id"`
+	typedTagCommon
+	DriftId types.String `tfsdk:"drift_id"`
 }
 
 func tagDriftSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagDriftModel) FromParams(p map[string]string) {
 	m.DriftId = types.StringValue(p["driftId"])
 }
 
-func newTagDriftModel() typedModel {
+func (m *tagDriftModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagDriftModel() typedTagModel {
 	return &tagDriftModel{}
 }

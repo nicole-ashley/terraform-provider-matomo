@@ -10,10 +10,7 @@ import (
 )
 
 type variableDatalayerModel struct {
-	ID            types.String `tfsdk:"id"`
-	ContainerID   types.String `tfsdk:"container_id"`
-	Name          types.String `tfsdk:"name"`
-	DefaultValue  types.String `tfsdk:"default_value"`
+	typedVariableCommon
 	DataLayerName types.String `tfsdk:"data_layer_name"`
 }
 
@@ -61,6 +58,10 @@ func (m *variableDatalayerModel) FromParams(p map[string]string) {
 	m.DataLayerName = types.StringValue(p["dataLayerName"])
 }
 
-func newVariableDatalayerModel() typedModel {
+func (m *variableDatalayerModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableDatalayerModel() typedVariableModel {
 	return &variableDatalayerModel{}
 }

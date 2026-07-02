@@ -12,15 +12,10 @@ import (
 )
 
 type tagHoneybadgerModel struct {
-	ID                     types.String   `tfsdk:"id"`
-	ContainerID            types.String   `tfsdk:"container_id"`
-	Name                   types.String   `tfsdk:"name"`
-	Status                 types.String   `tfsdk:"status"`
-	FireTriggerIDs         []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs        []types.String `tfsdk:"block_trigger_ids"`
-	HoneybadgerApiKey      types.String   `tfsdk:"honeybadger_api_key"`
-	HoneybadgerEnvironment types.String   `tfsdk:"honeybadger_environment"`
-	HoneybadgerRevision    types.String   `tfsdk:"honeybadger_revision"`
+	typedTagCommon
+	HoneybadgerApiKey      types.String `tfsdk:"honeybadger_api_key"`
+	HoneybadgerEnvironment types.String `tfsdk:"honeybadger_environment"`
+	HoneybadgerRevision    types.String `tfsdk:"honeybadger_revision"`
 }
 
 func tagHoneybadgerSchema() schema.Schema {
@@ -92,6 +87,10 @@ func (m *tagHoneybadgerModel) FromParams(p map[string]string) {
 	m.HoneybadgerRevision = types.StringValue(p["honeybadgerRevision"])
 }
 
-func newTagHoneybadgerModel() typedModel {
+func (m *tagHoneybadgerModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagHoneybadgerModel() typedTagModel {
 	return &tagHoneybadgerModel{}
 }

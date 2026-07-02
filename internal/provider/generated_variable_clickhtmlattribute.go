@@ -10,10 +10,7 @@ import (
 )
 
 type variableClickhtmlattributeModel struct {
-	ID            types.String `tfsdk:"id"`
-	ContainerID   types.String `tfsdk:"container_id"`
-	Name          types.String `tfsdk:"name"`
-	DefaultValue  types.String `tfsdk:"default_value"`
+	typedVariableCommon
 	HtmlAttribute types.String `tfsdk:"html_attribute"`
 }
 
@@ -61,6 +58,10 @@ func (m *variableClickhtmlattributeModel) FromParams(p map[string]string) {
 	m.HtmlAttribute = types.StringValue(p["htmlAttribute"])
 }
 
-func newVariableClickhtmlattributeModel() typedModel {
+func (m *variableClickhtmlattributeModel) Common() *typedVariableCommon {
+	return &m.typedVariableCommon
+}
+
+func newVariableClickhtmlattributeModel() typedVariableModel {
 	return &variableClickhtmlattributeModel{}
 }

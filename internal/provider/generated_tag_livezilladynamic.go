@@ -12,15 +12,10 @@ import (
 )
 
 type tagLivezilladynamicModel struct {
-	ID                     types.String   `tfsdk:"id"`
-	ContainerID            types.String   `tfsdk:"container_id"`
-	Name                   types.String   `tfsdk:"name"`
-	Status                 types.String   `tfsdk:"status"`
-	FireTriggerIDs         []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs        []types.String `tfsdk:"block_trigger_ids"`
-	LivezillaDynamicID     types.String   `tfsdk:"livezilla_dynamic_id"`
-	LivezillaDynamicDomain types.String   `tfsdk:"livezilla_dynamic_domain"`
-	LivezillaDynamicDefer  types.Bool     `tfsdk:"livezilla_dynamic_defer"`
+	typedTagCommon
+	LivezillaDynamicID     types.String `tfsdk:"livezilla_dynamic_id"`
+	LivezillaDynamicDomain types.String `tfsdk:"livezilla_dynamic_domain"`
+	LivezillaDynamicDefer  types.Bool   `tfsdk:"livezilla_dynamic_defer"`
 }
 
 func tagLivezilladynamicSchema() schema.Schema {
@@ -91,6 +86,10 @@ func (m *tagLivezilladynamicModel) FromParams(p map[string]string) {
 	m.LivezillaDynamicDefer = types.BoolValue(paramBoolValue(p["LivezillaDynamicDefer"]))
 }
 
-func newTagLivezilladynamicModel() typedModel {
+func (m *tagLivezilladynamicModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagLivezilladynamicModel() typedTagModel {
 	return &tagLivezilladynamicModel{}
 }

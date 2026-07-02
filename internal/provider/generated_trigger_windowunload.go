@@ -10,9 +10,7 @@ import (
 )
 
 type triggerWindowunloadModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerWindowunloadSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerWindowunloadModel) ToParams() map[string]string {
 func (m *triggerWindowunloadModel) FromParams(p map[string]string) {
 }
 
-func newTriggerWindowunloadModel() typedModel {
+func (m *triggerWindowunloadModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerWindowunloadModel() typedTriggerModel {
 	return &triggerWindowunloadModel{}
 }

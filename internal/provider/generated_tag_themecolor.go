@@ -12,13 +12,8 @@ import (
 )
 
 type tagThemecolorModel struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	ThemeColor      types.String   `tfsdk:"theme_color"`
+	typedTagCommon
+	ThemeColor types.String `tfsdk:"theme_color"`
 }
 
 func tagThemecolorSchema() schema.Schema {
@@ -76,6 +71,10 @@ func (m *tagThemecolorModel) FromParams(p map[string]string) {
 	m.ThemeColor = types.StringValue(p["themeColor"])
 }
 
-func newTagThemecolorModel() typedModel {
+func (m *tagThemecolorModel) Common() *typedTagCommon {
+	return &m.typedTagCommon
+}
+
+func newTagThemecolorModel() typedTagModel {
 	return &tagThemecolorModel{}
 }

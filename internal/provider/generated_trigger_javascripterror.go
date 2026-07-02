@@ -10,9 +10,7 @@ import (
 )
 
 type triggerJavascripterrorModel struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	typedTriggerCommon
 }
 
 func triggerJavascripterrorSchema() schema.Schema {
@@ -49,6 +47,10 @@ func (m *triggerJavascripterrorModel) ToParams() map[string]string {
 func (m *triggerJavascripterrorModel) FromParams(p map[string]string) {
 }
 
-func newTriggerJavascripterrorModel() typedModel {
+func (m *triggerJavascripterrorModel) Common() *typedTriggerCommon {
+	return &m.typedTriggerCommon
+}
+
+func newTriggerJavascripterrorModel() typedTriggerModel {
 	return &triggerJavascripterrorModel{}
 }
