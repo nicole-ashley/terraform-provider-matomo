@@ -57,7 +57,9 @@ resource "matomo_tagmanager_tag_visualwebsiteoptimizer" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-visualwebsiteoptimizer"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  account_id = "test-value"
+  // VisualWebsiteOptimizerTag.php validates accountId as numeric
+  // ("The value is not a number.").
+  account_id = "1234567890"
 }
 `
 }

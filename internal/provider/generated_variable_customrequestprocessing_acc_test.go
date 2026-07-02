@@ -50,7 +50,10 @@ resource "matomo_tagmanager_container" "test" {
 resource "matomo_tagmanager_variable_customrequestprocessing" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-customrequestprocessing"
-  js_function = "test-value"
+  // CustomRequestProcessingVariable.php requires the value to start with
+  // the exact literal "function(request){" (confirmed live and by
+  // reading the source).
+  js_function = "function(request){ return request; }"
 }
 `
 }

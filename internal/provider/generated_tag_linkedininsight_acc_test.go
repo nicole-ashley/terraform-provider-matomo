@@ -57,7 +57,9 @@ resource "matomo_tagmanager_tag_linkedininsight" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-linkedininsight"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  partner_id = "test-value"
+  // LinkedinInsightTag.php validates partnerId as numeric ("The value is
+  // not a number.").
+  partner_id = "1234567890"
 }
 `
 }

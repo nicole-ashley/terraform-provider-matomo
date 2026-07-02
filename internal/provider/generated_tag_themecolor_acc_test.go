@@ -57,7 +57,9 @@ resource "matomo_tagmanager_tag_themecolor" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-themecolor"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  theme_color = "test-value"
+  // ThemeColorTag.php validates against /^#(?:[0-9a-fA-F]{3}){1,2}$/
+  // ("Please enter a valid hexadecimal color").
+  theme_color = "#FF5733"
 }
 `
 }

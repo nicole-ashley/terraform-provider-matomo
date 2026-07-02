@@ -57,7 +57,10 @@ resource "matomo_tagmanager_tag_binguet" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-binguet"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  bing_ad_id = "test-value"
+  // BingUETTag.php's validate closure runs the value through NumberRange(),
+  // rejecting anything non-numeric ("The value is not a number.") -
+  // confirmed by reading the source directly.
+  bing_ad_id = "1234567890"
 }
 `
 }

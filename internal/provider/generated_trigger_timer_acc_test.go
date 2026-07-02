@@ -50,7 +50,9 @@ resource "matomo_tagmanager_container" "test" {
 resource "matomo_tagmanager_trigger_timer" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-timer"
-  trigger_interval = 1
+  // TimerTrigger.php requires triggerInterval >= 50 (confirmed live: 1
+  // was rejected as "too low").
+  trigger_interval = 50
 }
 `
 }

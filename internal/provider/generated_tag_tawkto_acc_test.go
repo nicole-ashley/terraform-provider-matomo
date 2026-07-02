@@ -57,8 +57,10 @@ resource "matomo_tagmanager_tag_tawkto" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-tawkto"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  tawk_to_id = "test-value"
-  tawk_to_widget_id = "test-value"
+  // TawkToTag.php requires a minimum 16-character tawkToId (confirmed
+  // live: "test-value" (10 chars) was rejected).
+  tawk_to_id = "test-value-12345"
+  tawk_to_widget_id = "test-value-12345"
 }
 `
 }
