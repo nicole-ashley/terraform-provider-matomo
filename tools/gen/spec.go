@@ -1,0 +1,96 @@
+// tools/gen/spec.go
+package main
+
+import (
+	"fmt"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
+)
+
+// ParamSpec is one generated attribute, derived from a matomo.TemplateParam.
+type ParamSpec struct {
+	MatomoName      string
+	TFName          string
+	GoFieldName     string
+	Description     string
+	GoType          string // "String", "Bool", or "List"
+	Required        bool
+	AvailableValues []string
+	Condition       ConditionNode
+}
+
+// TypeSpec is one generated Tag Manager type (tag, trigger, or variable),
+// ready to be rendered into Go source by Task 7's emitter.
+type TypeSpec struct {
+	Kind         string // "tag", "trigger", or "variable"
+	TypeID       string // Matomo's type id, e.g. "CustomHtml"
+	Slug         string // lowercased type id, e.g. "customhtml"
+	ResourceName string // full Terraform type name, e.g. "matomo_tagmanager_tag_customhtml"
+	Description  string
+	Params       []ParamSpec
+}
+
+func matomoTypeToGoType(matomoType string) (string, error) {
+	switch matomoType {
+	case "string":
+		return "String", nil
+	case "bool":
+		return "Bool", nil
+	case "array":
+		return "List", nil
+	default:
+		return "", fmt.Errorf("unrecognized Matomo parameter type %q - add a case to matomoTypeToGoType in tools/gen/spec.go", matomoType)
+	}
+}
+
+// BuildTypeSpec converts one discovered Matomo template into a TypeSpec,
+// consulting RequiredParams (Task 4) for required-ness and ParseCondition
+// (Task 3) for each parameter's condition. kind must be "tag", "trigger",
+// or "variable".
+func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
+	required, err := RequiredParams(kind, tmpl.ID)
+	if err != nil {
+		return TypeSpec{}, err
+	}
+	requiredSet := make(map[string]bool, len(required))
+	for _, name := range required {
+		requiredSet[name] = true
+	}
+
+	spec := TypeSpec{
+		Kind:         kind,
+		TypeID:       tmpl.ID,
+		Slug:         Slug(tmpl.ID),
+		ResourceName: fmt.Sprintf("matomo_tagmanager_%s_%s", kind, Slug(tmpl.ID)),
+		Description:  tmpl.Description,
+	}
+
+	for _, p := range tmpl.Parameters {
+		goType, err := matomoTypeToGoType(p.Type)
+		if err != nil {
+			return TypeSpec{}, fmt.Errorf("type %q, parameter %q: %w", tmpl.ID, p.Name, err)
+		}
+		cond, err := ParseCondition(p.Condition)
+		if err != nil {
+			return TypeSpec{}, fmt.Errorf("type %q, parameter %q: %w", tmpl.ID, p.Name, err)
+		}
+
+		var availableValues []string
+		for value := range p.AvailableValues {
+			availableValues = append(availableValues, value)
+		}
+
+		spec.Params = append(spec.Params, ParamSpec{
+			MatomoName:      p.Name,
+			TFName:          CamelToSnake(p.Name),
+			GoFieldName:     ExportedName(p.Name),
+			Description:     p.Description,
+			GoType:          goType,
+			Required:        requiredSet[p.Name],
+			AvailableValues: availableValues,
+			Condition:       cond,
+		})
+	}
+
+	return spec, nil
+}
