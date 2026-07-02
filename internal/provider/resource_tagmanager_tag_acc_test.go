@@ -45,6 +45,10 @@ resource "matomo_tagmanager_tag" "test" {
     name  = "customHtml"
     value = "<script>console.log('acceptance test')</script>"
   }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
+  }
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -84,6 +88,10 @@ resource "matomo_tagmanager_tag" "test" {
   parameter {
     name  = "customHtml"
     value = "<script>console.log('acceptance test')</script>"
+  }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
@@ -177,6 +185,10 @@ resource "matomo_tagmanager_tag" "test" {
     name  = "customHtml"
     value = "<script></script>"
   }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
+  }
 }
 `,
 			},
@@ -224,6 +236,10 @@ resource "matomo_tagmanager_tag" "test" {
   parameter {
     name  = "customHtml"
     value = "<script></script>"
+  }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
