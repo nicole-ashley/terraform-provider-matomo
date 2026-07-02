@@ -8,12 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -22,19 +18,11 @@ jobs:
           terraform_wrapper: false
       - run: go build -o /dev/null .
       - run: go test ./... -v -count=1
-      # Temporary bootstrap-commit: docs/ doesn't exist yet and can only
-      # be generated with a real terraform binary, which this sandbox's
-      # dev environment doesn't have. This commits it for real, once; it
-      # will be reverted back to a pure drift-check (see the docs and
-      # examples plan's Task 4 step 6) as soon as that lands.
-      - name: Generate and commit docs (temporary bootstrap)
+      - name: Check docs are up to date
         run: |
           make docs
-          git config user.email "noreply@anthropic.com"
-          git config user.name "Claude"
           git add -A -- docs/
-          git diff --cached --quiet || git commit -m "Generate initial tfplugindocs output"
-          git push origin HEAD:"${{ github.head_ref || github.ref_name }}"
+          git diff --cached --exit-code -- docs/ || (echo "::error::docs/ is out of date - run 'make docs' and commit the result" && exit 1)
 
   lint:
     runs-on: ubuntu-latest
