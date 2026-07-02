@@ -76,7 +76,12 @@ func (a *publishContainerVersionAction) Invoke(ctx context.Context, req action.I
 	}
 
 	resp.SendProgress(action.InvokeProgressEvent{Message: "Snapshotting current draft..."})
-	versionName := "terraform-release-" + time.Now().UTC().Format(time.RFC3339)
+	// A colon-free, sub-second-precision layout: Matomo's allowed
+	// character set for version names beyond the confirmed 1-50 char
+	// length bound is unverified, so this avoids RFC3339's colons on
+	// general principle, and the added precision avoids two publishes
+	// within the same second colliding on an identical name.
+	versionName := "terraform-release-" + time.Now().UTC().Format("20060102T150405.000000000Z")
 	versionID, err := a.client.CreateContainerVersion(ctx, siteID, idContainer, versionName, "")
 	if err != nil {
 		resp.Diagnostics.AddError("Error snapshotting Matomo Tag Manager container draft", err.Error())
