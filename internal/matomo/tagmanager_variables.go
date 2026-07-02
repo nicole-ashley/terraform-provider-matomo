@@ -11,7 +11,7 @@ type Variable struct {
 	IDVariable int       `json:"idvariable"`
 	Name       string    `json:"name"`
 	Type       string    `json:"type"`
-	Parameters stringMap `json:"parameters"`
+	Parameters ParamsMap `json:"parameters"`
 	// Confirmed against Matomo's own VariableTest.php fixture: the response
 	// key is default_value (snake_case), unlike the defaultValue (camelCase)
 	// request parameter used to set it.
@@ -23,7 +23,7 @@ type Variable struct {
 type VariableParams struct {
 	Type         string
 	Name         string
-	Parameters   map[string]string
+	Parameters   ParamsMap
 	DefaultValue *string
 }
 
@@ -35,7 +35,7 @@ func variableParamsToValues(idSite int, idContainer, idContainerVersion string, 
 		"type":               {p.Type},
 		"name":               {p.Name},
 	}
-	addMapParam(v, "parameters", p.Parameters)
+	addParamsMap(v, "parameters", p.Parameters)
 
 	if p.DefaultValue != nil {
 		v.Set("defaultValue", *p.DefaultValue)

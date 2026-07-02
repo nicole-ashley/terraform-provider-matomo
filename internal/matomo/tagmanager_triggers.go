@@ -18,7 +18,7 @@ type Trigger struct {
 	IDTrigger  int         `json:"idtrigger"`
 	Name       string      `json:"name"`
 	Type       string      `json:"type"`
-	Parameters stringMap   `json:"parameters"`
+	Parameters ParamsMap   `json:"parameters"`
 	Conditions []Condition `json:"conditions"`
 }
 
@@ -27,7 +27,7 @@ type Trigger struct {
 type TriggerParams struct {
 	Type       string
 	Name       string
-	Parameters map[string]string
+	Parameters ParamsMap
 	Conditions []Condition
 }
 
@@ -39,7 +39,7 @@ func triggerParamsToValues(idSite int, idContainer, idContainerVersion string, p
 		"type":               {p.Type},
 		"name":               {p.Name},
 	}
-	addMapParam(v, "parameters", p.Parameters)
+	addParamsMap(v, "parameters", p.Parameters)
 	addConditionsParam(v, "conditions", p.Conditions)
 
 	return v

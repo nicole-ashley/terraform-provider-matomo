@@ -104,7 +104,7 @@ func (p *MatomoProvider) Configure(ctx context.Context, req provider.ConfigureRe
 }
 
 func (p *MatomoProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewSiteResource,
 		NewCustomDimensionResource,
 		NewTagManagerContainerResource,
@@ -112,6 +112,7 @@ func (p *MatomoProvider) Resources(_ context.Context) []func() resource.Resource
 		NewTagManagerTriggerResource,
 		NewTagManagerVariableResource,
 	}
+	return append(resources, generatedResources()...)
 }
 
 func (p *MatomoProvider) DataSources(_ context.Context) []func() datasource.DataSource {

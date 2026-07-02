@@ -210,7 +210,7 @@ func (r *tagManagerTriggerResource) Read(ctx context.Context, req resource.ReadR
 
 	params := make([]tagParameterModel, 0, len(trig.Parameters))
 	for name, value := range trig.Parameters {
-		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(value)})
+		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(paramValueDisplayString(value))})
 	}
 	// trig.Parameters is a map, so Go's iteration order above is randomized
 	// per-process. Sort by name so Read's output is deterministic across

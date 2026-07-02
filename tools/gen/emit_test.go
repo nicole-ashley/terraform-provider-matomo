@@ -1,0 +1,226 @@
+// tools/gen/emit_test.go
+package main
+
+import (
+	"go/parser"
+	"go/token"
+	"regexp"
+	"strings"
+	"testing"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
+)
+
+func TestRenderSchema_parsesAsValidGo(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "CustomHtml",
+		Slug:         "customhtml",
+		ResourceName: "matomo_tagmanager_tag_customhtml",
+		Description:  "Inject custom HTML",
+		Params: []ParamSpec{
+			{MatomoName: "customHtml", TFName: "custom_html", GoFieldName: "CustomHtml", Description: "The HTML to inject", GoType: "String", Required: true},
+			{
+				MatomoName: "htmlPosition", TFName: "html_position", GoFieldName: "HtmlPosition",
+				Description: "Where to inject it", GoType: "String", Required: false,
+				AvailableValues: []string{"top", "bottom"},
+				Condition:       matomo.RefNode{Field: "custom_html"},
+			},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "tag_customhtml.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		"tagCustomhtmlModel",
+		`"custom_html"`,
+		"Required: true",
+		`TypeID:       "CustomHtml"`,
+		`ResourceName: "matomo_tagmanager_tag_customhtml"`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+
+	// gofmt column-aligns struct field declarations, so the amount of
+	// whitespace between the field name and its type is not fixed --
+	// match loosely with a regexp instead of a literal substring.
+	for _, wantPattern := range []string{
+		`CustomHtml\s+types\.String`,
+		`HtmlPosition\s+types\.String`,
+	} {
+		if !regexp.MustCompile(wantPattern).MatchString(got) {
+			t.Errorf("generated source missing pattern %q; full source:\n%s", wantPattern, got)
+		}
+	}
+}
+
+// TestRenderSchema_conditionallyRequired mirrors the real Etracker case
+// end to end: a param with ConditionallyRequired set must render a
+// conditionRequiredValidator wired to its (already TF-snake_case)
+// condition, with the internal/matomo package imported to support it -
+// and the result must still be valid, compilable Go.
+func TestRenderSchema_conditionallyRequired(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "Etracker",
+		Slug:         "etracker",
+		ResourceName: "matomo_tagmanager_tag_etracker",
+		Description:  "eTracker Analytics",
+		Params: []ParamSpec{
+			{
+				MatomoName: "trackingType", TFName: "tracking_type", GoFieldName: "TrackingType",
+				GoType: "String", Required: true,
+				AvailableValues: []string{"addtocart", "pageview"},
+			},
+			{
+				MatomoName: "etrackerAddToCartProduct", TFName: "etracker_add_to_cart_product", GoFieldName: "EtrackerAddToCartProduct",
+				GoType: "String", Required: false, ConditionallyRequired: true,
+				Condition: matomo.EqNode{Field: "tracking_type", Value: "addtocart"},
+			},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "tag_etracker.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		`"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"`,
+		`conditionRequiredValidator{Condition: matomo.EqNode{Field: "tracking_type", Value: "addtocart", Negate: false}}`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+}
+
+// TestRenderSchema_optionalFieldsAreComputed exercises every Go type's
+// Optional-field code path (String/Bool/Int64/Float64/List) to prove each
+// renders valid, compiling Go: String/Bool/Int64/Float64 get a Computed +
+// UseStateForUnknown attribute (with the matching plan modifier import) -
+// the fix for a live-acceptance-test failure where a Matomo-defaulted
+// value for an unset Optional field (e.g. a boolean parameter coming
+// back false rather than absent) caused a perpetual "refresh plan not
+// empty" diff against a bare Optional attribute. List is deliberately
+// NOT made Computed - its generated Go field type ([]types.String) can't
+// represent an unknown list, and a live acceptance-test run confirmed
+// that combination fails outright ("Value Conversion Error ... Received
+// unknown value").
+func TestRenderSchema_optionalFieldsAreComputed(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "trigger",
+		TypeID:       "Everything",
+		Slug:         "everything",
+		ResourceName: "matomo_tagmanager_trigger_everything",
+		Description:  "exercises every optional Go type",
+		Params: []ParamSpec{
+			{MatomoName: "s", TFName: "s", GoFieldName: "S", GoType: "String", Required: false},
+			{MatomoName: "b", TFName: "b", GoFieldName: "B", GoType: "Bool", Required: false},
+			{MatomoName: "i", TFName: "i", GoFieldName: "I", GoType: "Int64", Required: false},
+			{MatomoName: "f", TFName: "f", GoFieldName: "F", GoType: "Float64", Required: false},
+			{MatomoName: "l", TFName: "l", GoFieldName: "L", GoType: "List", Required: false},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "trigger_everything.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"`,
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"`,
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"`,
+		`PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}`,
+		`PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}`,
+		`PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}`,
+		`PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()}`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "listplanmodifier") {
+		t.Errorf("generated source references listplanmodifier, want none (List params are not Computed): full source:\n%s", got)
+	}
+	// The "l" field itself must still be Optional (not Computed) - only
+	// check its own attribute block, not "L []types.String" the struct
+	// field declaration.
+	if regexp.MustCompile(`"l":\s*schema\.ListAttribute\{[^}]*Computed`).MatchString(got) {
+		t.Errorf("generated source marks the List param \"l\" Computed, want Optional only: full source:\n%s", got)
+	}
+}
+
+// TestRenderSchema_listParamsUseNativeArrayEncoding proves ToParams/
+// FromParams wire a List-typed parameter through matomo.ListParam/
+// ParamValue.List, not a delimiter-joined string - a live acceptance
+// test only ever exercised a single-element list, which can't tell a
+// correct array encoding apart from the lossy comma-joined-string
+// encoding it replaced (a multi-element value, or any element
+// containing a comma, would have round-tripped corrupted, and Matomo's
+// dispatcher rejects a joined string for a genuinely array-typed field
+// outright in the first place).
+func TestRenderSchema_listParamsUseNativeArrayEncoding(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "ListExample",
+		Slug:         "listexample",
+		ResourceName: "matomo_tagmanager_tag_listexample",
+		Description:  "exercises List param wire encoding",
+		Params: []ParamSpec{
+			{MatomoName: "requiredList", TFName: "required_list", GoFieldName: "RequiredList", GoType: "List", Required: true},
+			{MatomoName: "optionalList", TFName: "optional_list", GoFieldName: "OptionalList", GoType: "List", Required: false},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "tag_listexample.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		`func (m *tagListexampleModel) ToParams() matomo.ParamsMap {`,
+		`p["requiredList"] = matomo.ListParam(stringSliceFromModel(m.RequiredList))`,
+		`p["optionalList"] = matomo.ListParam(stringSliceFromModel(m.OptionalList))`,
+		`func (m *tagListexampleModel) FromParams(p matomo.ParamsMap) {`,
+		`m.RequiredList = paramListValue(p["requiredList"].List)`,
+		`m.OptionalList = paramListValue(v.List)`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "paramListString") || strings.Contains(got, `strings.Join`) {
+		t.Errorf("generated source still comma-joins a List param; full source:\n%s", got)
+	}
+}
