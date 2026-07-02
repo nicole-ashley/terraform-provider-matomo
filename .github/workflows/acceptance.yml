@@ -21,9 +21,15 @@ jobs:
           terraform_wrapper: false
       - run: docker compose up -d --wait
       - run: ./scripts/bootstrap-matomo.sh >> "$GITHUB_ENV"
-      - name: Regenerate typed Tag Manager resources and check for drift
+      - run: go run ./tools/gen
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-tagmanager-resources
+          path: internal/provider/generated_*.go
+          retention-days: 1
+      - name: Check for drift in generated Tag Manager resources
         run: |
-          go run ./tools/gen
           git add -A -- 'internal/provider/generated_*.go'
           if ! git diff --cached --exit-code -- 'internal/provider/generated_*.go'; then
             echo "::error::generated Tag Manager resources are out of date. Run 'go run ./tools/gen' locally (against a Matomo instance) and commit the result." >&2
