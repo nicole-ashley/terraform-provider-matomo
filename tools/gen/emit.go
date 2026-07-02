@@ -41,6 +41,15 @@ type templateData struct {
 	// typed_model.go) the generated model's constructor returns, so the
 	// shared runtime can call Common() without a type assertion.
 	ModelInterfaceName string
+	// NeedsTypesImport is true when the generated file actually
+	// references the "types" package. Tag types always do (the common
+	// fire_trigger_ids/block_trigger_ids attributes use
+	// types.StringType), but trigger/variable types with zero
+	// type-specific parameters (e.g. PageView, DomReady - the whole
+	// model is just the embedded common struct) never reference it at
+	// all, producing an "imported and not used" error - caught the hard
+	// way against real discovered types with no parameters.
+	NeedsTypesImport bool
 }
 
 func newTemplateData(spec TypeSpec) templateData {
@@ -63,6 +72,7 @@ func newTemplateData(spec TypeSpec) templateData {
 		NeedsValidatorImports: needsValidatorImports,
 		CommonTypeName:        "typed" + ExportedName(spec.Kind) + "Common",
 		ModelInterfaceName:    "typed" + ExportedName(spec.Kind) + "Model",
+		NeedsTypesImport:      spec.Kind == "tag" || len(spec.Params) > 0,
 	}
 }
 
