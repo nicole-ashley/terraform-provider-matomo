@@ -191,13 +191,10 @@ func (r *tagManagerTriggerResource) Read(ctx context.Context, req resource.ReadR
 
 	trig, err := r.client.GetContainerTrigger(ctx, siteID, idContainer, versionID, idTrigger)
 	if err != nil {
-		// NOTE: "Trigger does not exist" is the exact error string this
-		// provider assumes TagManager.getContainerTrigger returns for an
-		// unknown trigger, but it has never been verified against a live
-		// Matomo instance. If the real wire format differs, a trigger deleted
-		// out of band will surface as a hard error here instead of being
-		// silently removed from state. Verifying this string is a gate for
-		// the acceptance-test plan that stands up a real Matomo fixture.
+		// "Trigger does not exist" is confirmed (via the _disappears
+		// acceptance test against a real Matomo instance) to be the exact
+		// error string TagManager.getContainerTrigger returns for an unknown
+		// trigger.
 		if apiErr, ok := err.(*matomo.APIError); ok && apiErr.Message == "Trigger does not exist" {
 			resp.State.RemoveResource(ctx)
 			return

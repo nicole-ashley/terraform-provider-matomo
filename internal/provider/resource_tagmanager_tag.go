@@ -241,13 +241,9 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 
 	tag, err := r.client.GetContainerTag(ctx, siteID, idContainer, versionID, idTag)
 	if err != nil {
-		// NOTE: "Tag does not exist" is the exact error string this provider
-		// assumes TagManager.getContainerTag returns for an unknown tag, but
-		// it has never been verified against a live Matomo instance. If the
-		// real wire format differs, a tag deleted out of band will surface
-		// as a hard error here instead of being silently removed from state.
-		// Verifying this string is a gate for the acceptance-test plan that
-		// stands up a real Matomo fixture.
+		// "Tag does not exist" is confirmed (via the _disappears acceptance
+		// test against a real Matomo instance) to be the exact error string
+		// TagManager.getContainerTag returns for an unknown tag.
 		if apiErr, ok := err.(*matomo.APIError); ok && apiErr.Message == "Tag does not exist" {
 			resp.State.RemoveResource(ctx)
 			return
