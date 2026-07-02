@@ -1,4 +1,3 @@
-// internal/provider/data_source_tagmanager_variable_types.go
 package provider
 
 import (

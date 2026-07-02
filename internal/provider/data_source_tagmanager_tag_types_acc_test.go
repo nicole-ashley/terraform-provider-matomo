@@ -1,4 +1,3 @@
-// internal/provider/data_source_tagmanager_tag_types_acc_test.go
 package provider
 
 import (
