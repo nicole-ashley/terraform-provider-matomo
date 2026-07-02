@@ -76,10 +76,26 @@ func (m *triggerTimerModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *triggerTimerModel) FromParams(p map[string]string) {
 	m.TriggerInterval = types.Int64Value(paramInt64Value(p["triggerInterval"]))
-	m.EventName = types.StringValue(p["eventName"])
-	m.TriggerLimit = types.Int64Value(paramInt64Value(p["triggerLimit"]))
+	if v, ok := p["eventName"]; ok {
+		m.EventName = types.StringValue(v)
+	} else {
+		m.EventName = types.StringNull()
+	}
+	if v, ok := p["triggerLimit"]; ok {
+		m.TriggerLimit = types.Int64Value(paramInt64Value(v))
+	} else {
+		m.TriggerLimit = types.Int64Null()
+	}
 }
 
 func (m *triggerTimerModel) Common() *typedTriggerCommon {

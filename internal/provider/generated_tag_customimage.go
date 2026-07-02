@@ -83,9 +83,21 @@ func (m *tagCustomimageModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *tagCustomimageModel) FromParams(p map[string]string) {
 	m.CustomImageSrc = types.StringValue(p["customImageSrc"])
-	m.CacheBusterEnabled = types.BoolValue(paramBoolValue(p["cacheBusterEnabled"]))
+	if v, ok := p["cacheBusterEnabled"]; ok {
+		m.CacheBusterEnabled = types.BoolValue(paramBoolValue(v))
+	} else {
+		m.CacheBusterEnabled = types.BoolNull()
+	}
 }
 
 func (m *tagCustomimageModel) Common() *typedTagCommon {

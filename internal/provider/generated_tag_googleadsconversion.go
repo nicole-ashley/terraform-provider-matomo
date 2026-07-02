@@ -107,12 +107,32 @@ func (m *tagGoogleadsconversionModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *tagGoogleadsconversionModel) FromParams(p map[string]string) {
 	m.GoogleAdsConversionId = types.StringValue(p["googleAdsConversionId"])
 	m.GoogleAdsConversionLabel = types.StringValue(p["googleAdsConversionLabel"])
-	m.GoogleAdsConversionValue = types.StringValue(p["googleAdsConversionValue"])
-	m.GoogleAdsConversionTransactionId = types.StringValue(p["googleAdsConversionTransactionId"])
-	m.GoogleAdsConversionCurrency = types.StringValue(p["googleAdsConversionCurrency"])
+	if v, ok := p["googleAdsConversionValue"]; ok {
+		m.GoogleAdsConversionValue = types.StringValue(v)
+	} else {
+		m.GoogleAdsConversionValue = types.StringNull()
+	}
+	if v, ok := p["googleAdsConversionTransactionId"]; ok {
+		m.GoogleAdsConversionTransactionId = types.StringValue(v)
+	} else {
+		m.GoogleAdsConversionTransactionId = types.StringNull()
+	}
+	if v, ok := p["googleAdsConversionCurrency"]; ok {
+		m.GoogleAdsConversionCurrency = types.StringValue(v)
+	} else {
+		m.GoogleAdsConversionCurrency = types.StringNull()
+	}
 }
 
 func (m *tagGoogleadsconversionModel) Common() *typedTagCommon {

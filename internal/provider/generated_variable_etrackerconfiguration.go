@@ -161,19 +161,71 @@ func (m *variableEtrackerconfigurationModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *variableEtrackerconfigurationModel) FromParams(p map[string]string) {
 	m.EtrackerID = types.StringValue(p["etrackerID"])
-	m.EtrackerBlockCookies = types.BoolValue(paramBoolValue(p["etrackerBlockCookies"]))
-	m.EtrackerDNT = types.BoolValue(paramBoolValue(p["etrackerDNT"]))
-	m.Et_pagename = types.StringValue(p["et_pagename"])
-	m.Et_areas = types.StringValue(p["et_areas"])
-	m.Et_target = types.StringValue(p["et_target"])
-	m.Et_tval = types.StringValue(p["et_tval"])
-	m.Et_tonr = types.StringValue(p["et_tonr"])
-	m.Et_tsale = types.StringValue(p["et_tsale"])
-	m.Et_basket = types.StringValue(p["et_basket"])
-	m.Et_cust = types.StringValue(p["et_cust"])
-	m.CustomDimensions = paramListValue(p["customDimensions"])
+	if v, ok := p["etrackerBlockCookies"]; ok {
+		m.EtrackerBlockCookies = types.BoolValue(paramBoolValue(v))
+	} else {
+		m.EtrackerBlockCookies = types.BoolNull()
+	}
+	if v, ok := p["etrackerDNT"]; ok {
+		m.EtrackerDNT = types.BoolValue(paramBoolValue(v))
+	} else {
+		m.EtrackerDNT = types.BoolNull()
+	}
+	if v, ok := p["et_pagename"]; ok {
+		m.Et_pagename = types.StringValue(v)
+	} else {
+		m.Et_pagename = types.StringNull()
+	}
+	if v, ok := p["et_areas"]; ok {
+		m.Et_areas = types.StringValue(v)
+	} else {
+		m.Et_areas = types.StringNull()
+	}
+	if v, ok := p["et_target"]; ok {
+		m.Et_target = types.StringValue(v)
+	} else {
+		m.Et_target = types.StringNull()
+	}
+	if v, ok := p["et_tval"]; ok {
+		m.Et_tval = types.StringValue(v)
+	} else {
+		m.Et_tval = types.StringNull()
+	}
+	if v, ok := p["et_tonr"]; ok {
+		m.Et_tonr = types.StringValue(v)
+	} else {
+		m.Et_tonr = types.StringNull()
+	}
+	if v, ok := p["et_tsale"]; ok {
+		m.Et_tsale = types.StringValue(v)
+	} else {
+		m.Et_tsale = types.StringNull()
+	}
+	if v, ok := p["et_basket"]; ok {
+		m.Et_basket = types.StringValue(v)
+	} else {
+		m.Et_basket = types.StringNull()
+	}
+	if v, ok := p["et_cust"]; ok {
+		m.Et_cust = types.StringValue(v)
+	} else {
+		m.Et_cust = types.StringNull()
+	}
+	if v, ok := p["customDimensions"]; ok {
+		m.CustomDimensions = paramListValue(v)
+	} else {
+		m.CustomDimensions = nil
+	}
 }
 
 func (m *variableEtrackerconfigurationModel) Common() *typedVariableCommon {

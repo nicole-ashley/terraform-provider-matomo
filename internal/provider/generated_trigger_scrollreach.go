@@ -79,10 +79,26 @@ func (m *triggerScrollreachModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *triggerScrollreachModel) FromParams(p map[string]string) {
 	m.ScrollType = types.StringValue(p["scrollType"])
-	m.Pixels = types.Int64Value(paramInt64Value(p["pixels"]))
-	m.Percentage = types.Int64Value(paramInt64Value(p["percentage"]))
+	if v, ok := p["pixels"]; ok {
+		m.Pixels = types.Int64Value(paramInt64Value(v))
+	} else {
+		m.Pixels = types.Int64Null()
+	}
+	if v, ok := p["percentage"]; ok {
+		m.Percentage = types.Int64Value(paramInt64Value(v))
+	} else {
+		m.Percentage = types.Int64Null()
+	}
 }
 
 func (m *triggerScrollreachModel) Common() *typedTriggerCommon {

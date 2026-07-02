@@ -84,9 +84,21 @@ func (m *tagGoogleanalytics4eventModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *tagGoogleanalytics4eventModel) FromParams(p map[string]string) {
 	m.EventName = types.StringValue(p["eventName"])
-	m.EventParameters = paramListValue(p["eventParameters"])
+	if v, ok := p["eventParameters"]; ok {
+		m.EventParameters = paramListValue(v)
+	} else {
+		m.EventParameters = nil
+	}
 }
 
 func (m *tagGoogleanalytics4eventModel) Common() *typedTagCommon {

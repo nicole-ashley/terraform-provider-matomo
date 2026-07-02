@@ -320,35 +320,151 @@ func (m *tagEtrackerModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *tagEtrackerModel) FromParams(p map[string]string) {
 	m.TrackingType = types.StringValue(p["trackingType"])
-	m.EtrackerConfig = types.StringValue(p["etrackerConfig"])
-	m.EtrackerWrapperPagename = types.StringValue(p["etrackerWrapperPagename"])
-	m.EtrackerWrapperArea = types.StringValue(p["etrackerWrapperArea"])
-	m.EtrackerWrapperTarget = types.StringValue(p["etrackerWrapperTarget"])
-	m.EtrackerWrapperTval = types.StringValue(p["etrackerWrapperTval"])
-	m.EtrackerWrapperTonr = types.StringValue(p["etrackerWrapperTonr"])
-	m.EtrackerWrapperTsale = types.StringValue(p["etrackerWrapperTsale"])
-	m.EtrackerWrapperCust = types.StringValue(p["etrackerWrapperCust"])
-	m.EtrackerWrapperBasket = types.StringValue(p["etrackerWrapperBasket"])
-	m.EtrackerEventCategory = types.StringValue(p["etrackerEventCategory"])
-	m.EtrackerEventObject = types.StringValue(p["etrackerEventObject"])
-	m.EtrackerEventAction = types.StringValue(p["etrackerEventAction"])
-	m.EtrackerEventType = types.StringValue(p["etrackerEventType"])
-	m.EtrackerTransactionType = types.StringValue(p["etrackerTransactionType"])
-	m.EtrackerTransactionID = types.StringValue(p["etrackerTransactionID"])
-	m.EtrackerTransactionValue = types.StringValue(p["etrackerTransactionValue"])
-	m.EtrackerTransactionCurrency = types.StringValue(p["etrackerTransactionCurrency"])
-	m.EtrackerTransactionBasket = types.StringValue(p["etrackerTransactionBasket"])
-	m.EtrackerTransactionCustomerGroup = types.StringValue(p["etrackerTransactionCustomerGroup"])
-	m.EtrackerTransactionDeliveryConditions = types.StringValue(p["etrackerTransactionDeliveryConditions"])
-	m.EtrackerTransactionPaymentConditions = types.StringValue(p["etrackerTransactionPaymentConditions"])
-	m.EtrackerTransactionDebugMode = types.BoolValue(paramBoolValue(p["etrackerTransactionDebugMode"]))
-	m.EtrackerAddToCartProduct = types.StringValue(p["etrackerAddToCartProduct"])
-	m.EtrackerAddToCartNumber = types.StringValue(p["etrackerAddToCartNumber"])
-	m.EtrackerFormType = types.StringValue(p["etrackerFormType"])
-	m.EtrackerFormName = types.StringValue(p["etrackerFormName"])
-	m.EtrackerFormData = types.StringValue(p["etrackerFormData"])
+	if v, ok := p["etrackerConfig"]; ok {
+		m.EtrackerConfig = types.StringValue(v)
+	} else {
+		m.EtrackerConfig = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperPagename"]; ok {
+		m.EtrackerWrapperPagename = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperPagename = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperArea"]; ok {
+		m.EtrackerWrapperArea = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperArea = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperTarget"]; ok {
+		m.EtrackerWrapperTarget = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperTarget = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperTval"]; ok {
+		m.EtrackerWrapperTval = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperTval = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperTonr"]; ok {
+		m.EtrackerWrapperTonr = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperTonr = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperTsale"]; ok {
+		m.EtrackerWrapperTsale = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperTsale = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperCust"]; ok {
+		m.EtrackerWrapperCust = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperCust = types.StringNull()
+	}
+	if v, ok := p["etrackerWrapperBasket"]; ok {
+		m.EtrackerWrapperBasket = types.StringValue(v)
+	} else {
+		m.EtrackerWrapperBasket = types.StringNull()
+	}
+	if v, ok := p["etrackerEventCategory"]; ok {
+		m.EtrackerEventCategory = types.StringValue(v)
+	} else {
+		m.EtrackerEventCategory = types.StringNull()
+	}
+	if v, ok := p["etrackerEventObject"]; ok {
+		m.EtrackerEventObject = types.StringValue(v)
+	} else {
+		m.EtrackerEventObject = types.StringNull()
+	}
+	if v, ok := p["etrackerEventAction"]; ok {
+		m.EtrackerEventAction = types.StringValue(v)
+	} else {
+		m.EtrackerEventAction = types.StringNull()
+	}
+	if v, ok := p["etrackerEventType"]; ok {
+		m.EtrackerEventType = types.StringValue(v)
+	} else {
+		m.EtrackerEventType = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionType"]; ok {
+		m.EtrackerTransactionType = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionType = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionID"]; ok {
+		m.EtrackerTransactionID = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionID = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionValue"]; ok {
+		m.EtrackerTransactionValue = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionValue = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionCurrency"]; ok {
+		m.EtrackerTransactionCurrency = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionCurrency = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionBasket"]; ok {
+		m.EtrackerTransactionBasket = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionBasket = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionCustomerGroup"]; ok {
+		m.EtrackerTransactionCustomerGroup = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionCustomerGroup = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionDeliveryConditions"]; ok {
+		m.EtrackerTransactionDeliveryConditions = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionDeliveryConditions = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionPaymentConditions"]; ok {
+		m.EtrackerTransactionPaymentConditions = types.StringValue(v)
+	} else {
+		m.EtrackerTransactionPaymentConditions = types.StringNull()
+	}
+	if v, ok := p["etrackerTransactionDebugMode"]; ok {
+		m.EtrackerTransactionDebugMode = types.BoolValue(paramBoolValue(v))
+	} else {
+		m.EtrackerTransactionDebugMode = types.BoolNull()
+	}
+	if v, ok := p["etrackerAddToCartProduct"]; ok {
+		m.EtrackerAddToCartProduct = types.StringValue(v)
+	} else {
+		m.EtrackerAddToCartProduct = types.StringNull()
+	}
+	if v, ok := p["etrackerAddToCartNumber"]; ok {
+		m.EtrackerAddToCartNumber = types.StringValue(v)
+	} else {
+		m.EtrackerAddToCartNumber = types.StringNull()
+	}
+	if v, ok := p["etrackerFormType"]; ok {
+		m.EtrackerFormType = types.StringValue(v)
+	} else {
+		m.EtrackerFormType = types.StringNull()
+	}
+	if v, ok := p["etrackerFormName"]; ok {
+		m.EtrackerFormName = types.StringValue(v)
+	} else {
+		m.EtrackerFormName = types.StringNull()
+	}
+	if v, ok := p["etrackerFormData"]; ok {
+		m.EtrackerFormData = types.StringValue(v)
+	} else {
+		m.EtrackerFormData = types.StringNull()
+	}
 }
 
 func (m *tagEtrackerModel) Common() *typedTagCommon {

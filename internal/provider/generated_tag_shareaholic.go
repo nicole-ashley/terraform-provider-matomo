@@ -102,11 +102,31 @@ func (m *tagShareaholicModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *tagShareaholicModel) FromParams(p map[string]string) {
 	m.ShareaholicSiteId = types.StringValue(p["shareaholicSiteId"])
-	m.ShareaholicInPageApp = types.StringValue(p["shareaholicInPageApp"])
-	m.ShareaholicAppId = types.StringValue(p["shareaholicAppId"])
-	m.ShareaholicParentSelector = types.StringValue(p["shareaholicParentSelector"])
+	if v, ok := p["shareaholicInPageApp"]; ok {
+		m.ShareaholicInPageApp = types.StringValue(v)
+	} else {
+		m.ShareaholicInPageApp = types.StringNull()
+	}
+	if v, ok := p["shareaholicAppId"]; ok {
+		m.ShareaholicAppId = types.StringValue(v)
+	} else {
+		m.ShareaholicAppId = types.StringNull()
+	}
+	if v, ok := p["shareaholicParentSelector"]; ok {
+		m.ShareaholicParentSelector = types.StringValue(v)
+	} else {
+		m.ShareaholicParentSelector = types.StringNull()
+	}
 }
 
 func (m *tagShareaholicModel) Common() *typedTagCommon {

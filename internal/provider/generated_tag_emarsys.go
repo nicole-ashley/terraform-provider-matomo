@@ -110,12 +110,36 @@ func (m *tagEmarsysModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *tagEmarsysModel) FromParams(p map[string]string) {
 	m.MerchantId = types.StringValue(p["merchantId"])
-	m.CommandCategory = types.StringValue(p["commandCategory"])
-	m.CommandView = types.StringValue(p["commandView"])
-	m.CommandTag = types.StringValue(p["commandTag"])
-	m.CommandGo = types.BoolValue(paramBoolValue(p["commandGo"]))
+	if v, ok := p["commandCategory"]; ok {
+		m.CommandCategory = types.StringValue(v)
+	} else {
+		m.CommandCategory = types.StringNull()
+	}
+	if v, ok := p["commandView"]; ok {
+		m.CommandView = types.StringValue(v)
+	} else {
+		m.CommandView = types.StringNull()
+	}
+	if v, ok := p["commandTag"]; ok {
+		m.CommandTag = types.StringValue(v)
+	} else {
+		m.CommandTag = types.StringNull()
+	}
+	if v, ok := p["commandGo"]; ok {
+		m.CommandGo = types.BoolValue(paramBoolValue(v))
+	} else {
+		m.CommandGo = types.BoolNull()
+	}
 }
 
 func (m *tagEmarsysModel) Common() *typedTagCommon {

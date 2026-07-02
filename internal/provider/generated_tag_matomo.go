@@ -217,24 +217,92 @@ func (m *tagMatomoModel) ToParams() map[string]string {
 	return p
 }
 
+// FromParams mirrors ToParams' omission convention on the way back: a key
+// absent from Matomo's response (an unset Optional parameter) must decode
+// to a null value, not a zero value ("", false, 0) - decoding it to a
+// zero value made every unset Optional parameter round-trip as a
+// non-null empty value, which never matched the null the config itself
+// produced and left Terraform reporting a perpetual "refresh plan not
+// empty" diff on every generated resource with an unset Optional field
+// (confirmed against a real acceptance-test run).
 func (m *tagMatomoModel) FromParams(p map[string]string) {
 	m.MatomoConfig = types.StringValue(p["matomoConfig"])
 	m.TrackingType = types.StringValue(p["trackingType"])
-	m.IdGoal = types.StringValue(p["idGoal"])
-	m.GoalCustomRevenue = types.StringValue(p["goalCustomRevenue"])
-	m.DocumentTitle = types.StringValue(p["documentTitle"])
-	m.CustomUrl = types.StringValue(p["customUrl"])
-	m.IsEcommerceView = types.BoolValue(paramBoolValue(p["isEcommerceView"]))
-	m.ProductSKU = types.StringValue(p["productSKU"])
-	m.ProductName = types.StringValue(p["productName"])
-	m.CategoryName = types.StringValue(p["categoryName"])
-	m.Price = types.StringValue(p["price"])
-	m.EventCategory = types.StringValue(p["eventCategory"])
-	m.EventAction = types.StringValue(p["eventAction"])
-	m.EventName = types.StringValue(p["eventName"])
-	m.EventValue = types.StringValue(p["eventValue"])
-	m.CustomDimensions = paramListValue(p["customDimensions"])
-	m.AreCustomDimensionsSticky = types.BoolValue(paramBoolValue(p["areCustomDimensionsSticky"]))
+	if v, ok := p["idGoal"]; ok {
+		m.IdGoal = types.StringValue(v)
+	} else {
+		m.IdGoal = types.StringNull()
+	}
+	if v, ok := p["goalCustomRevenue"]; ok {
+		m.GoalCustomRevenue = types.StringValue(v)
+	} else {
+		m.GoalCustomRevenue = types.StringNull()
+	}
+	if v, ok := p["documentTitle"]; ok {
+		m.DocumentTitle = types.StringValue(v)
+	} else {
+		m.DocumentTitle = types.StringNull()
+	}
+	if v, ok := p["customUrl"]; ok {
+		m.CustomUrl = types.StringValue(v)
+	} else {
+		m.CustomUrl = types.StringNull()
+	}
+	if v, ok := p["isEcommerceView"]; ok {
+		m.IsEcommerceView = types.BoolValue(paramBoolValue(v))
+	} else {
+		m.IsEcommerceView = types.BoolNull()
+	}
+	if v, ok := p["productSKU"]; ok {
+		m.ProductSKU = types.StringValue(v)
+	} else {
+		m.ProductSKU = types.StringNull()
+	}
+	if v, ok := p["productName"]; ok {
+		m.ProductName = types.StringValue(v)
+	} else {
+		m.ProductName = types.StringNull()
+	}
+	if v, ok := p["categoryName"]; ok {
+		m.CategoryName = types.StringValue(v)
+	} else {
+		m.CategoryName = types.StringNull()
+	}
+	if v, ok := p["price"]; ok {
+		m.Price = types.StringValue(v)
+	} else {
+		m.Price = types.StringNull()
+	}
+	if v, ok := p["eventCategory"]; ok {
+		m.EventCategory = types.StringValue(v)
+	} else {
+		m.EventCategory = types.StringNull()
+	}
+	if v, ok := p["eventAction"]; ok {
+		m.EventAction = types.StringValue(v)
+	} else {
+		m.EventAction = types.StringNull()
+	}
+	if v, ok := p["eventName"]; ok {
+		m.EventName = types.StringValue(v)
+	} else {
+		m.EventName = types.StringNull()
+	}
+	if v, ok := p["eventValue"]; ok {
+		m.EventValue = types.StringValue(v)
+	} else {
+		m.EventValue = types.StringNull()
+	}
+	if v, ok := p["customDimensions"]; ok {
+		m.CustomDimensions = paramListValue(v)
+	} else {
+		m.CustomDimensions = nil
+	}
+	if v, ok := p["areCustomDimensionsSticky"]; ok {
+		m.AreCustomDimensionsSticky = types.BoolValue(paramBoolValue(v))
+	} else {
+		m.AreCustomDimensionsSticky = types.BoolNull()
+	}
 }
 
 func (m *tagMatomoModel) Common() *typedTagCommon {
