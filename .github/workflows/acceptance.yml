@@ -11,8 +11,6 @@ on:
 jobs:
   acceptance:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,20 +30,16 @@ jobs:
           name: generated-tagmanager-resources
           path: internal/provider/generated_*.go
           retention-days: 1
-      # Temporary bootstrap-commit: this branch just wired up tools/gen to
-      # also emit examples/resources/<type>/resource.tf for each of the 64
-      # generated types (Phase 8a, docs-and-examples plan Task 1), but
-      # those 64 files don't exist yet - they can only be produced against
-      # a live Matomo instance, which this sandbox doesn't have. This step
-      # commits them for real, once; it will be reverted back to a pure
-      # drift-check (see plan Task 4 step 4) as soon as that lands.
-      - name: Commit generated resources and examples (temporary bootstrap)
+      # Drift check: the generated resources and examples committed to the
+      # repo must match what tools/gen produces against the live Matomo
+      # instance right now. If this fails, someone edited a generated
+      # file by hand, or a codegen change wasn't followed by a real
+      # regeneration + commit (the bootstrap-commit pattern used earlier
+      # in this branch's history, temporarily, whenever that happened).
+      - name: Fail if generated resources or examples have drifted
         run: |
-          git config user.email "noreply@anthropic.com"
-          git config user.name "Claude"
           git add -A -- 'internal/provider/generated_*.go' 'examples/resources/*'
-          git diff --cached --quiet || git commit -m "Regenerate generated resources and examples against live Matomo"
-          git push origin HEAD:"${{ github.head_ref || github.ref_name }}"
+          git diff --cached --exit-code -- 'internal/provider/generated_*.go' 'examples/resources/*'
       - run: TF_ACC=1 go test ./... -run TestAcc -v -count=1 -timeout 20m
       - if: always()
         run: docker compose down -v
