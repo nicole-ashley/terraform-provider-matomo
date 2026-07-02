@@ -5,6 +5,7 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -41,14 +42,34 @@ func triggerScrollreachSchema() schema.Schema {
 				},
 			},
 			"pixels": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
-				Description: "The amount in pixels that needs to be visible of this element depending on the selected scroll match type.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "The amount in pixels that needs to be visible of this element depending on the selected scroll match type.",
 			},
 			"percentage": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
-				Description: "You can specify any number between 1 and 100. If you specify 50, then it means the element needs to be at least 50% visible depending on the scroll match type.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "You can specify any number between 1 and 100. If you specify 50, then it means the element needs to be at least 50% visible depending on the scroll match type.",
 			},
 		},
 	}

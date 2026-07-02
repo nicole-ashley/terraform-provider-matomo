@@ -5,6 +5,9 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -100,7 +103,9 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Required: true,
 			},
 			"default_value": schema.StringAttribute{
-				Optional: true,
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"matomo_url": schema.StringAttribute{
 				Required:    true,
@@ -111,354 +116,1024 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Description: "The idSite you want to track data into. The idSite of the current website is preconfigured. You may also find the idSite of any other website under \"Administration → Manage Measurables/Websites\".",
 			},
 			"enable_link_tracking": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enables the automatic download and outlink tracking.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the automatic download and outlink tracking.",
 			},
 			"enable_file_tracking": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enable tracking of file:// protocol actions. By default, the file:// protocol is not tracked.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enable tracking of file:// protocol actions. By default, the file:// protocol is not tracked.",
 			},
 			"enable_cross_domain_linking": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enable this to accurately measure the same visitor across multiple domain names.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enable this to accurately measure the same visitor across multiple domain names.",
 			},
 			"cross_domain_linking_timeout": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set the cross domain linking timeout (in seconds). By default, the two visits across domains will be linked together when the link is clicked and the page is loaded within a 180 seconds timeout window.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "Set the cross domain linking timeout (in seconds). By default, the two visits across domains will be linked together when the link is clicked and the page is loaded within a 180 seconds timeout window.",
 			},
 			"enable_do_not_track": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enable this feature to not track users who opt out of tracking using Mozilla's (proposed) Do Not Track setting",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enable this feature to not track users who opt out of tracking using Mozilla's (proposed) Do Not Track setting",
 			},
 			"disable_performance_tracking": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Disables page performance tracking.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Disables page performance tracking.",
 			},
 			"enable_js_error_tracking": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enables the tracking of uncaught JavaScript errors as an event.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the tracking of uncaught JavaScript errors as an event.",
 			},
 			"enable_heart_beat_timer": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Install a Heart beat timer that will regularly send requests to Matomo in order to better measure the time spent on the page.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Install a Heart beat timer that will regularly send requests to Matomo in order to better measure the time spent on the page.",
 			},
 			"heart_beat_time": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
-				Description: "The time interval in seconds in which to send pings. Can not be lower then 5s.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "The time interval in seconds in which to send pings. Can not be lower then 5s.",
 			},
 			"track_all_content_impressions": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enables the content tracking feature by scanning the entire DOM for all content blocks and tracks all impressions once the page has loaded.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the content tracking feature by scanning the entire DOM for all content blocks and tracks all impressions once the page has loaded.",
 			},
 			"track_visible_content_impressions": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enables the content tracking feature by scanning the entire DOM for all content blocks but only tracks content impressions once the user scrolls to the content and the content is actually visible.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the content tracking feature by scanning the entire DOM for all content blocks but only tracks content impressions once the user scrolls to the content and the content is actually visible.",
 			},
 			"track_bots": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "By default, Matomo doesn't track visits by bots in order to show accurate visitor metrics. Enable this feature to add tracking for bot visits.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "By default, Matomo doesn't track visits by bots in order to show accurate visitor metrics. Enable this feature to add tracking for bot visits.",
 			},
 			"disable_cookies": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Disables all first party cookies.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Disables all first party cookies.",
 			},
 			"require_consent": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Track only when user gave tracking consent. In a consent screen you need to call \"window._paq=window._paq||[];window._paq.push(['rememberConsentGiven']);\" when the user gives consent.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Track only when user gave tracking consent. In a consent screen you need to call \"window._paq=window._paq||[];window._paq.push(['rememberConsentGiven']);\" when the user gives consent.",
 			},
 			"require_cookie_consent": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Use cookies only if the user gave cookie consent, otherwise track the user without cookies. In a consent screen you need to call \"window._paq=window._paq||[];window._paq.push(['rememberCookieConsentGiven']);\" when the user gives consent for cookies.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Use cookies only if the user gave cookie consent, otherwise track the user without cookies. In a consent screen you need to call \"window._paq=window._paq||[];window._paq.push(['rememberCookieConsentGiven']);\" when the user gives consent for cookies.",
 			},
 			"custom_cookie_time_out_enable": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Allows you to set custom timeouts for various cookies.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Allows you to set custom timeouts for various cookies.",
 			},
 			"custom_cookie_time_out": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Timeout of pk_id in full days. By default, the Matomo tracking cookie expires in 13 months (365 + 28 days) = 393 days.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "Timeout of pk_id in full days. By default, the Matomo tracking cookie expires in 13 months (365 + 28 days) = 393 days.",
 			},
 			"referral_cookie_time_out": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Timeout of the referral cookie in full days. By default, the Matomo tracking cookie expires in 6 months = 182 days.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "Timeout of the referral cookie in full days. By default, the Matomo tracking cookie expires in 6 months = 182 days.",
 			},
 			"session_cookie_time_out": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Timeout of the session cookie in minutes.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "Timeout of the session cookie in minutes.",
 			},
 			"set_secure_cookie": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enable the Secure cookie flag on all first party cookies. This should be used when your website is only available under HTTPS so that all tracking cookies are always sent over secure connection.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enable the Secure cookie flag on all first party cookies. This should be used when your website is only available under HTTPS so that all tracking cookies are always sent over secure connection.",
 			},
 			"cookie_domain": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "",
 			},
 			"cookie_name_prefix": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "The name prefix of the cookies.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "The name prefix of the cookies.",
 			},
 			"cookie_path": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "When tracking many subdirectories in separate websites, the cookie path prevents the number of cookies to quickly increase and prevent browser from deleting some of the cookies. This ensures optimal data accuracy and improves performance for your users (fewer cookies are sent with each request).",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "When tracking many subdirectories in separate websites, the cookie path prevents the number of cookies to quickly increase and prevent browser from deleting some of the cookies. This ensures optimal data accuracy and improves performance for your users (fewer cookies are sent with each request).",
 			},
 			"cookie_same_site": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set the SameSite attribute for cookies to a custom value. You might want to use this if your site is running in an iframe since then it will only be able to access the cookies if SameSite is set to \"None\". Choosing \"None\" will only work on HTTPS and will automatically also set the secure cookie. If your site is available under http and https, using \"None\" might lead to duplicate or incomplete visits.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set the SameSite attribute for cookies to a custom value. You might want to use this if your site is running in an iframe since then it will only be able to access the cookies if SameSite is set to \"None\". Choosing \"None\" will only work on HTTPS and will automatically also set the secure cookie. If your site is available under http and https, using \"None\" might lead to duplicate or incomplete visits.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("Lax", "None", "Strict"),
 				},
 			},
 			"disable_browser_feature_detection": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "By default, Matomo accesses some information from the visitor’s browser like the browser resolution. Some privacy regulations may allow access of such information from the visitor’s device only after having a consent. If this applies to you, you can disable this feature.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "By default, Matomo accesses some information from the visitor’s browser like the browser resolution. Some privacy regulations may allow access of such information from the visitor’s device only after having a consent. If this applies to you, you can disable this feature.",
 			},
 			"disable_campaign_parameters": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "When this option is checked, Matomo will not track campaign parameters and they will be removed from the tracked URLs.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "When this option is checked, Matomo will not track campaign parameters and they will be removed from the tracked URLs.",
 			},
 			"domains": schema.ListAttribute{
 				ElementType: types.StringType,
 				Required:    false,
 				Optional:    true,
-				Description: "Used to detect outlinks. Add hostnames or domains to be treated as local. For wildcard subdomains, you can use: \".example.com\" or \"*.example.com\". You can also specify a path along a domain: \"*.example.com/subsite1\".",
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				Description:   "Used to detect outlinks. Add hostnames or domains to be treated as local. For wildcard subdomains, you can use: \".example.com\" or \"*.example.com\". You can also specify a path along a domain: \"*.example.com/subsite1\".",
 			},
 			"always_use_send_beacon": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enables sendBeacon usage instead of a regular ajax request. This means when a user clicks for example on an outlink, the navigation to this page will happen much faster.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables sendBeacon usage instead of a regular ajax request. This means when a user clicks for example on an outlink, the navigation to this page will happen much faster.",
 			},
 			"disable_always_use_send_beacon": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Choose to stop using sendBeacon and use a regular AJAX request instead. This might make clicking on external links a bit slower for users, but it won't be stopped by ad blockers.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Choose to stop using sendBeacon and use a regular AJAX request instead. This might make clicking on external links a bit slower for users, but it won't be stopped by ad blockers.",
 			},
 			"user_id": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Sets a User ID to this user (such as an email address or a username).",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Sets a User ID to this user (such as an email address or a username).",
 			},
 			"custom_dimensions": schema.ListAttribute{
 				ElementType: types.StringType,
 				Required:    false,
 				Optional:    true,
-				Description: "Optionally set one or multiple custom dimensions.",
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				Description:   "Optionally set one or multiple custom dimensions.",
 			},
 			"register_as_default_tracker": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "When enabled, the tracker will be registered as the default one for the website, and will receive all commands that get pushed into the global _paq variable. Useful if you want to use the tracker config from the container with your own _paq.push() JavaScript code.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "When enabled, the tracker will be registered as the default one for the website, and will receive all commands that get pushed into the global _paq variable. Useful if you want to use the tracker config from the container with your own _paq.push() JavaScript code.",
 			},
 			"bundle_tracker": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "By bundling the Matomo JavaScript tracker directly into the container it may improve the performance of your website as it reduces the number of needed requests. It is recommended to bundle the Matomo tracker because in most cases the tracker would otherwise be loaded in a separate request on page view anyway. Note: If you use two different Matomo configurations in one container, the setting of the first configuration used in the first Matomo Tag will be applied to all Matomo tags within one container.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "By bundling the Matomo JavaScript tracker directly into the container it may improve the performance of your website as it reduces the number of needed requests. It is recommended to bundle the Matomo tracker because in most cases the tracker would otherwise be loaded in a separate request on page view anyway. Note: If you use two different Matomo configurations in one container, the setting of the first configuration used in the first Matomo Tag will be applied to all Matomo tags within one container.",
 			},
 			"js_endpoint": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Here you can configure the source path of the Matomo Tracker JavaScript, if you are not using the \"Bundle Tracker\" option.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Here you can configure the source path of the Matomo Tracker JavaScript, if you are not using the \"Bundle Tracker\" option.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("custom", "js/", "js/tracker.php", "matomo.js", "piwik.js"),
 				},
 			},
 			"js_endpoint_custom": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Here you can configure a non standard path to fetch the tracker from. Will be appended to the Matomo URL. Should not start with '/'. Keep in mind that, since this is non standard, you have to handle the requests there yourself!",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Here you can configure a non standard path to fetch the tracker from. Will be appended to the Matomo URL. Should not start with '/'. Keep in mind that, since this is non standard, you have to handle the requests there yourself!",
 			},
 			"tracking_endpoint": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Here you can configure the target path for tracking requests.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Here you can configure the target path for tracking requests.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("custom", "js/", "js/tracker.php", "matomo.php", "piwik.php"),
 				},
 			},
 			"tracking_endpoint_custom": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Here you can configure a non standard path for tracking requests. Will be appended to the Matomo URL. Should not start with '/'. Keep in mind that, since this is non standard, you have to handle the requests there yourself!",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Here you can configure a non standard path for tracking requests. Will be appended to the Matomo URL. Should not start with '/'. Keep in mind that, since this is non standard, you have to handle the requests there yourself!",
 			},
 			"append_to_tracking_url": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Append a custom string to the end of the HTTP request to matomo.php? (or your selected respective tracking endpoint).",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Append a custom string to the end of the HTTP request to matomo.php? (or your selected respective tracking endpoint).",
 			},
 			"force_request_method": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enables forcing the request method to either GET or POST.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables forcing the request method to either GET or POST.",
 			},
 			"request_method": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "",
 				Validators: []validator.String{
 					stringvalidator.OneOf("GET", "POST"),
 				},
 			},
 			"request_content_type": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set request Content-Type header value for POST requests.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set request Content-Type header value for POST requests.",
 			},
 			"custom_request_processing": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Can be set to a variable of type \"Custom Request Processing Function\" to augment or override default request sending behaviour.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Can be set to a variable of type \"Custom Request Processing Function\" to augment or override default request sending behaviour.",
 			},
 			"custom_data": schema.ListAttribute{
 				ElementType: types.StringType,
 				Required:    false,
 				Optional:    true,
-				Description: "Optionally set custom data in your tracking request.",
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				Description:   "Optionally set custom data in your tracking request.",
 			},
 			"set_download_extensions": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set a list of file extensions to be recognized as downloads. Example: doc or doc,xls",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set a list of file extensions to be recognized as downloads. Example: doc or doc,xls",
 			},
 			"add_download_extensions": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Specify additional file extensions to be recognized as downloads. Example: doc or doc,xls",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Specify additional file extensions to be recognized as downloads. Example: doc or doc,xls",
 			},
 			"remove_download_extensions": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Specify file extensions to be removed from the list of download file extensions. Example: doc or doc,xls",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Specify file extensions to be removed from the list of download file extensions. Example: doc or doc,xls",
 			},
 			"set_ignore_classes": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set classes to be ignored if present in link (in addition to matomo_ignore and piwik_ignore). Example classA or classA,classB",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set classes to be ignored if present in link (in addition to matomo_ignore and piwik_ignore). Example classA or classA,classB",
 			},
 			"set_referrer_url": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Override the detected Http-Referer. We recommend you call this method early in your tracking code before you call trackPageView if it should be applied to all tracking requests.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Override the detected Http-Referer. We recommend you call this method early in your tracking code before you call trackPageView if it should be applied to all tracking requests.",
 			},
 			"set_api_url": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Specify the Matomo HTTP API URL endpoint. Points to the root directory of piwik, e.g. https://matomo.example.org/ or https://example.org/matomo/. This function is only useful when the 'Overlay' report is not working. By default, you do not need to use this function.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Specify the Matomo HTTP API URL endpoint. Points to the root directory of piwik, e.g. https://matomo.example.org/ or https://example.org/matomo/. This function is only useful when the 'Overlay' report is not working. By default, you do not need to use this function.",
 			},
 			"set_page_view_id": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Override PageView id for every use of logPageView(). Do not use this if you call trackPageView() multiple times during tracking (e.g. when tracking a single page application).",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Override PageView id for every use of logPageView(). Do not use this if you call trackPageView() multiple times during tracking (e.g. when tracking a single page application).",
 			},
 			"set_excluded_referrers": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set array of hostnames or domains that should be ignored as referrers. For wildcard subdomains, you can use .example.com or *.example.com",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set array of hostnames or domains that should be ignored as referrers. For wildcard subdomains, you can use .example.com or *.example.com",
 			},
 			"set_download_classes": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set classes to be treated as downloads (in addition to matomo_download)",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set classes to be treated as downloads (in addition to matomo_download)",
 			},
 			"set_link_classes": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set classes to be treated as outlinks (in addition to piwik_link). Example class1 or class1,class2",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set classes to be treated as outlinks (in addition to piwik_link). Example class1 or class1,class2",
 			},
 			"set_campaign_name_key": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set campaign name parameter(s).",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set campaign name parameter(s).",
 			},
 			"set_campaign_keyword_key": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set campaign keyword parameter(s).",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set campaign keyword parameter(s).",
 			},
 			"set_consent_given": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Mark that the current user has consented. The consent is one-time only, so in a subsequent browser session, the user will have to consent again. To remember consent, see the Remember consent given option below.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Mark that the current user has consented. The consent is one-time only, so in a subsequent browser session, the user will have to consent again. To remember consent, see the Remember consent given option below.",
 			},
 			"remember_consent_given": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Mark that the current user has consented, and remembers this consent through a browser cookie. The next time the user visits the site, Matomo will remember that they consented, and track them. If you enable this option, you do not need to enable Set consent given option.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Mark that the current user has consented, and remembers this consent through a browser cookie. The next time the user visits the site, Matomo will remember that they consented, and track them. If you enable this option, you do not need to enable Set consent given option.",
 			},
 			"remember_consent_given_for_hours": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Optionally set after how many hours the consent should expire. By default the consent is valid for 30 years unless cookies are deleted by the user or the browser prior to this.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Optionally set after how many hours the consent should expire. By default the consent is valid for 30 years unless cookies are deleted by the user or the browser prior to this.",
 			},
 			"forget_consent_given": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Remove a user's consent, both if the consent was one-time only and if the consent was remembered. After calling this method, the user will have to consent again in order to be tracked.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Remove a user's consent, both if the consent was one-time only and if the consent was remembered. After calling this method, the user will have to consent again in order to be tracked.",
 			},
 			"discard_hash_tag": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "If enabled, it will not record the hash tag (anchor) portion of URLs.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "If enabled, it will not record the hash tag (anchor) portion of URLs.",
 			},
 			"set_excluded_query_params": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set query params to exclude from URL. Example uuid or uuid1,uuid2",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set query params to exclude from URL. Example uuid or uuid1,uuid2",
 			},
 			"set_conversion_attribution_first_referrer": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "If enabled, conversion will be attributed to first referred. By default, conversion is attributed to the most recent referrer.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "If enabled, conversion will be attributed to first referred. By default, conversion is attributed to the most recent referrer.",
 			},
 			"set_do_not_track": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "If enabled, it will not track users who opt out of tracking using Mozilla's (proposed) Do Not Track setting.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "If enabled, it will not track users who opt out of tracking using Mozilla's (proposed) Do Not Track setting.",
 			},
 			"set_link_tracking_timer": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Set delay for link tracking in milliseconds.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Set delay for link tracking in milliseconds.",
 			},
 			"kill_frame": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Enable a frame-buster to prevent the tracked web page from being framed/iframed.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enable a frame-buster to prevent the tracked web page from being framed/iframed.",
 			},
 			"set_count_pre_rendered": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "If enabled, it will count sites in pre-rendered state.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "If enabled, it will count sites in pre-rendered state.",
 			},
 			"set_request_queue_interval": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "Defines after how many ms a queued requests will be executed after the request was queued initially. The higher the value the more tracking requests can be sent together at once. interval has to be at least 1000 (1000ms = 1s) and defaults to 2.5 seconds.",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Defines after how many ms a queued requests will be executed after the request was queued initially. The higher the value the more tracking requests can be sent together at once. interval has to be at least 1000 (1000ms = 1s) and defaults to 2.5 seconds.",
 			},
 		},
 	}

@@ -32,7 +32,9 @@ func variableMetacontentSchema() schema.Schema {
 				Required: true,
 			},
 			"default_value": schema.StringAttribute{
-				Optional: true,
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"meta_name": schema.StringAttribute{
 				Required:    true,

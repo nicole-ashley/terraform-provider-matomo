@@ -30,12 +30,24 @@ func variableUrlparameterSchema() schema.Schema {
 				Required: true,
 			},
 			"default_value": schema.StringAttribute{
-				Optional: true,
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"parameter_name": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Description: "For example when your page has URL parameters such as \"?lang=NZ\" and you want to get the value \"NZ\", then you need to enter \"lang\".",
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go.
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "For example when your page has URL parameters such as \"?lang=NZ\" and you want to get the value \"NZ\", then you need to enter \"lang\".",
 			},
 		},
 	}

@@ -30,7 +30,9 @@ func variableCustomjsfunctionSchema() schema.Schema {
 				Required: true,
 			},
 			"default_value": schema.StringAttribute{
-				Optional: true,
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"js_function": schema.StringAttribute{
 				Required:    true,

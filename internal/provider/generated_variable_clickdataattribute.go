@@ -30,7 +30,9 @@ func variableClickdataattributeSchema() schema.Schema {
 				Required: true,
 			},
 			"default_value": schema.StringAttribute{
-				Optional: true,
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"data_attribute": schema.StringAttribute{
 				Required:    true,

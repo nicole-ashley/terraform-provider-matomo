@@ -30,7 +30,9 @@ func variableDatalayerSchema() schema.Schema {
 				Required: true,
 			},
 			"default_value": schema.StringAttribute{
-				Optional: true,
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"data_layer_name": schema.StringAttribute{
 				Required:    true,
