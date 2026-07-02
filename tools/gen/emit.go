@@ -50,17 +50,29 @@ type templateData struct {
 	// all, producing an "imported and not used" error - caught the hard
 	// way against real discovered types with no parameters.
 	NeedsTypesImport bool
+	// NeedsMatomoImport is true when at least one parameter is
+	// ConditionallyRequired, meaning the generated schema embeds a
+	// conditionRequiredValidator{Condition: matomo.EqNode{...}} literal
+	// (see renderCondition) that references the internal/matomo package.
+	NeedsMatomoImport bool
 }
 
 func newTemplateData(spec TypeSpec) templateData {
 	typeName := ExportedName(spec.Kind) + ExportedName(spec.Slug)
 	needsValidatorImports := spec.Kind == "tag"
+	needsMatomoImport := false
 	if !needsValidatorImports {
 		for _, p := range spec.Params {
-			if len(p.AvailableValues) > 0 {
+			if len(p.AvailableValues) > 0 || p.ConditionallyRequired {
 				needsValidatorImports = true
 				break
 			}
+		}
+	}
+	for _, p := range spec.Params {
+		if p.ConditionallyRequired {
+			needsMatomoImport = true
+			break
 		}
 	}
 	return templateData{
@@ -73,13 +85,18 @@ func newTemplateData(spec TypeSpec) templateData {
 		CommonTypeName:        "typed" + ExportedName(spec.Kind) + "Common",
 		ModelInterfaceName:    "typed" + ExportedName(spec.Kind) + "Model",
 		NeedsTypesImport:      spec.Kind == "tag" || len(spec.Params) > 0,
+		NeedsMatomoImport:     needsMatomoImport,
 	}
 }
 
 //go:embed templates/schema.go.tmpl
 var schemaTemplateFS embed.FS
 
-var schemaTemplate = template.Must(template.ParseFS(schemaTemplateFS, "templates/schema.go.tmpl"))
+var schemaTemplate = template.Must(
+	template.New("schema.go.tmpl").
+		Funcs(template.FuncMap{"renderCondition": renderCondition}).
+		ParseFS(schemaTemplateFS, "templates/schema.go.tmpl"),
+)
 
 // RenderSchema renders spec into a gofmt'd Go source file implementing
 // the type's generated model + schema.Schema + typedModel methods, ready

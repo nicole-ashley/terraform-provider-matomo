@@ -1,4 +1,4 @@
-package main
+package matomo
 
 import "fmt"
 
@@ -185,4 +185,40 @@ func ParseCondition(expr string) (ConditionNode, error) {
 		return nil, fmt.Errorf("parsing condition %q: unexpected trailing token %q", expr, p.peek().kind)
 	}
 	return node, nil
+}
+
+// Evaluate walks a parsed condition tree against sibling field values,
+// mirroring how Matomo's own JS evaluates a field's `condition` string
+// against the rest of the form: a RefNode is true iff get returns a
+// non-empty value for that field, an EqNode compares get's value against
+// its string literal (case-sensitive, matching Matomo's own strict ==
+// comparison), and And/Or/Not combine sub-results the obvious way. get is
+// called with a field's name exactly as it appears in the condition
+// expression - the caller is responsible for translating that into
+// whatever it takes to look the value up (e.g. a Terraform attribute
+// path).
+func Evaluate(node ConditionNode, get func(field string) (value string, isSet bool)) bool {
+	switch n := node.(type) {
+	case RefNode:
+		v, ok := get(n.Field)
+		return ok && v != ""
+	case EqNode:
+		v, ok := get(n.Field)
+		if !ok {
+			return false
+		}
+		eq := v == n.Value
+		if n.Negate {
+			eq = !eq
+		}
+		return eq
+	case NotNode:
+		return !Evaluate(n.Inner, get)
+	case AndNode:
+		return Evaluate(n.Left, get) && Evaluate(n.Right, get)
+	case OrNode:
+		return Evaluate(n.Left, get) || Evaluate(n.Right, get)
+	default:
+		return false
+	}
 }

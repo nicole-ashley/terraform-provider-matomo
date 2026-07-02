@@ -63,7 +63,7 @@ resource "{{.ResourceName}}" "test" {
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
 {{- end}}
 {{- range .Params}}
-{{- if .Required}}
+{{- if or .Required .ConditionallyRequired}}
 {{- if eq .GoType "String"}}
 {{- if .AvailableValues}}
   {{.TFName}} = {{printf "%q" (index .AvailableValues 0)}}

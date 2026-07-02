@@ -14,6 +14,10 @@ import (
 {{- if .NeedsTypesImport}}
 	"github.com/hashicorp/terraform-plugin-framework/types"
 {{- end}}
+{{- if .NeedsMatomoImport}}
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
+{{- end}}
 )
 
 type {{.GoModelName}} struct {
@@ -73,10 +77,15 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 				Optional: true,
 {{- end}}
 				Description: {{printf "%q" .Description}},
+{{- if and (eq .GoType "String") (or .AvailableValues .ConditionallyRequired)}}
+				Validators: []validator.String{
 {{- if .AvailableValues}}
-{{- if eq .GoType "String"}}
-				Validators: []validator.String{stringvalidator.OneOf({{range $i, $v := .AvailableValues}}{{if $i}}, {{end}}{{printf "%q" $v}}{{end}})},
+					stringvalidator.OneOf({{range $i, $v := .AvailableValues}}{{if $i}}, {{end}}{{printf "%q" $v}}{{end}}),
 {{- end}}
+{{- if .ConditionallyRequired}}
+					conditionRequiredValidator{Condition: {{renderCondition .Condition}}},
+{{- end}}
+				},
 {{- end}}
 			},
 {{- end}}

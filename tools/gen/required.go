@@ -116,3 +116,50 @@ func RequiredParams(kind, typeID string) ([]string, error) {
 	}
 	return required, nil
 }
+
+// conditionallyRequiredParams is the hand-maintained source of truth for
+// parameters that Matomo only requires (adds a NotEmpty validator to)
+// while their own `condition` expression holds - e.g. EtrackerTag's
+// etrackerAddToCartProduct is only required when trackingType ==
+// "addtocart" (`if ($trackingType->getValue() === 'addtocart') {
+// $field->validators[] = new NotEmpty(); }`, confirmed by reading
+// EtrackerTag.php directly). BuildTypeSpec (tools/gen/spec.go) wires a
+// listed param into a runtime conditionRequiredValidator
+// (internal/provider/condition_validators.go) using the same condition
+// string Matomo's discovery API already exposes for that parameter, so
+// there's no expression to duplicate here - just the field name.
+//
+// Unlike requiredParams, this table is deliberately NOT comprehensive:
+// populated only for types where a live acceptance-test failure surfaced
+// a genuinely conditionally-required field and its source was read to
+// confirm it. A type absent here is assumed to have no such fields, which
+// may be wrong for types nobody has hit yet - if a future live run
+// surfaces another "Matomo rejected an empty field that our schema marked
+// Optional" error, that's this table's gap to close, the same way these
+// two entries were found.
+var conditionallyRequiredParams = map[string]map[string][]string{
+	"tag": {
+		"Etracker": {"etrackerAddToCartProduct"},
+		"Matomo":   {"eventCategory"},
+	},
+	"trigger": {
+		// ElementVisibilityTrigger.php: cssSelector/elementId each throw
+		// from a custom `validate` closure ("Please specify a value for
+		// ...") gated on selectionMethod's live value, not a declarative
+		// NotEmpty - functionally identical conditional-requiredness.
+		"ElementVisibility": {"cssSelector", "elementId"},
+	},
+	"variable": {
+		// DomElementVariable.php: same cssSelector/elementId pattern as
+		// ElementVisibilityTrigger above.
+		"DomElement": {"cssSelector", "elementId"},
+	},
+}
+
+// ConditionallyRequiredParams returns the conditionally-required
+// parameter names for the given Tag Manager type, or nil if kind/typeID
+// has no entry - unlike RequiredParams, a missing entry is not an error
+// (see conditionallyRequiredParams' own doc comment for why).
+func ConditionallyRequiredParams(kind, typeID string) []string {
+	return conditionallyRequiredParams[kind][typeID]
+}

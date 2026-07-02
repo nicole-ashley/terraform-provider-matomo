@@ -17,7 +17,12 @@ type ParamSpec struct {
 	GoType          string // "String", "Bool", or "List"
 	Required        bool
 	AvailableValues []string
-	Condition       ConditionNode
+	Condition       matomo.ConditionNode
+	// ConditionallyRequired is true when Matomo only requires this
+	// parameter while Condition holds (see conditionallyRequiredParams
+	// in tools/gen/required.go) - unlike Required, which is unconditional.
+	// Always false when Condition is nil.
+	ConditionallyRequired bool
 }
 
 // TypeSpec is one generated Tag Manager type (tag, trigger, or variable),
@@ -68,6 +73,11 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 		requiredSet[name] = true
 	}
 
+	condRequiredSet := make(map[string]bool, len(ConditionallyRequiredParams(kind, tmpl.ID)))
+	for _, name := range ConditionallyRequiredParams(kind, tmpl.ID) {
+		condRequiredSet[name] = true
+	}
+
 	spec := TypeSpec{
 		Kind:         kind,
 		TypeID:       tmpl.ID,
@@ -81,9 +91,20 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 		if err != nil {
 			return TypeSpec{}, fmt.Errorf("type %q, parameter %q: %w", tmpl.ID, p.Name, err)
 		}
-		cond, err := ParseCondition(p.Condition)
+		cond, err := matomo.ParseCondition(p.Condition)
 		if err != nil {
 			return TypeSpec{}, fmt.Errorf("type %q, parameter %q: %w", tmpl.ID, p.Name, err)
+		}
+		if cond != nil {
+			cond = rewriteConditionFieldsToTFNames(cond)
+		}
+
+		conditionallyRequired := condRequiredSet[p.Name]
+		if conditionallyRequired && cond == nil {
+			return TypeSpec{}, fmt.Errorf("type %q, parameter %q: listed in conditionallyRequiredParams but has no condition to require it under - check tools/gen/required.go", tmpl.ID, p.Name)
+		}
+		if conditionallyRequired && goType != "String" {
+			return TypeSpec{}, fmt.Errorf("type %q, parameter %q: conditionallyRequiredParams only supports String parameters today, got GoType %q - extend conditionRequiredValidator in internal/provider/condition_validators.go first", tmpl.ID, p.Name, goType)
 		}
 
 		var availableValues []string
@@ -93,16 +114,41 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 		sort.Strings(availableValues)
 
 		spec.Params = append(spec.Params, ParamSpec{
-			MatomoName:      p.Name,
-			TFName:          CamelToSnake(p.Name),
-			GoFieldName:     ExportedName(p.Name),
-			Description:     p.Description,
-			GoType:          goType,
-			Required:        requiredSet[p.Name],
-			AvailableValues: availableValues,
-			Condition:       cond,
+			MatomoName:            p.Name,
+			TFName:                CamelToSnake(p.Name),
+			GoFieldName:           ExportedName(p.Name),
+			Description:           p.Description,
+			GoType:                goType,
+			Required:              requiredSet[p.Name],
+			AvailableValues:       availableValues,
+			Condition:             cond,
+			ConditionallyRequired: conditionallyRequired,
 		})
 	}
 
 	return spec, nil
+}
+
+// rewriteConditionFieldsToTFNames translates a parsed condition's field
+// references from Matomo's camelCase parameter names ("triggerType") into
+// the snake_case Terraform attribute names ("trigger_type") the generated
+// schema actually uses. Doing this once at codegen time means the runtime
+// evaluator (internal/matomo.Evaluate, called from
+// internal/provider/condition_validators.go) can look sibling values up by
+// Terraform attribute path directly, with no naming logic of its own.
+func rewriteConditionFieldsToTFNames(node matomo.ConditionNode) matomo.ConditionNode {
+	switch n := node.(type) {
+	case matomo.RefNode:
+		return matomo.RefNode{Field: CamelToSnake(n.Field)}
+	case matomo.EqNode:
+		return matomo.EqNode{Field: CamelToSnake(n.Field), Value: n.Value, Negate: n.Negate}
+	case matomo.NotNode:
+		return matomo.NotNode{Inner: rewriteConditionFieldsToTFNames(n.Inner)}
+	case matomo.AndNode:
+		return matomo.AndNode{Left: rewriteConditionFieldsToTFNames(n.Left), Right: rewriteConditionFieldsToTFNames(n.Right)}
+	case matomo.OrNode:
+		return matomo.OrNode{Left: rewriteConditionFieldsToTFNames(n.Left), Right: rewriteConditionFieldsToTFNames(n.Right)}
+	default:
+		return node
+	}
 }

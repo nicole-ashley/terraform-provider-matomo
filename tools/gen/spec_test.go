@@ -59,9 +59,9 @@ func TestBuildTypeSpec(t *testing.T) {
 	if p1.AvailableValues[0] != "bottom" || p1.AvailableValues[1] != "top" {
 		t.Errorf("spec.Params[1].AvailableValues = %v, want [bottom top]", p1.AvailableValues)
 	}
-	ref, ok := p1.Condition.(RefNode)
-	if !ok || ref.Field != "customHtml" {
-		t.Errorf("spec.Params[1].Condition = %#v, want RefNode{Field: customHtml}", p1.Condition)
+	ref, ok := p1.Condition.(matomo.RefNode)
+	if !ok || ref.Field != "custom_html" {
+		t.Errorf("spec.Params[1].Condition = %#v, want matomo.RefNode{Field: custom_html} (condition field names are rewritten to TF snake_case)", p1.Condition)
 	}
 }
 
@@ -79,5 +79,69 @@ func TestBuildTypeSpec_unannotatedType(t *testing.T) {
 	tmpl := matomo.Template{ID: "SomeBrandNewType"}
 	if _, err := BuildTypeSpec("tag", tmpl); err == nil {
 		t.Fatal("BuildTypeSpec() error = nil, want error for a type with no requiredParams entry")
+	}
+}
+
+// TestBuildTypeSpec_conditionallyRequired exercises the real Etracker
+// entry in both requiredParams and conditionallyRequiredParams
+// (tools/gen/required.go): trackingType is unconditionally required,
+// while etrackerAddToCartProduct is only required once trackingType ==
+// "addtocart" (confirmed against EtrackerTag.php - see required.go's own
+// comment on conditionallyRequiredParams).
+func TestBuildTypeSpec_conditionallyRequired(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "Etracker",
+		Parameters: []matomo.TemplateParam{
+			{Name: "trackingType", Type: "string", AvailableValues: map[string]string{"addtocart": "Add to cart", "pageview": "Page view"}},
+			{
+				Name:      "etrackerAddToCartProduct",
+				Type:      "string",
+				Condition: `trackingType == "addtocart"`,
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("tag", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+
+	var product ParamSpec
+	found := false
+	for _, p := range spec.Params {
+		if p.MatomoName == "etrackerAddToCartProduct" {
+			product = p
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("etrackerAddToCartProduct not found in spec.Params")
+	}
+	if product.Required {
+		t.Error("etrackerAddToCartProduct.Required = true, want false (it's only conditionally required)")
+	}
+	if !product.ConditionallyRequired {
+		t.Error("etrackerAddToCartProduct.ConditionallyRequired = false, want true")
+	}
+	eq, ok := product.Condition.(matomo.EqNode)
+	if !ok || eq.Field != "tracking_type" || eq.Value != "addtocart" {
+		t.Errorf("etrackerAddToCartProduct.Condition = %#v, want matomo.EqNode{Field: tracking_type, Value: addtocart} (field name rewritten to TF snake_case)", product.Condition)
+	}
+}
+
+func TestBuildTypeSpec_conditionallyRequiredWithoutCondition(t *testing.T) {
+	// A parameter listed in conditionallyRequiredParams but with no
+	// `condition` string from Matomo's API is a data-entry mistake in
+	// required.go - BuildTypeSpec must fail loudly rather than silently
+	// treat it as unconditionally optional.
+	tmpl := matomo.Template{
+		ID: "Etracker",
+		Parameters: []matomo.TemplateParam{
+			{Name: "trackingType", Type: "string"},
+			{Name: "etrackerAddToCartProduct", Type: "string"}, // no Condition
+		},
+	}
+	if _, err := BuildTypeSpec("tag", tmpl); err == nil {
+		t.Fatal("BuildTypeSpec() error = nil, want error for a conditionallyRequiredParams entry with no condition")
 	}
 }
