@@ -95,8 +95,12 @@ var requiredParams = map[string]map[string][]string{
 		"MetaContent":             {"metaName"},
 		"ReferrerUrl":             {"urlPart"},
 		"TimeSinceLoad":           {"unit"},
-		"UrlParameter":            {},
-		"Url":                     {"urlPart"},
+		// UrlParameterVariable.php's parameterName has no NotEmpty
+		// validator, but an unconditional CharacterLength(1, 300) -
+		// practically identical requiredness for a field that can never
+		// be sent empty (confirmed by reading the source directly).
+		"UrlParameter": {"parameterName"},
+		"Url":          {"urlPart"},
 	},
 }
 
@@ -140,7 +144,11 @@ func RequiredParams(kind, typeID string) ([]string, error) {
 var conditionallyRequiredParams = map[string]map[string][]string{
 	"tag": {
 		"Etracker": {"etrackerAddToCartProduct"},
-		"Matomo":   {"eventCategory"},
+		// MatomoTag.php: eventAction follows the exact same pattern as
+		// eventCategory just below - condition 'trackingType == "event"',
+		// NotEmpty + CharacterLength(1,500) added only inside that
+		// condition (confirmed by reading the source directly).
+		"Matomo": {"eventCategory", "eventAction"},
 	},
 	"trigger": {
 		// ElementVisibilityTrigger.php: cssSelector/elementId each throw
