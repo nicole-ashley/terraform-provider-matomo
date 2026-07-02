@@ -61,7 +61,11 @@ resource "matomo_tagmanager_tag_livezilladynamic" "test" {
   // LivezillaDynamicID (confirmed live: "test-value" (10 chars) was
   // rejected).
   livezilla_dynamic_id = "test-value-123456789012345678901"
-  livezilla_dynamic_domain = "test-value"
+  // LivezillaDynamicTag.php's livezillaDynamicDomain must satisfy
+  // UrlHelper::isLookLikeUrl() (needs a "//" after an optional scheme)
+  // and CharacterLength(11, 60) (confirmed live and by reading the
+  // source).
+  livezilla_dynamic_domain = "https://example.com"
 }
 `
 }
