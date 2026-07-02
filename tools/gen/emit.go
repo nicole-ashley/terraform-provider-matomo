@@ -18,16 +18,36 @@ type templateData struct {
 	GoSchemaFuncName string
 	GoTypeName       string
 	GoModelReceiver  string
+	// NeedsValidatorImports is true when the generated file actually
+	// references stringvalidator/validator - tag types always do (the
+	// common "status" attribute uses stringvalidator.OneOf), but
+	// trigger/variable types only do when at least one of their own
+	// parameters has AvailableValues. Importing these packages
+	// unconditionally would produce an "imported and not used" compile
+	// error on every trigger/variable type with no such parameter -
+	// caught the hard way against real discovered types with no
+	// AvailableValues params (e.g. PageView, DomReady).
+	NeedsValidatorImports bool
 }
 
 func newTemplateData(spec TypeSpec) templateData {
 	typeName := ExportedName(spec.Kind) + ExportedName(spec.Slug)
+	needsValidatorImports := spec.Kind == "tag"
+	if !needsValidatorImports {
+		for _, p := range spec.Params {
+			if len(p.AvailableValues) > 0 {
+				needsValidatorImports = true
+				break
+			}
+		}
+	}
 	return templateData{
-		TypeSpec:         spec,
-		GoModelName:      spec.Kind + ExportedName(spec.Slug) + "Model",
-		GoSchemaFuncName: spec.Kind + ExportedName(spec.Slug) + "Schema",
-		GoTypeName:       typeName,
-		GoModelReceiver:  "m",
+		TypeSpec:              spec,
+		GoModelName:           spec.Kind + ExportedName(spec.Slug) + "Model",
+		GoSchemaFuncName:      spec.Kind + ExportedName(spec.Slug) + "Schema",
+		GoTypeName:            typeName,
+		GoModelReceiver:       "m",
+		NeedsValidatorImports: needsValidatorImports,
 	}
 }
 
