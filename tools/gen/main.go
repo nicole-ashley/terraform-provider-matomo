@@ -13,8 +13,20 @@ import (
 )
 
 // outputDir is a var (not const) so tests can point it at a t.TempDir()
-// without touching the real internal/provider/generated tree.
-var outputDir = "internal/provider/generated"
+// without touching the real tree.
+//
+// Generated files must live directly in internal/provider, not a
+// subdirectory: Go package identity is per-directory, not per
+// package-name string, so a "package provider" file in
+// internal/provider/generated/ would compile as its own, separate
+// package that cannot see internal/provider's unexported typedMeta/
+// typedModel/paramXString helpers the generated code needs - confirmed
+// the hard way via a live CI build failure ("undefined: typedMeta") the
+// first time real generated output was compiled together with the rest
+// of the package. Generated filenames are prefixed with "generated_" to
+// keep them visually distinct from hand-written files in the same
+// directory.
+var outputDir = "internal/provider"
 
 func main() {
 	baseURL := os.Getenv("MATOMO_BASE_URL")
@@ -98,6 +110,6 @@ func writeSchemaFile(spec TypeSpec) error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(outputDir, fmt.Sprintf("%s_%s.go", spec.Kind, spec.Slug))
+	path := filepath.Join(outputDir, fmt.Sprintf("generated_%s_%s.go", spec.Kind, spec.Slug))
 	return os.WriteFile(path, src, 0o644)
 }

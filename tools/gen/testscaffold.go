@@ -20,7 +20,7 @@ var testScaffoldTemplate = template.Must(template.ParseFS(testScaffoldTemplateFS
 // test for spec, but only if that file doesn't already exist - so a
 // hand-improved test is never clobbered by a later tools/gen run.
 func writeTestScaffoldIfAbsent(spec TypeSpec) error {
-	path := filepath.Join(outputDir, fmt.Sprintf("%s_%s_acc_test.go", spec.Kind, spec.Slug))
+	path := filepath.Join(outputDir, fmt.Sprintf("generated_%s_%s_acc_test.go", spec.Kind, spec.Slug))
 	if _, err := os.Stat(path); err == nil {
 		return nil // already exists, leave it alone
 	} else if !os.IsNotExist(err) {

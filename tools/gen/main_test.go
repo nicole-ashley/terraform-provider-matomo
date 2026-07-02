@@ -61,7 +61,7 @@ func TestWriteSchemaFile(t *testing.T) {
 		t.Fatalf("writeSchemaFile() error = %v", err)
 	}
 
-	path := filepath.Join(dir, "tag_customhtml.go")
+	path := filepath.Join(dir, "generated_tag_customhtml.go")
 	src, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("reading %s: %v", path, err)
@@ -80,7 +80,7 @@ func TestWriteTestScaffoldIfAbsent(t *testing.T) {
 	defer func() { outputDir = origOutputDir }()
 
 	spec := testSpecs()[1]
-	path := filepath.Join(dir, "variable_constant_acc_test.go")
+	path := filepath.Join(dir, "generated_variable_constant_acc_test.go")
 
 	if err := writeTestScaffoldIfAbsent(spec); err != nil {
 		t.Fatalf("writeTestScaffoldIfAbsent() error = %v", err)
@@ -167,10 +167,10 @@ func TestDiscoverAllSpecsSupportingLogicEndToEnd(t *testing.T) {
 	}
 
 	wantFiles := []string{
-		"tag_customhtml.go",
-		"tag_customhtml_acc_test.go",
-		"variable_constant.go",
-		"variable_constant_acc_test.go",
+		"generated_tag_customhtml.go",
+		"generated_tag_customhtml_acc_test.go",
+		"generated_variable_constant.go",
+		"generated_variable_constant_acc_test.go",
 		"generated_resources.go",
 	}
 	for _, name := range wantFiles {

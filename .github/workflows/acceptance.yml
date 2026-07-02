@@ -24,8 +24,9 @@ jobs:
       - name: Regenerate typed Tag Manager resources and check for drift
         run: |
           go run ./tools/gen
-          if ! git diff --exit-code -- internal/provider/generated/; then
-            echo "::error::internal/provider/generated/ is out of date. Run 'go run ./tools/gen' locally (against a Matomo instance) and commit the result." >&2
+          git add -A -- 'internal/provider/generated_*.go'
+          if ! git diff --cached --exit-code -- 'internal/provider/generated_*.go'; then
+            echo "::error::generated Tag Manager resources are out of date. Run 'go run ./tools/gen' locally (against a Matomo instance) and commit the result." >&2
             exit 1
           fi
       - run: TF_ACC=1 go test ./... -run TestAcc -v -count=1 -timeout 20m
