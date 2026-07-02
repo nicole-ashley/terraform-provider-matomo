@@ -54,6 +54,9 @@ func main() {
 		if err := writeTestScaffoldIfAbsent(spec); err != nil {
 			log.Fatalf("writing test scaffold for %s %q: %v", spec.Kind, spec.TypeID, err)
 		}
+		if err := writeExampleIfAbsent(spec); err != nil {
+			log.Fatalf("writing example for %s %q: %v", spec.Kind, spec.TypeID, err)
+		}
 	}
 
 	if err := writeResourcesFile(specs); err != nil {
