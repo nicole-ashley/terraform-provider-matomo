@@ -48,7 +48,3 @@ func ExportedName(s string) string {
 	}
 	return string(r)
 }
-
-// Stub main function. Task 9 will add the real implementation.
-func main() {
-}
