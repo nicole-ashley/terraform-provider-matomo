@@ -18,8 +18,8 @@ type tagGoogleconsentmodev2Model struct {
 	Status          types.String   `tfsdk:"status"`
 	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
 	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-	ConsentAction   types.List     `tfsdk:"consent_action"`
-	ConsentTypes    types.List     `tfsdk:"consent_types"`
+	ConsentAction   []types.String `tfsdk:"consent_action"`
+	ConsentTypes    []types.String `tfsdk:"consent_types"`
 }
 
 func tagGoogleconsentmodev2Schema() schema.Schema {

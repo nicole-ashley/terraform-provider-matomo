@@ -19,7 +19,7 @@ type tagGoogleanalytics4eventModel struct {
 	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
 	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
 	EventName       types.String   `tfsdk:"event_name"`
-	EventParameters types.List     `tfsdk:"event_parameters"`
+	EventParameters []types.String `tfsdk:"event_parameters"`
 }
 
 func tagGoogleanalytics4eventSchema() schema.Schema {

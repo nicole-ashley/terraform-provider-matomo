@@ -12,22 +12,22 @@ import (
 )
 
 type variableEtrackerconfigurationModel struct {
-	ID                   types.String `tfsdk:"id"`
-	ContainerID          types.String `tfsdk:"container_id"`
-	Name                 types.String `tfsdk:"name"`
-	DefaultValue         types.String `tfsdk:"default_value"`
-	EtrackerID           types.String `tfsdk:"etracker_id"`
-	EtrackerBlockCookies types.Bool   `tfsdk:"etracker_block_cookies"`
-	EtrackerDNT          types.Bool   `tfsdk:"etracker_dnt"`
-	Et_pagename          types.String `tfsdk:"et_pagename"`
-	Et_areas             types.String `tfsdk:"et_areas"`
-	Et_target            types.String `tfsdk:"et_target"`
-	Et_tval              types.String `tfsdk:"et_tval"`
-	Et_tonr              types.String `tfsdk:"et_tonr"`
-	Et_tsale             types.String `tfsdk:"et_tsale"`
-	Et_basket            types.String `tfsdk:"et_basket"`
-	Et_cust              types.String `tfsdk:"et_cust"`
-	CustomDimensions     types.List   `tfsdk:"custom_dimensions"`
+	ID                   types.String   `tfsdk:"id"`
+	ContainerID          types.String   `tfsdk:"container_id"`
+	Name                 types.String   `tfsdk:"name"`
+	DefaultValue         types.String   `tfsdk:"default_value"`
+	EtrackerID           types.String   `tfsdk:"etracker_id"`
+	EtrackerBlockCookies types.Bool     `tfsdk:"etracker_block_cookies"`
+	EtrackerDNT          types.Bool     `tfsdk:"etracker_dnt"`
+	Et_pagename          types.String   `tfsdk:"et_pagename"`
+	Et_areas             types.String   `tfsdk:"et_areas"`
+	Et_target            types.String   `tfsdk:"et_target"`
+	Et_tval              types.String   `tfsdk:"et_tval"`
+	Et_tonr              types.String   `tfsdk:"et_tonr"`
+	Et_tsale             types.String   `tfsdk:"et_tsale"`
+	Et_basket            types.String   `tfsdk:"et_basket"`
+	Et_cust              types.String   `tfsdk:"et_cust"`
+	CustomDimensions     []types.String `tfsdk:"custom_dimensions"`
 }
 
 func variableEtrackerconfigurationSchema() schema.Schema {

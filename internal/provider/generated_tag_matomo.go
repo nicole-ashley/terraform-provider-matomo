@@ -33,7 +33,7 @@ type tagMatomoModel struct {
 	EventAction               types.String   `tfsdk:"event_action"`
 	EventName                 types.String   `tfsdk:"event_name"`
 	EventValue                types.String   `tfsdk:"event_value"`
-	CustomDimensions          types.List     `tfsdk:"custom_dimensions"`
+	CustomDimensions          []types.String `tfsdk:"custom_dimensions"`
 	AreCustomDimensionsSticky types.Bool     `tfsdk:"are_custom_dimensions_sticky"`
 }
 
