@@ -134,5 +134,6 @@ func (p *MatomoProvider) DataSources(_ context.Context) []func() datasource.Data
 func (p *MatomoProvider) Actions(_ context.Context) []func() action.Action {
 	return []func() action.Action{
 		NewCreateContainerVersionAction,
+		NewPublishContainerVersionAction,
 	}
 }
