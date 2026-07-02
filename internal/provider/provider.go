@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -15,7 +16,10 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
-var _ provider.Provider = &MatomoProvider{}
+var (
+	_ provider.Provider            = &MatomoProvider{}
+	_ provider.ProviderWithActions = &MatomoProvider{}
+)
 
 type MatomoProvider struct {
 	version string
@@ -101,6 +105,7 @@ func (p *MatomoProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	client := matomo.NewClient(baseURL, apiToken, httpClient)
 	resp.ResourceData = client
 	resp.DataSourceData = client
+	resp.ActionData = client
 }
 
 func (p *MatomoProvider) Resources(_ context.Context) []func() resource.Resource {
@@ -123,5 +128,11 @@ func (p *MatomoProvider) DataSources(_ context.Context) []func() datasource.Data
 		NewTagManagerTagTypesDataSource,
 		NewTagManagerTriggerTypesDataSource,
 		NewTagManagerVariableTypesDataSource,
+	}
+}
+
+func (p *MatomoProvider) Actions(_ context.Context) []func() action.Action {
+	return []func() action.Action{
+		NewCreateContainerVersionAction,
 	}
 }
