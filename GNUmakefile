@@ -12,6 +12,10 @@ test:
 lint:
 	golangci-lint run ./...
 
+.PHONY: docs
+docs:
+	go tool tfplugindocs generate
+
 .PHONY: fmt
 fmt:
 	gofmt -s -w .
