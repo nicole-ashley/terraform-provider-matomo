@@ -57,7 +57,12 @@ func triggerElementvisibilitySchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "A CSS selector allows you to select an element by id, className, element names, etc. If multiple elements match this selector, the first matching element will be used to get the value from. Examples for valid selectors are \".classname\", \"#id\" or \"li a\".",
@@ -75,7 +80,12 @@ func triggerElementvisibilitySchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "The id attribute specifies a unique id for an HTML element. Insert here the value of an ID attribute of any element within your website.",
@@ -100,7 +110,12 @@ func triggerElementvisibilitySchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
 				Description:   "",
@@ -115,7 +130,12 @@ func triggerElementvisibilitySchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 				Description:   "",

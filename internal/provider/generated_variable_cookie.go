@@ -50,7 +50,12 @@ func variableCookieSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 				Description:   "",

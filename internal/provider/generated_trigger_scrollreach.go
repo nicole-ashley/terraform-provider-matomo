@@ -51,7 +51,12 @@ func triggerScrollreachSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
 				Description:   "The amount in pixels that needs to be visible of this element depending on the selected scroll match type.",
@@ -66,7 +71,12 @@ func triggerScrollreachSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
 				Description:   "You can specify any number between 1 and 100. If you specify 50, then it means the element needs to be at least 50% visible depending on the scroll match type.",

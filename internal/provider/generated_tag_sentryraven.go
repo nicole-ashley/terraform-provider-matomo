@@ -5,7 +5,6 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -43,10 +42,24 @@ func tagSentryravenSchema() schema.Schema {
 				ElementType: types.StringType,
 			},
 			"block_trigger_ids": schema.ListAttribute{
-				Optional:      true,
-				Computed:      true,
-				ElementType:   types.StringType,
-				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				// Not Computed, unlike the other common/generated Optional
+				// attributes: the generated Go field type for a List
+				// attribute is a bare []types.String (see the Params
+				// range below), which - unlike types.List - has no way to
+				// represent "the whole list is unknown," so marking it
+				// Computed makes terraform-plugin-framework fail outright
+				// trying to decode plan's Unknown value into it
+				// (confirmed against a real acceptance-test run: "Value
+				// Conversion Error ... Received unknown value, however
+				// the target type cannot handle unknown values"). A
+				// List-typed field can still show a spurious
+				// "refresh plan not empty" diff if Matomo defaults it to
+				// a non-empty value server-side - fixing that for real
+				// would mean switching the generated field type to
+				// types.List, which is a larger change than this pass
+				// covers.
+				Optional:    true,
+				ElementType: types.StringType,
 			},
 			"sentry_dsn": schema.StringAttribute{
 				Required:    true,

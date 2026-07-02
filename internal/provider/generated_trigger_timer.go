@@ -46,7 +46,12 @@ func triggerTimerSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "You can optionally change the name of this event. This can be useful if you have for example multiple timers on the page and want to perform different logic based on the name of the timer.",
@@ -61,7 +66,12 @@ func triggerTimerSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
 				Description:   "Enter \"0\" to not limit the trigger.",

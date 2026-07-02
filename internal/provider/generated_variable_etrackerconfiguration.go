@@ -5,7 +5,6 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -61,7 +60,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 				Description:   "",
@@ -76,7 +80,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 				Description:   "",
@@ -91,7 +100,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -106,7 +120,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -121,7 +140,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -136,7 +160,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -151,7 +180,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -166,7 +200,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -181,7 +220,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -196,7 +240,12 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				// reconcile against an unset (null) config without
 				// reporting a spurious diff on every subsequent plan - see
 				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
@@ -205,17 +254,7 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				ElementType: types.StringType,
 				Required:    false,
 				Optional:    true,
-				// Computed + UseStateForUnknown: Matomo can return a
-				// non-empty default for this field even when it was never
-				// sent (e.g. a boolean parameter defaulting to false
-				// server-side), which a bare Optional attribute can't
-				// reconcile against an unset (null) config without
-				// reporting a spurious diff on every subsequent plan - see
-				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go.
-				Computed:      true,
-				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
-				Description:   "Optionally set one or multiple custom dimensions.",
+				Description: "Optionally set one or multiple custom dimensions.",
 			},
 		},
 	}
