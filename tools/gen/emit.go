@@ -3,6 +3,7 @@ package main
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"go/format"
 	"text/template"
@@ -30,7 +31,10 @@ func newTemplateData(spec TypeSpec) templateData {
 	}
 }
 
-var schemaTemplate = template.Must(template.ParseFiles("templates/schema.go.tmpl"))
+//go:embed templates/schema.go.tmpl
+var schemaTemplateFS embed.FS
+
+var schemaTemplate = template.Must(template.ParseFS(schemaTemplateFS, "templates/schema.go.tmpl"))
 
 // RenderSchema renders spec into a gofmt'd Go source file implementing
 // the type's generated model + schema.Schema + typedModel methods, ready
