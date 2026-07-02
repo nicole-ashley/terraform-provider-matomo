@@ -114,3 +114,38 @@ func TestDisablePreviewMode(t *testing.T) {
 		t.Errorf("method = %q, want TagManager.disablePreviewMode", got)
 	}
 }
+
+func TestGetContainerVersions(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("ParseForm() error = %v", err)
+		}
+		if got := r.Form.Get("method"); got != "TagManager.getContainerVersions" {
+			t.Errorf("method = %q, want TagManager.getContainerVersions", got)
+		}
+		if got := r.Form.Get("idSite"); got != "1" {
+			t.Errorf("idSite = %q, want 1", got)
+		}
+		if got := r.Form.Get("idContainer"); got != "abc123" {
+			t.Errorf("idContainer = %q, want abc123", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode([]map[string]interface{}{
+			{"idcontainerversion": 1, "name": "Draft", "description": ""},
+			{"idcontainerversion": 42, "name": "acceptance-test-version", "description": "a description"},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(srv.URL, "test-token", srv.Client())
+	versions, err := client.GetContainerVersions(context.Background(), 1, "abc123")
+	if err != nil {
+		t.Fatalf("GetContainerVersions() error = %v", err)
+	}
+	if len(versions) != 2 {
+		t.Fatalf("len(versions) = %d, want 2", len(versions))
+	}
+	if versions[1] != (ContainerVersion{IDContainerVersion: 42, Name: "acceptance-test-version", Description: "a description"}) {
+		t.Errorf("versions[1] = %+v, want {42 acceptance-test-version a description}", versions[1])
+	}
+}

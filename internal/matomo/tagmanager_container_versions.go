@@ -58,3 +58,25 @@ func (c *Client) DisablePreviewMode(ctx context.Context, idSite int, idContainer
 	}
 	return c.call(ctx, "TagManager.disablePreviewMode", v, nil)
 }
+
+// ContainerVersion describes one container version, as returned by
+// TagManager.getContainerVersions.
+type ContainerVersion struct {
+	IDContainerVersion int    `json:"idcontainerversion"`
+	Name               string `json:"name"`
+	Description        string `json:"description"`
+}
+
+// GetContainerVersions lists every version (draft and snapshots) of a
+// container.
+func (c *Client) GetContainerVersions(ctx context.Context, idSite int, idContainer string) ([]ContainerVersion, error) {
+	v := url.Values{
+		"idSite":      {strconv.Itoa(idSite)},
+		"idContainer": {idContainer},
+	}
+	var versions []ContainerVersion
+	if err := c.call(ctx, "TagManager.getContainerVersions", v, &versions); err != nil {
+		return nil, err
+	}
+	return versions, nil
+}

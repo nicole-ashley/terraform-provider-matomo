@@ -1,9 +1,12 @@
 package provider
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccCreateContainerVersionAction(t *testing.T) {
@@ -45,9 +48,27 @@ resource "terraform_data" "trigger" {
   }
 }
 `,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("matomo_tagmanager_container.test", "id"),
-				),
+				Check: func(s *terraform.State) error {
+					rs, ok := s.RootModule().Resources["matomo_tagmanager_container.test"]
+					if !ok {
+						return fmt.Errorf("matomo_tagmanager_container.test not found in state")
+					}
+					siteID, idContainer, err := parseContainerID(rs.Primary.ID)
+					if err != nil {
+						return fmt.Errorf("invalid container id %q: %w", rs.Primary.ID, err)
+					}
+					client := testAccMatomoClient(t)
+					versions, err := client.GetContainerVersions(context.Background(), siteID, idContainer)
+					if err != nil {
+						return fmt.Errorf("listing container versions: %w", err)
+					}
+					for _, v := range versions {
+						if v.Name == "acceptance-test-version" {
+							return nil
+						}
+					}
+					return fmt.Errorf("no container version named %q found after create_container_version action ran; versions = %+v", "acceptance-test-version", versions)
+				},
 			},
 		},
 	})
