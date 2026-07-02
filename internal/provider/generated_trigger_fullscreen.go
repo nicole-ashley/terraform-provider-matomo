@@ -35,7 +35,9 @@ func triggerFullscreenSchema() schema.Schema {
 			"trigger_action": schema.StringAttribute{
 				Required:    true,
 				Description: "",
-				Validators:  []validator.String{stringvalidator.OneOf("any", "enter", "exit")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("any", "enter", "exit"),
+				},
 			},
 			"trigger_limit": schema.Int64Attribute{
 				Required:    false,

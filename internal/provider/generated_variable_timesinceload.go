@@ -37,7 +37,9 @@ func variableTimesinceloadSchema() schema.Schema {
 			"unit": schema.StringAttribute{
 				Required:    true,
 				Description: "Select in which unit you want to retrieve the time.",
-				Validators:  []validator.String{stringvalidator.OneOf("m", "ms", "s")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("m", "ms", "s"),
+				},
 			},
 		},
 	}

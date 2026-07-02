@@ -37,7 +37,9 @@ func variableReferrerurlSchema() schema.Schema {
 			"url_part": schema.StringAttribute{
 				Required:    true,
 				Description: "Select the part of the URL you want to retrieve.",
-				Validators:  []validator.String{stringvalidator.OneOf("host", "hostname", "href", "origin", "pathname", "port", "protocol", "search")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("host", "hostname", "href", "origin", "pathname", "port", "protocol", "search"),
+				},
 			},
 		},
 	}

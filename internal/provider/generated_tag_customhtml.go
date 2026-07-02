@@ -54,7 +54,9 @@ func tagCustomhtmlSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "Define the position of where the HTML should be inserted into your website.",
-				Validators:  []validator.String{stringvalidator.OneOf("bodyEnd", "bodyStart", "headEnd", "headStart")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("bodyEnd", "bodyStart", "headEnd", "headStart"),
+				},
 			},
 		},
 	}

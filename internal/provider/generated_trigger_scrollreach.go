@@ -36,7 +36,9 @@ func triggerScrollreachSchema() schema.Schema {
 			"scroll_type": schema.StringAttribute{
 				Required:    true,
 				Description: "",
-				Validators:  []validator.String{stringvalidator.OneOf("horizontalpercentage", "horizontalpixel", "verticalpercentage", "verticalpixel")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("horizontalpercentage", "horizontalpixel", "verticalpercentage", "verticalpixel"),
+				},
 			},
 			"pixels": schema.Int64Attribute{
 				Required:    false,

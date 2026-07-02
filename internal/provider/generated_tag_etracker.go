@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagEtrackerModel struct {
@@ -75,7 +77,9 @@ func tagEtrackerSchema() schema.Schema {
 			"tracking_type": schema.StringAttribute{
 				Required:    true,
 				Description: "Choose which action should be executed when this tag is fired.",
-				Validators:  []validator.String{stringvalidator.OneOf("addtocart", "event", "form", "pageview", "transaction", "wrapper")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("addtocart", "event", "form", "pageview", "transaction", "wrapper"),
+				},
 			},
 			"etracker_config": schema.StringAttribute{
 				Required:    false,
@@ -146,7 +150,9 @@ func tagEtrackerSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "Sale / Lead / Partial Cancellation / Cancellation",
-				Validators:  []validator.String{stringvalidator.OneOf("cancellation", "lead", "partial_cancellation", "sale")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("cancellation", "lead", "partial_cancellation", "sale"),
+				},
 			},
 			"etracker_transaction_id": schema.StringAttribute{
 				Required:    false,
@@ -192,6 +198,9 @@ func tagEtrackerSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "dataLayer object of the product - according to etracker reference",
+				Validators: []validator.String{
+					conditionRequiredValidator{Condition: matomo.EqNode{Field: "tracking_type", Value: "addtocart", Negate: false}},
+				},
 			},
 			"etracker_add_to_cart_number": schema.StringAttribute{
 				Required:    false,
@@ -202,7 +211,9 @@ func tagEtrackerSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "Conversion / Form View / Field View / Field Interaction / Field Error",
-				Validators:  []validator.String{stringvalidator.OneOf("formConversion", "formFieldError", "formFieldInteraction", "formFieldsView", "formView")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("formConversion", "formFieldError", "formFieldInteraction", "formFieldsView", "formView"),
+				},
 			},
 			"etracker_form_name": schema.StringAttribute{
 				Required:    false,

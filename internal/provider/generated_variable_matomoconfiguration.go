@@ -229,7 +229,9 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "Set the SameSite attribute for cookies to a custom value. You might want to use this if your site is running in an iframe since then it will only be able to access the cookies if SameSite is set to \"None\". Choosing \"None\" will only work on HTTPS and will automatically also set the secure cookie. If your site is available under http and https, using \"None\" might lead to duplicate or incomplete visits.",
-				Validators:  []validator.String{stringvalidator.OneOf("Lax", "None", "Strict")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("Lax", "None", "Strict"),
+				},
 			},
 			"disable_browser_feature_detection": schema.BoolAttribute{
 				Required:    false,
@@ -282,7 +284,9 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "Here you can configure the source path of the Matomo Tracker JavaScript, if you are not using the \"Bundle Tracker\" option.",
-				Validators:  []validator.String{stringvalidator.OneOf("custom", "js/", "js/tracker.php", "matomo.js", "piwik.js")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("custom", "js/", "js/tracker.php", "matomo.js", "piwik.js"),
+				},
 			},
 			"js_endpoint_custom": schema.StringAttribute{
 				Required:    false,
@@ -293,7 +297,9 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "Here you can configure the target path for tracking requests.",
-				Validators:  []validator.String{stringvalidator.OneOf("custom", "js/", "js/tracker.php", "matomo.php", "piwik.php")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("custom", "js/", "js/tracker.php", "matomo.php", "piwik.php"),
+				},
 			},
 			"tracking_endpoint_custom": schema.StringAttribute{
 				Required:    false,
@@ -314,7 +320,9 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "",
-				Validators:  []validator.String{stringvalidator.OneOf("GET", "POST")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("GET", "POST"),
+				},
 			},
 			"request_content_type": schema.StringAttribute{
 				Required:    false,

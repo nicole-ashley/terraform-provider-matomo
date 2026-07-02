@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type variableDomelementModel struct {
@@ -40,17 +42,25 @@ func variableDomelementSchema() schema.Schema {
 			"selection_method": schema.StringAttribute{
 				Required:    true,
 				Description: "Select the way you want to identify the element you want to read the value from.",
-				Validators:  []validator.String{stringvalidator.OneOf("cssSelector", "elementId")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("cssSelector", "elementId"),
+				},
 			},
 			"css_selector": schema.StringAttribute{
 				Required:    false,
 				Optional:    true,
 				Description: "A CSS selector allows you to select an element by id, className, element names, etc. If multiple elements match this selector, the first matching element will be used to get the value from. Examples for valid selectors are \".classname\", \"#id\" or \"li a\".",
+				Validators: []validator.String{
+					conditionRequiredValidator{Condition: matomo.EqNode{Field: "selection_method", Value: "cssSelector", Negate: false}},
+				},
 			},
 			"element_id": schema.StringAttribute{
 				Required:    false,
 				Optional:    true,
 				Description: "The id attribute specifies a unique id for an HTML element. Insert here the value of an ID attribute of any element within your website.",
+				Validators: []validator.String{
+					conditionRequiredValidator{Condition: matomo.EqNode{Field: "selection_method", Value: "elementId", Negate: false}},
+				},
 			},
 			"attribute_name": schema.StringAttribute{
 				Required:    false,

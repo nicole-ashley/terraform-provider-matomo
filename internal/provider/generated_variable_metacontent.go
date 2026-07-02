@@ -37,7 +37,9 @@ func variableMetacontentSchema() schema.Schema {
 			"meta_name": schema.StringAttribute{
 				Required:    true,
 				Description: "",
-				Validators:  []validator.String{stringvalidator.OneOf("application-name", "author", "content-type", "copyright", "description", "generator", "keywords", "language", "og:description", "og:image", "og:locale", "og:site_name", "og:title", "og:type", "og:url", "robots", "subject", "viewport")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("application-name", "author", "content-type", "copyright", "description", "generator", "keywords", "language", "og:description", "og:image", "og:locale", "og:site_name", "og:title", "og:type", "og:url", "robots", "subject", "viewport"),
+				},
 			},
 		},
 	}

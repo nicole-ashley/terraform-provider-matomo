@@ -56,7 +56,9 @@ func tagShareaholicSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "Here you can optionally add an In-Page App to your website.",
-				Validators:  []validator.String{stringvalidator.OneOf("", "follow_buttons", "recommendations", "share_buttons", "total_share_count")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("", "follow_buttons", "recommendations", "share_buttons", "total_share_count"),
+				},
 			},
 			"shareaholic_app_id": schema.StringAttribute{
 				Required:    false,

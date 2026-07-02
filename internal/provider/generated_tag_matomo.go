@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type tagMatomoModel struct {
@@ -68,7 +70,9 @@ func tagMatomoSchema() schema.Schema {
 			"tracking_type": schema.StringAttribute{
 				Required:    true,
 				Description: "Choose which action should be executed when this tag is fired.",
-				Validators:  []validator.String{stringvalidator.OneOf("event", "goal", "initialise", "pageview")},
+				Validators: []validator.String{
+					stringvalidator.OneOf("event", "goal", "initialise", "pageview"),
+				},
 			},
 			"id_goal": schema.StringAttribute{
 				Required:    false,
@@ -119,6 +123,9 @@ func tagMatomoSchema() schema.Schema {
 				Required:    false,
 				Optional:    true,
 				Description: "The event's category, for example Videos, Music, Games…",
+				Validators: []validator.String{
+					conditionRequiredValidator{Condition: matomo.EqNode{Field: "tracking_type", Value: "event", Negate: false}},
+				},
 			},
 			"event_action": schema.StringAttribute{
 				Required:    false,
