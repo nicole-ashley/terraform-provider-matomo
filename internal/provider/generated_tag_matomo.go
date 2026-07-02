@@ -158,26 +158,63 @@ func (m *tagMatomoModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *tagMatomoModel) ToParams() map[string]string {
-	return map[string]string{
-		"matomoConfig":              m.MatomoConfig.ValueString(),
-		"trackingType":              m.TrackingType.ValueString(),
-		"idGoal":                    m.IdGoal.ValueString(),
-		"goalCustomRevenue":         m.GoalCustomRevenue.ValueString(),
-		"documentTitle":             m.DocumentTitle.ValueString(),
-		"customUrl":                 m.CustomUrl.ValueString(),
-		"isEcommerceView":           paramBoolString(m.IsEcommerceView.ValueBool()),
-		"productSKU":                m.ProductSKU.ValueString(),
-		"productName":               m.ProductName.ValueString(),
-		"categoryName":              m.CategoryName.ValueString(),
-		"price":                     m.Price.ValueString(),
-		"eventCategory":             m.EventCategory.ValueString(),
-		"eventAction":               m.EventAction.ValueString(),
-		"eventName":                 m.EventName.ValueString(),
-		"eventValue":                m.EventValue.ValueString(),
-		"customDimensions":          paramListString(m.CustomDimensions),
-		"areCustomDimensionsSticky": paramBoolString(m.AreCustomDimensionsSticky.ValueBool()),
+	p := map[string]string{}
+	p["matomoConfig"] = m.MatomoConfig.ValueString()
+	p["trackingType"] = m.TrackingType.ValueString()
+	if !m.IdGoal.IsNull() && !m.IdGoal.IsUnknown() {
+		p["idGoal"] = m.IdGoal.ValueString()
 	}
+	if !m.GoalCustomRevenue.IsNull() && !m.GoalCustomRevenue.IsUnknown() {
+		p["goalCustomRevenue"] = m.GoalCustomRevenue.ValueString()
+	}
+	if !m.DocumentTitle.IsNull() && !m.DocumentTitle.IsUnknown() {
+		p["documentTitle"] = m.DocumentTitle.ValueString()
+	}
+	if !m.CustomUrl.IsNull() && !m.CustomUrl.IsUnknown() {
+		p["customUrl"] = m.CustomUrl.ValueString()
+	}
+	if !m.IsEcommerceView.IsNull() && !m.IsEcommerceView.IsUnknown() {
+		p["isEcommerceView"] = paramBoolString(m.IsEcommerceView.ValueBool())
+	}
+	if !m.ProductSKU.IsNull() && !m.ProductSKU.IsUnknown() {
+		p["productSKU"] = m.ProductSKU.ValueString()
+	}
+	if !m.ProductName.IsNull() && !m.ProductName.IsUnknown() {
+		p["productName"] = m.ProductName.ValueString()
+	}
+	if !m.CategoryName.IsNull() && !m.CategoryName.IsUnknown() {
+		p["categoryName"] = m.CategoryName.ValueString()
+	}
+	if !m.Price.IsNull() && !m.Price.IsUnknown() {
+		p["price"] = m.Price.ValueString()
+	}
+	if !m.EventCategory.IsNull() && !m.EventCategory.IsUnknown() {
+		p["eventCategory"] = m.EventCategory.ValueString()
+	}
+	if !m.EventAction.IsNull() && !m.EventAction.IsUnknown() {
+		p["eventAction"] = m.EventAction.ValueString()
+	}
+	if !m.EventName.IsNull() && !m.EventName.IsUnknown() {
+		p["eventName"] = m.EventName.ValueString()
+	}
+	if !m.EventValue.IsNull() && !m.EventValue.IsUnknown() {
+		p["eventValue"] = m.EventValue.ValueString()
+	}
+	if m.CustomDimensions != nil {
+		p["customDimensions"] = paramListString(m.CustomDimensions)
+	}
+	if !m.AreCustomDimensionsSticky.IsNull() && !m.AreCustomDimensionsSticky.IsUnknown() {
+		p["areCustomDimensionsSticky"] = paramBoolString(m.AreCustomDimensionsSticky.ValueBool())
+	}
+	return p
 }
 
 func (m *tagMatomoModel) FromParams(p map[string]string) {

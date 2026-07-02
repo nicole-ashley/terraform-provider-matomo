@@ -67,11 +67,20 @@ func (m *tagBugsnagModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *tagBugsnagModel) ToParams() map[string]string {
-	return map[string]string{
-		"apiKey":        m.ApiKey.ValueString(),
-		"collectUserIp": paramBoolString(m.CollectUserIp.ValueBool()),
+	p := map[string]string{}
+	p["apiKey"] = m.ApiKey.ValueString()
+	if !m.CollectUserIp.IsNull() && !m.CollectUserIp.IsUnknown() {
+		p["collectUserIp"] = paramBoolString(m.CollectUserIp.ValueBool())
 	}
+	return p
 }
 
 func (m *tagBugsnagModel) FromParams(p map[string]string) {

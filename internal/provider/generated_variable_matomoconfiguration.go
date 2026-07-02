@@ -464,78 +464,219 @@ func (m *variableMatomoconfigurationModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *variableMatomoconfigurationModel) ToParams() map[string]string {
-	return map[string]string{
-		"matomoUrl":                             m.MatomoUrl.ValueString(),
-		"idSite":                                m.IdSite.ValueString(),
-		"enableLinkTracking":                    paramBoolString(m.EnableLinkTracking.ValueBool()),
-		"enableFileTracking":                    paramBoolString(m.EnableFileTracking.ValueBool()),
-		"enableCrossDomainLinking":              paramBoolString(m.EnableCrossDomainLinking.ValueBool()),
-		"crossDomainLinkingTimeout":             paramInt64String(m.CrossDomainLinkingTimeout.ValueInt64()),
-		"enableDoNotTrack":                      paramBoolString(m.EnableDoNotTrack.ValueBool()),
-		"disablePerformanceTracking":            paramBoolString(m.DisablePerformanceTracking.ValueBool()),
-		"enableJSErrorTracking":                 paramBoolString(m.EnableJSErrorTracking.ValueBool()),
-		"enableHeartBeatTimer":                  paramBoolString(m.EnableHeartBeatTimer.ValueBool()),
-		"heartBeatTime":                         paramInt64String(m.HeartBeatTime.ValueInt64()),
-		"trackAllContentImpressions":            paramBoolString(m.TrackAllContentImpressions.ValueBool()),
-		"trackVisibleContentImpressions":        paramBoolString(m.TrackVisibleContentImpressions.ValueBool()),
-		"trackBots":                             paramBoolString(m.TrackBots.ValueBool()),
-		"disableCookies":                        paramBoolString(m.DisableCookies.ValueBool()),
-		"requireConsent":                        paramBoolString(m.RequireConsent.ValueBool()),
-		"requireCookieConsent":                  paramBoolString(m.RequireCookieConsent.ValueBool()),
-		"customCookieTimeOutEnable":             paramBoolString(m.CustomCookieTimeOutEnable.ValueBool()),
-		"customCookieTimeOut":                   paramInt64String(m.CustomCookieTimeOut.ValueInt64()),
-		"referralCookieTimeOut":                 paramInt64String(m.ReferralCookieTimeOut.ValueInt64()),
-		"sessionCookieTimeOut":                  paramInt64String(m.SessionCookieTimeOut.ValueInt64()),
-		"setSecureCookie":                       paramBoolString(m.SetSecureCookie.ValueBool()),
-		"cookieDomain":                          m.CookieDomain.ValueString(),
-		"cookieNamePrefix":                      m.CookieNamePrefix.ValueString(),
-		"cookiePath":                            m.CookiePath.ValueString(),
-		"cookieSameSite":                        m.CookieSameSite.ValueString(),
-		"disableBrowserFeatureDetection":        paramBoolString(m.DisableBrowserFeatureDetection.ValueBool()),
-		"disableCampaignParameters":             paramBoolString(m.DisableCampaignParameters.ValueBool()),
-		"domains":                               paramListString(m.Domains),
-		"alwaysUseSendBeacon":                   paramBoolString(m.AlwaysUseSendBeacon.ValueBool()),
-		"disableAlwaysUseSendBeacon":            paramBoolString(m.DisableAlwaysUseSendBeacon.ValueBool()),
-		"userId":                                m.UserId.ValueString(),
-		"customDimensions":                      paramListString(m.CustomDimensions),
-		"registerAsDefaultTracker":              paramBoolString(m.RegisterAsDefaultTracker.ValueBool()),
-		"bundleTracker":                         paramBoolString(m.BundleTracker.ValueBool()),
-		"jsEndpoint":                            m.JsEndpoint.ValueString(),
-		"jsEndpointCustom":                      m.JsEndpointCustom.ValueString(),
-		"trackingEndpoint":                      m.TrackingEndpoint.ValueString(),
-		"trackingEndpointCustom":                m.TrackingEndpointCustom.ValueString(),
-		"appendToTrackingUrl":                   m.AppendToTrackingUrl.ValueString(),
-		"forceRequestMethod":                    paramBoolString(m.ForceRequestMethod.ValueBool()),
-		"requestMethod":                         m.RequestMethod.ValueString(),
-		"requestContentType":                    m.RequestContentType.ValueString(),
-		"customRequestProcessing":               m.CustomRequestProcessing.ValueString(),
-		"customData":                            paramListString(m.CustomData),
-		"setDownloadExtensions":                 m.SetDownloadExtensions.ValueString(),
-		"addDownloadExtensions":                 m.AddDownloadExtensions.ValueString(),
-		"removeDownloadExtensions":              m.RemoveDownloadExtensions.ValueString(),
-		"setIgnoreClasses":                      m.SetIgnoreClasses.ValueString(),
-		"setReferrerUrl":                        m.SetReferrerUrl.ValueString(),
-		"setApiUrl":                             m.SetApiUrl.ValueString(),
-		"setPageViewId":                         m.SetPageViewId.ValueString(),
-		"setExcludedReferrers":                  m.SetExcludedReferrers.ValueString(),
-		"setDownloadClasses":                    m.SetDownloadClasses.ValueString(),
-		"setLinkClasses":                        m.SetLinkClasses.ValueString(),
-		"setCampaignNameKey":                    m.SetCampaignNameKey.ValueString(),
-		"setCampaignKeywordKey":                 m.SetCampaignKeywordKey.ValueString(),
-		"setConsentGiven":                       paramBoolString(m.SetConsentGiven.ValueBool()),
-		"rememberConsentGiven":                  paramBoolString(m.RememberConsentGiven.ValueBool()),
-		"rememberConsentGivenForHours":          m.RememberConsentGivenForHours.ValueString(),
-		"forgetConsentGiven":                    paramBoolString(m.ForgetConsentGiven.ValueBool()),
-		"discardHashTag":                        paramBoolString(m.DiscardHashTag.ValueBool()),
-		"setExcludedQueryParams":                m.SetExcludedQueryParams.ValueString(),
-		"setConversionAttributionFirstReferrer": paramBoolString(m.SetConversionAttributionFirstReferrer.ValueBool()),
-		"setDoNotTrack":                         paramBoolString(m.SetDoNotTrack.ValueBool()),
-		"setLinkTrackingTimer":                  m.SetLinkTrackingTimer.ValueString(),
-		"killFrame":                             paramBoolString(m.KillFrame.ValueBool()),
-		"setCountPreRendered":                   paramBoolString(m.SetCountPreRendered.ValueBool()),
-		"setRequestQueueInterval":               m.SetRequestQueueInterval.ValueString(),
+	p := map[string]string{}
+	p["matomoUrl"] = m.MatomoUrl.ValueString()
+	p["idSite"] = m.IdSite.ValueString()
+	if !m.EnableLinkTracking.IsNull() && !m.EnableLinkTracking.IsUnknown() {
+		p["enableLinkTracking"] = paramBoolString(m.EnableLinkTracking.ValueBool())
 	}
+	if !m.EnableFileTracking.IsNull() && !m.EnableFileTracking.IsUnknown() {
+		p["enableFileTracking"] = paramBoolString(m.EnableFileTracking.ValueBool())
+	}
+	if !m.EnableCrossDomainLinking.IsNull() && !m.EnableCrossDomainLinking.IsUnknown() {
+		p["enableCrossDomainLinking"] = paramBoolString(m.EnableCrossDomainLinking.ValueBool())
+	}
+	if !m.CrossDomainLinkingTimeout.IsNull() && !m.CrossDomainLinkingTimeout.IsUnknown() {
+		p["crossDomainLinkingTimeout"] = paramInt64String(m.CrossDomainLinkingTimeout.ValueInt64())
+	}
+	if !m.EnableDoNotTrack.IsNull() && !m.EnableDoNotTrack.IsUnknown() {
+		p["enableDoNotTrack"] = paramBoolString(m.EnableDoNotTrack.ValueBool())
+	}
+	if !m.DisablePerformanceTracking.IsNull() && !m.DisablePerformanceTracking.IsUnknown() {
+		p["disablePerformanceTracking"] = paramBoolString(m.DisablePerformanceTracking.ValueBool())
+	}
+	if !m.EnableJSErrorTracking.IsNull() && !m.EnableJSErrorTracking.IsUnknown() {
+		p["enableJSErrorTracking"] = paramBoolString(m.EnableJSErrorTracking.ValueBool())
+	}
+	if !m.EnableHeartBeatTimer.IsNull() && !m.EnableHeartBeatTimer.IsUnknown() {
+		p["enableHeartBeatTimer"] = paramBoolString(m.EnableHeartBeatTimer.ValueBool())
+	}
+	if !m.HeartBeatTime.IsNull() && !m.HeartBeatTime.IsUnknown() {
+		p["heartBeatTime"] = paramInt64String(m.HeartBeatTime.ValueInt64())
+	}
+	if !m.TrackAllContentImpressions.IsNull() && !m.TrackAllContentImpressions.IsUnknown() {
+		p["trackAllContentImpressions"] = paramBoolString(m.TrackAllContentImpressions.ValueBool())
+	}
+	if !m.TrackVisibleContentImpressions.IsNull() && !m.TrackVisibleContentImpressions.IsUnknown() {
+		p["trackVisibleContentImpressions"] = paramBoolString(m.TrackVisibleContentImpressions.ValueBool())
+	}
+	if !m.TrackBots.IsNull() && !m.TrackBots.IsUnknown() {
+		p["trackBots"] = paramBoolString(m.TrackBots.ValueBool())
+	}
+	if !m.DisableCookies.IsNull() && !m.DisableCookies.IsUnknown() {
+		p["disableCookies"] = paramBoolString(m.DisableCookies.ValueBool())
+	}
+	if !m.RequireConsent.IsNull() && !m.RequireConsent.IsUnknown() {
+		p["requireConsent"] = paramBoolString(m.RequireConsent.ValueBool())
+	}
+	if !m.RequireCookieConsent.IsNull() && !m.RequireCookieConsent.IsUnknown() {
+		p["requireCookieConsent"] = paramBoolString(m.RequireCookieConsent.ValueBool())
+	}
+	if !m.CustomCookieTimeOutEnable.IsNull() && !m.CustomCookieTimeOutEnable.IsUnknown() {
+		p["customCookieTimeOutEnable"] = paramBoolString(m.CustomCookieTimeOutEnable.ValueBool())
+	}
+	if !m.CustomCookieTimeOut.IsNull() && !m.CustomCookieTimeOut.IsUnknown() {
+		p["customCookieTimeOut"] = paramInt64String(m.CustomCookieTimeOut.ValueInt64())
+	}
+	if !m.ReferralCookieTimeOut.IsNull() && !m.ReferralCookieTimeOut.IsUnknown() {
+		p["referralCookieTimeOut"] = paramInt64String(m.ReferralCookieTimeOut.ValueInt64())
+	}
+	if !m.SessionCookieTimeOut.IsNull() && !m.SessionCookieTimeOut.IsUnknown() {
+		p["sessionCookieTimeOut"] = paramInt64String(m.SessionCookieTimeOut.ValueInt64())
+	}
+	if !m.SetSecureCookie.IsNull() && !m.SetSecureCookie.IsUnknown() {
+		p["setSecureCookie"] = paramBoolString(m.SetSecureCookie.ValueBool())
+	}
+	if !m.CookieDomain.IsNull() && !m.CookieDomain.IsUnknown() {
+		p["cookieDomain"] = m.CookieDomain.ValueString()
+	}
+	if !m.CookieNamePrefix.IsNull() && !m.CookieNamePrefix.IsUnknown() {
+		p["cookieNamePrefix"] = m.CookieNamePrefix.ValueString()
+	}
+	if !m.CookiePath.IsNull() && !m.CookiePath.IsUnknown() {
+		p["cookiePath"] = m.CookiePath.ValueString()
+	}
+	if !m.CookieSameSite.IsNull() && !m.CookieSameSite.IsUnknown() {
+		p["cookieSameSite"] = m.CookieSameSite.ValueString()
+	}
+	if !m.DisableBrowserFeatureDetection.IsNull() && !m.DisableBrowserFeatureDetection.IsUnknown() {
+		p["disableBrowserFeatureDetection"] = paramBoolString(m.DisableBrowserFeatureDetection.ValueBool())
+	}
+	if !m.DisableCampaignParameters.IsNull() && !m.DisableCampaignParameters.IsUnknown() {
+		p["disableCampaignParameters"] = paramBoolString(m.DisableCampaignParameters.ValueBool())
+	}
+	if m.Domains != nil {
+		p["domains"] = paramListString(m.Domains)
+	}
+	if !m.AlwaysUseSendBeacon.IsNull() && !m.AlwaysUseSendBeacon.IsUnknown() {
+		p["alwaysUseSendBeacon"] = paramBoolString(m.AlwaysUseSendBeacon.ValueBool())
+	}
+	if !m.DisableAlwaysUseSendBeacon.IsNull() && !m.DisableAlwaysUseSendBeacon.IsUnknown() {
+		p["disableAlwaysUseSendBeacon"] = paramBoolString(m.DisableAlwaysUseSendBeacon.ValueBool())
+	}
+	if !m.UserId.IsNull() && !m.UserId.IsUnknown() {
+		p["userId"] = m.UserId.ValueString()
+	}
+	if m.CustomDimensions != nil {
+		p["customDimensions"] = paramListString(m.CustomDimensions)
+	}
+	if !m.RegisterAsDefaultTracker.IsNull() && !m.RegisterAsDefaultTracker.IsUnknown() {
+		p["registerAsDefaultTracker"] = paramBoolString(m.RegisterAsDefaultTracker.ValueBool())
+	}
+	if !m.BundleTracker.IsNull() && !m.BundleTracker.IsUnknown() {
+		p["bundleTracker"] = paramBoolString(m.BundleTracker.ValueBool())
+	}
+	if !m.JsEndpoint.IsNull() && !m.JsEndpoint.IsUnknown() {
+		p["jsEndpoint"] = m.JsEndpoint.ValueString()
+	}
+	if !m.JsEndpointCustom.IsNull() && !m.JsEndpointCustom.IsUnknown() {
+		p["jsEndpointCustom"] = m.JsEndpointCustom.ValueString()
+	}
+	if !m.TrackingEndpoint.IsNull() && !m.TrackingEndpoint.IsUnknown() {
+		p["trackingEndpoint"] = m.TrackingEndpoint.ValueString()
+	}
+	if !m.TrackingEndpointCustom.IsNull() && !m.TrackingEndpointCustom.IsUnknown() {
+		p["trackingEndpointCustom"] = m.TrackingEndpointCustom.ValueString()
+	}
+	if !m.AppendToTrackingUrl.IsNull() && !m.AppendToTrackingUrl.IsUnknown() {
+		p["appendToTrackingUrl"] = m.AppendToTrackingUrl.ValueString()
+	}
+	if !m.ForceRequestMethod.IsNull() && !m.ForceRequestMethod.IsUnknown() {
+		p["forceRequestMethod"] = paramBoolString(m.ForceRequestMethod.ValueBool())
+	}
+	if !m.RequestMethod.IsNull() && !m.RequestMethod.IsUnknown() {
+		p["requestMethod"] = m.RequestMethod.ValueString()
+	}
+	if !m.RequestContentType.IsNull() && !m.RequestContentType.IsUnknown() {
+		p["requestContentType"] = m.RequestContentType.ValueString()
+	}
+	if !m.CustomRequestProcessing.IsNull() && !m.CustomRequestProcessing.IsUnknown() {
+		p["customRequestProcessing"] = m.CustomRequestProcessing.ValueString()
+	}
+	if m.CustomData != nil {
+		p["customData"] = paramListString(m.CustomData)
+	}
+	if !m.SetDownloadExtensions.IsNull() && !m.SetDownloadExtensions.IsUnknown() {
+		p["setDownloadExtensions"] = m.SetDownloadExtensions.ValueString()
+	}
+	if !m.AddDownloadExtensions.IsNull() && !m.AddDownloadExtensions.IsUnknown() {
+		p["addDownloadExtensions"] = m.AddDownloadExtensions.ValueString()
+	}
+	if !m.RemoveDownloadExtensions.IsNull() && !m.RemoveDownloadExtensions.IsUnknown() {
+		p["removeDownloadExtensions"] = m.RemoveDownloadExtensions.ValueString()
+	}
+	if !m.SetIgnoreClasses.IsNull() && !m.SetIgnoreClasses.IsUnknown() {
+		p["setIgnoreClasses"] = m.SetIgnoreClasses.ValueString()
+	}
+	if !m.SetReferrerUrl.IsNull() && !m.SetReferrerUrl.IsUnknown() {
+		p["setReferrerUrl"] = m.SetReferrerUrl.ValueString()
+	}
+	if !m.SetApiUrl.IsNull() && !m.SetApiUrl.IsUnknown() {
+		p["setApiUrl"] = m.SetApiUrl.ValueString()
+	}
+	if !m.SetPageViewId.IsNull() && !m.SetPageViewId.IsUnknown() {
+		p["setPageViewId"] = m.SetPageViewId.ValueString()
+	}
+	if !m.SetExcludedReferrers.IsNull() && !m.SetExcludedReferrers.IsUnknown() {
+		p["setExcludedReferrers"] = m.SetExcludedReferrers.ValueString()
+	}
+	if !m.SetDownloadClasses.IsNull() && !m.SetDownloadClasses.IsUnknown() {
+		p["setDownloadClasses"] = m.SetDownloadClasses.ValueString()
+	}
+	if !m.SetLinkClasses.IsNull() && !m.SetLinkClasses.IsUnknown() {
+		p["setLinkClasses"] = m.SetLinkClasses.ValueString()
+	}
+	if !m.SetCampaignNameKey.IsNull() && !m.SetCampaignNameKey.IsUnknown() {
+		p["setCampaignNameKey"] = m.SetCampaignNameKey.ValueString()
+	}
+	if !m.SetCampaignKeywordKey.IsNull() && !m.SetCampaignKeywordKey.IsUnknown() {
+		p["setCampaignKeywordKey"] = m.SetCampaignKeywordKey.ValueString()
+	}
+	if !m.SetConsentGiven.IsNull() && !m.SetConsentGiven.IsUnknown() {
+		p["setConsentGiven"] = paramBoolString(m.SetConsentGiven.ValueBool())
+	}
+	if !m.RememberConsentGiven.IsNull() && !m.RememberConsentGiven.IsUnknown() {
+		p["rememberConsentGiven"] = paramBoolString(m.RememberConsentGiven.ValueBool())
+	}
+	if !m.RememberConsentGivenForHours.IsNull() && !m.RememberConsentGivenForHours.IsUnknown() {
+		p["rememberConsentGivenForHours"] = m.RememberConsentGivenForHours.ValueString()
+	}
+	if !m.ForgetConsentGiven.IsNull() && !m.ForgetConsentGiven.IsUnknown() {
+		p["forgetConsentGiven"] = paramBoolString(m.ForgetConsentGiven.ValueBool())
+	}
+	if !m.DiscardHashTag.IsNull() && !m.DiscardHashTag.IsUnknown() {
+		p["discardHashTag"] = paramBoolString(m.DiscardHashTag.ValueBool())
+	}
+	if !m.SetExcludedQueryParams.IsNull() && !m.SetExcludedQueryParams.IsUnknown() {
+		p["setExcludedQueryParams"] = m.SetExcludedQueryParams.ValueString()
+	}
+	if !m.SetConversionAttributionFirstReferrer.IsNull() && !m.SetConversionAttributionFirstReferrer.IsUnknown() {
+		p["setConversionAttributionFirstReferrer"] = paramBoolString(m.SetConversionAttributionFirstReferrer.ValueBool())
+	}
+	if !m.SetDoNotTrack.IsNull() && !m.SetDoNotTrack.IsUnknown() {
+		p["setDoNotTrack"] = paramBoolString(m.SetDoNotTrack.ValueBool())
+	}
+	if !m.SetLinkTrackingTimer.IsNull() && !m.SetLinkTrackingTimer.IsUnknown() {
+		p["setLinkTrackingTimer"] = m.SetLinkTrackingTimer.ValueString()
+	}
+	if !m.KillFrame.IsNull() && !m.KillFrame.IsUnknown() {
+		p["killFrame"] = paramBoolString(m.KillFrame.ValueBool())
+	}
+	if !m.SetCountPreRendered.IsNull() && !m.SetCountPreRendered.IsUnknown() {
+		p["setCountPreRendered"] = paramBoolString(m.SetCountPreRendered.ValueBool())
+	}
+	if !m.SetRequestQueueInterval.IsNull() && !m.SetRequestQueueInterval.IsUnknown() {
+		p["setRequestQueueInterval"] = m.SetRequestQueueInterval.ValueString()
+	}
+	return p
 }
 
 func (m *variableMatomoconfigurationModel) FromParams(p map[string]string) {

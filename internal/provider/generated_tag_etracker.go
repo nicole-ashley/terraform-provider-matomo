@@ -226,37 +226,98 @@ func (m *tagEtrackerModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *tagEtrackerModel) ToParams() map[string]string {
-	return map[string]string{
-		"trackingType":                          m.TrackingType.ValueString(),
-		"etrackerConfig":                        m.EtrackerConfig.ValueString(),
-		"etrackerWrapperPagename":               m.EtrackerWrapperPagename.ValueString(),
-		"etrackerWrapperArea":                   m.EtrackerWrapperArea.ValueString(),
-		"etrackerWrapperTarget":                 m.EtrackerWrapperTarget.ValueString(),
-		"etrackerWrapperTval":                   m.EtrackerWrapperTval.ValueString(),
-		"etrackerWrapperTonr":                   m.EtrackerWrapperTonr.ValueString(),
-		"etrackerWrapperTsale":                  m.EtrackerWrapperTsale.ValueString(),
-		"etrackerWrapperCust":                   m.EtrackerWrapperCust.ValueString(),
-		"etrackerWrapperBasket":                 m.EtrackerWrapperBasket.ValueString(),
-		"etrackerEventCategory":                 m.EtrackerEventCategory.ValueString(),
-		"etrackerEventObject":                   m.EtrackerEventObject.ValueString(),
-		"etrackerEventAction":                   m.EtrackerEventAction.ValueString(),
-		"etrackerEventType":                     m.EtrackerEventType.ValueString(),
-		"etrackerTransactionType":               m.EtrackerTransactionType.ValueString(),
-		"etrackerTransactionID":                 m.EtrackerTransactionID.ValueString(),
-		"etrackerTransactionValue":              m.EtrackerTransactionValue.ValueString(),
-		"etrackerTransactionCurrency":           m.EtrackerTransactionCurrency.ValueString(),
-		"etrackerTransactionBasket":             m.EtrackerTransactionBasket.ValueString(),
-		"etrackerTransactionCustomerGroup":      m.EtrackerTransactionCustomerGroup.ValueString(),
-		"etrackerTransactionDeliveryConditions": m.EtrackerTransactionDeliveryConditions.ValueString(),
-		"etrackerTransactionPaymentConditions":  m.EtrackerTransactionPaymentConditions.ValueString(),
-		"etrackerTransactionDebugMode":          paramBoolString(m.EtrackerTransactionDebugMode.ValueBool()),
-		"etrackerAddToCartProduct":              m.EtrackerAddToCartProduct.ValueString(),
-		"etrackerAddToCartNumber":               m.EtrackerAddToCartNumber.ValueString(),
-		"etrackerFormType":                      m.EtrackerFormType.ValueString(),
-		"etrackerFormName":                      m.EtrackerFormName.ValueString(),
-		"etrackerFormData":                      m.EtrackerFormData.ValueString(),
+	p := map[string]string{}
+	p["trackingType"] = m.TrackingType.ValueString()
+	if !m.EtrackerConfig.IsNull() && !m.EtrackerConfig.IsUnknown() {
+		p["etrackerConfig"] = m.EtrackerConfig.ValueString()
 	}
+	if !m.EtrackerWrapperPagename.IsNull() && !m.EtrackerWrapperPagename.IsUnknown() {
+		p["etrackerWrapperPagename"] = m.EtrackerWrapperPagename.ValueString()
+	}
+	if !m.EtrackerWrapperArea.IsNull() && !m.EtrackerWrapperArea.IsUnknown() {
+		p["etrackerWrapperArea"] = m.EtrackerWrapperArea.ValueString()
+	}
+	if !m.EtrackerWrapperTarget.IsNull() && !m.EtrackerWrapperTarget.IsUnknown() {
+		p["etrackerWrapperTarget"] = m.EtrackerWrapperTarget.ValueString()
+	}
+	if !m.EtrackerWrapperTval.IsNull() && !m.EtrackerWrapperTval.IsUnknown() {
+		p["etrackerWrapperTval"] = m.EtrackerWrapperTval.ValueString()
+	}
+	if !m.EtrackerWrapperTonr.IsNull() && !m.EtrackerWrapperTonr.IsUnknown() {
+		p["etrackerWrapperTonr"] = m.EtrackerWrapperTonr.ValueString()
+	}
+	if !m.EtrackerWrapperTsale.IsNull() && !m.EtrackerWrapperTsale.IsUnknown() {
+		p["etrackerWrapperTsale"] = m.EtrackerWrapperTsale.ValueString()
+	}
+	if !m.EtrackerWrapperCust.IsNull() && !m.EtrackerWrapperCust.IsUnknown() {
+		p["etrackerWrapperCust"] = m.EtrackerWrapperCust.ValueString()
+	}
+	if !m.EtrackerWrapperBasket.IsNull() && !m.EtrackerWrapperBasket.IsUnknown() {
+		p["etrackerWrapperBasket"] = m.EtrackerWrapperBasket.ValueString()
+	}
+	if !m.EtrackerEventCategory.IsNull() && !m.EtrackerEventCategory.IsUnknown() {
+		p["etrackerEventCategory"] = m.EtrackerEventCategory.ValueString()
+	}
+	if !m.EtrackerEventObject.IsNull() && !m.EtrackerEventObject.IsUnknown() {
+		p["etrackerEventObject"] = m.EtrackerEventObject.ValueString()
+	}
+	if !m.EtrackerEventAction.IsNull() && !m.EtrackerEventAction.IsUnknown() {
+		p["etrackerEventAction"] = m.EtrackerEventAction.ValueString()
+	}
+	if !m.EtrackerEventType.IsNull() && !m.EtrackerEventType.IsUnknown() {
+		p["etrackerEventType"] = m.EtrackerEventType.ValueString()
+	}
+	if !m.EtrackerTransactionType.IsNull() && !m.EtrackerTransactionType.IsUnknown() {
+		p["etrackerTransactionType"] = m.EtrackerTransactionType.ValueString()
+	}
+	if !m.EtrackerTransactionID.IsNull() && !m.EtrackerTransactionID.IsUnknown() {
+		p["etrackerTransactionID"] = m.EtrackerTransactionID.ValueString()
+	}
+	if !m.EtrackerTransactionValue.IsNull() && !m.EtrackerTransactionValue.IsUnknown() {
+		p["etrackerTransactionValue"] = m.EtrackerTransactionValue.ValueString()
+	}
+	if !m.EtrackerTransactionCurrency.IsNull() && !m.EtrackerTransactionCurrency.IsUnknown() {
+		p["etrackerTransactionCurrency"] = m.EtrackerTransactionCurrency.ValueString()
+	}
+	if !m.EtrackerTransactionBasket.IsNull() && !m.EtrackerTransactionBasket.IsUnknown() {
+		p["etrackerTransactionBasket"] = m.EtrackerTransactionBasket.ValueString()
+	}
+	if !m.EtrackerTransactionCustomerGroup.IsNull() && !m.EtrackerTransactionCustomerGroup.IsUnknown() {
+		p["etrackerTransactionCustomerGroup"] = m.EtrackerTransactionCustomerGroup.ValueString()
+	}
+	if !m.EtrackerTransactionDeliveryConditions.IsNull() && !m.EtrackerTransactionDeliveryConditions.IsUnknown() {
+		p["etrackerTransactionDeliveryConditions"] = m.EtrackerTransactionDeliveryConditions.ValueString()
+	}
+	if !m.EtrackerTransactionPaymentConditions.IsNull() && !m.EtrackerTransactionPaymentConditions.IsUnknown() {
+		p["etrackerTransactionPaymentConditions"] = m.EtrackerTransactionPaymentConditions.ValueString()
+	}
+	if !m.EtrackerTransactionDebugMode.IsNull() && !m.EtrackerTransactionDebugMode.IsUnknown() {
+		p["etrackerTransactionDebugMode"] = paramBoolString(m.EtrackerTransactionDebugMode.ValueBool())
+	}
+	if !m.EtrackerAddToCartProduct.IsNull() && !m.EtrackerAddToCartProduct.IsUnknown() {
+		p["etrackerAddToCartProduct"] = m.EtrackerAddToCartProduct.ValueString()
+	}
+	if !m.EtrackerAddToCartNumber.IsNull() && !m.EtrackerAddToCartNumber.IsUnknown() {
+		p["etrackerAddToCartNumber"] = m.EtrackerAddToCartNumber.ValueString()
+	}
+	if !m.EtrackerFormType.IsNull() && !m.EtrackerFormType.IsUnknown() {
+		p["etrackerFormType"] = m.EtrackerFormType.ValueString()
+	}
+	if !m.EtrackerFormName.IsNull() && !m.EtrackerFormName.IsUnknown() {
+		p["etrackerFormName"] = m.EtrackerFormName.ValueString()
+	}
+	if !m.EtrackerFormData.IsNull() && !m.EtrackerFormData.IsUnknown() {
+		p["etrackerFormData"] = m.EtrackerFormData.ValueString()
+	}
+	return p
 }
 
 func (m *tagEtrackerModel) FromParams(p map[string]string) {

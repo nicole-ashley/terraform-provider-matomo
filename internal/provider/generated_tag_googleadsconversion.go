@@ -84,14 +84,27 @@ func (m *tagGoogleadsconversionModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *tagGoogleadsconversionModel) ToParams() map[string]string {
-	return map[string]string{
-		"googleAdsConversionId":            m.GoogleAdsConversionId.ValueString(),
-		"googleAdsConversionLabel":         m.GoogleAdsConversionLabel.ValueString(),
-		"googleAdsConversionValue":         m.GoogleAdsConversionValue.ValueString(),
-		"googleAdsConversionTransactionId": m.GoogleAdsConversionTransactionId.ValueString(),
-		"googleAdsConversionCurrency":      m.GoogleAdsConversionCurrency.ValueString(),
+	p := map[string]string{}
+	p["googleAdsConversionId"] = m.GoogleAdsConversionId.ValueString()
+	p["googleAdsConversionLabel"] = m.GoogleAdsConversionLabel.ValueString()
+	if !m.GoogleAdsConversionValue.IsNull() && !m.GoogleAdsConversionValue.IsUnknown() {
+		p["googleAdsConversionValue"] = m.GoogleAdsConversionValue.ValueString()
 	}
+	if !m.GoogleAdsConversionTransactionId.IsNull() && !m.GoogleAdsConversionTransactionId.IsUnknown() {
+		p["googleAdsConversionTransactionId"] = m.GoogleAdsConversionTransactionId.ValueString()
+	}
+	if !m.GoogleAdsConversionCurrency.IsNull() && !m.GoogleAdsConversionCurrency.IsUnknown() {
+		p["googleAdsConversionCurrency"] = m.GoogleAdsConversionCurrency.ValueString()
+	}
+	return p
 }
 
 func (m *tagGoogleadsconversionModel) FromParams(p map[string]string) {

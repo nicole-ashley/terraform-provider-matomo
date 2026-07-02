@@ -73,12 +73,23 @@ func (m *tagHoneybadgerModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *tagHoneybadgerModel) ToParams() map[string]string {
-	return map[string]string{
-		"honeybadgerApiKey":      m.HoneybadgerApiKey.ValueString(),
-		"honeybadgerEnvironment": m.HoneybadgerEnvironment.ValueString(),
-		"honeybadgerRevision":    m.HoneybadgerRevision.ValueString(),
+	p := map[string]string{}
+	p["honeybadgerApiKey"] = m.HoneybadgerApiKey.ValueString()
+	if !m.HoneybadgerEnvironment.IsNull() && !m.HoneybadgerEnvironment.IsUnknown() {
+		p["honeybadgerEnvironment"] = m.HoneybadgerEnvironment.ValueString()
 	}
+	if !m.HoneybadgerRevision.IsNull() && !m.HoneybadgerRevision.IsUnknown() {
+		p["honeybadgerRevision"] = m.HoneybadgerRevision.ValueString()
+	}
+	return p
 }
 
 func (m *tagHoneybadgerModel) FromParams(p map[string]string) {

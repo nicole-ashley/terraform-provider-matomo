@@ -48,10 +48,17 @@ func (m *variableDatalayerModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *variableDatalayerModel) ToParams() map[string]string {
-	return map[string]string{
-		"dataLayerName": m.DataLayerName.ValueString(),
-	}
+	p := map[string]string{}
+	p["dataLayerName"] = m.DataLayerName.ValueString()
+	return p
 }
 
 func (m *variableDatalayerModel) FromParams(p map[string]string) {

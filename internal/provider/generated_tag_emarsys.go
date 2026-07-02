@@ -85,14 +85,29 @@ func (m *tagEmarsysModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *tagEmarsysModel) ToParams() map[string]string {
-	return map[string]string{
-		"merchantId":      m.MerchantId.ValueString(),
-		"commandCategory": m.CommandCategory.ValueString(),
-		"commandView":     m.CommandView.ValueString(),
-		"commandTag":      m.CommandTag.ValueString(),
-		"commandGo":       paramBoolString(m.CommandGo.ValueBool()),
+	p := map[string]string{}
+	p["merchantId"] = m.MerchantId.ValueString()
+	if !m.CommandCategory.IsNull() && !m.CommandCategory.IsUnknown() {
+		p["commandCategory"] = m.CommandCategory.ValueString()
 	}
+	if !m.CommandView.IsNull() && !m.CommandView.IsUnknown() {
+		p["commandView"] = m.CommandView.ValueString()
+	}
+	if !m.CommandTag.IsNull() && !m.CommandTag.IsUnknown() {
+		p["commandTag"] = m.CommandTag.ValueString()
+	}
+	if !m.CommandGo.IsNull() && !m.CommandGo.IsUnknown() {
+		p["commandGo"] = paramBoolString(m.CommandGo.ValueBool())
+	}
+	return p
 }
 
 func (m *tagEmarsysModel) FromParams(p map[string]string) {

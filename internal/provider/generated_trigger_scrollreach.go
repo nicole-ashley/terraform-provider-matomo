@@ -60,12 +60,23 @@ func (m *triggerScrollreachModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *triggerScrollreachModel) ToParams() map[string]string {
-	return map[string]string{
-		"scrollType": m.ScrollType.ValueString(),
-		"pixels":     paramInt64String(m.Pixels.ValueInt64()),
-		"percentage": paramInt64String(m.Percentage.ValueInt64()),
+	p := map[string]string{}
+	p["scrollType"] = m.ScrollType.ValueString()
+	if !m.Pixels.IsNull() && !m.Pixels.IsUnknown() {
+		p["pixels"] = paramInt64String(m.Pixels.ValueInt64())
 	}
+	if !m.Percentage.IsNull() && !m.Percentage.IsUnknown() {
+		p["percentage"] = paramInt64String(m.Percentage.ValueInt64())
+	}
+	return p
 }
 
 func (m *triggerScrollreachModel) FromParams(p map[string]string) {

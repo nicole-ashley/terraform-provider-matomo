@@ -69,13 +69,26 @@ func (m *variableDomelementModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *variableDomelementModel) ToParams() map[string]string {
-	return map[string]string{
-		"selectionMethod": m.SelectionMethod.ValueString(),
-		"cssSelector":     m.CssSelector.ValueString(),
-		"elementId":       m.ElementId.ValueString(),
-		"attributeName":   m.AttributeName.ValueString(),
+	p := map[string]string{}
+	p["selectionMethod"] = m.SelectionMethod.ValueString()
+	if !m.CssSelector.IsNull() && !m.CssSelector.IsUnknown() {
+		p["cssSelector"] = m.CssSelector.ValueString()
 	}
+	if !m.ElementId.IsNull() && !m.ElementId.IsUnknown() {
+		p["elementId"] = m.ElementId.ValueString()
+	}
+	if !m.AttributeName.IsNull() && !m.AttributeName.IsUnknown() {
+		p["attributeName"] = m.AttributeName.ValueString()
+	}
+	return p
 }
 
 func (m *variableDomelementModel) FromParams(p map[string]string) {

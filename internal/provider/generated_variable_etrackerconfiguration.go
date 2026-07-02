@@ -115,21 +115,50 @@ func (m *variableEtrackerconfigurationModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *variableEtrackerconfigurationModel) ToParams() map[string]string {
-	return map[string]string{
-		"etrackerID":           m.EtrackerID.ValueString(),
-		"etrackerBlockCookies": paramBoolString(m.EtrackerBlockCookies.ValueBool()),
-		"etrackerDNT":          paramBoolString(m.EtrackerDNT.ValueBool()),
-		"et_pagename":          m.Et_pagename.ValueString(),
-		"et_areas":             m.Et_areas.ValueString(),
-		"et_target":            m.Et_target.ValueString(),
-		"et_tval":              m.Et_tval.ValueString(),
-		"et_tonr":              m.Et_tonr.ValueString(),
-		"et_tsale":             m.Et_tsale.ValueString(),
-		"et_basket":            m.Et_basket.ValueString(),
-		"et_cust":              m.Et_cust.ValueString(),
-		"customDimensions":     paramListString(m.CustomDimensions),
+	p := map[string]string{}
+	p["etrackerID"] = m.EtrackerID.ValueString()
+	if !m.EtrackerBlockCookies.IsNull() && !m.EtrackerBlockCookies.IsUnknown() {
+		p["etrackerBlockCookies"] = paramBoolString(m.EtrackerBlockCookies.ValueBool())
 	}
+	if !m.EtrackerDNT.IsNull() && !m.EtrackerDNT.IsUnknown() {
+		p["etrackerDNT"] = paramBoolString(m.EtrackerDNT.ValueBool())
+	}
+	if !m.Et_pagename.IsNull() && !m.Et_pagename.IsUnknown() {
+		p["et_pagename"] = m.Et_pagename.ValueString()
+	}
+	if !m.Et_areas.IsNull() && !m.Et_areas.IsUnknown() {
+		p["et_areas"] = m.Et_areas.ValueString()
+	}
+	if !m.Et_target.IsNull() && !m.Et_target.IsUnknown() {
+		p["et_target"] = m.Et_target.ValueString()
+	}
+	if !m.Et_tval.IsNull() && !m.Et_tval.IsUnknown() {
+		p["et_tval"] = m.Et_tval.ValueString()
+	}
+	if !m.Et_tonr.IsNull() && !m.Et_tonr.IsUnknown() {
+		p["et_tonr"] = m.Et_tonr.ValueString()
+	}
+	if !m.Et_tsale.IsNull() && !m.Et_tsale.IsUnknown() {
+		p["et_tsale"] = m.Et_tsale.ValueString()
+	}
+	if !m.Et_basket.IsNull() && !m.Et_basket.IsUnknown() {
+		p["et_basket"] = m.Et_basket.ValueString()
+	}
+	if !m.Et_cust.IsNull() && !m.Et_cust.IsUnknown() {
+		p["et_cust"] = m.Et_cust.ValueString()
+	}
+	if m.CustomDimensions != nil {
+		p["customDimensions"] = paramListString(m.CustomDimensions)
+	}
+	return p
 }
 
 func (m *variableEtrackerconfigurationModel) FromParams(p map[string]string) {

@@ -49,10 +49,19 @@ func (m *variableUrlparameterModel) Meta() typedMeta {
 	}
 }
 
+// ToParams only includes a key for an Optional parameter when it's
+// actually set - sending an empty string for an unset Optional field
+// (rather than omitting the key) was rejected by Matomo's own validation
+// on live enum/format-constrained parameters (confirmed against a real
+// acceptance-test run: an unset htmlPosition sent as "" was rejected by
+// CustomHtml's own field validator, which never happens for a key that's
+// simply absent from the parameters map).
 func (m *variableUrlparameterModel) ToParams() map[string]string {
-	return map[string]string{
-		"parameterName": m.ParameterName.ValueString(),
+	p := map[string]string{}
+	if !m.ParameterName.IsNull() && !m.ParameterName.IsUnknown() {
+		p["parameterName"] = m.ParameterName.ValueString()
 	}
+	return p
 }
 
 func (m *variableUrlparameterModel) FromParams(p map[string]string) {
