@@ -57,21 +57,25 @@ type templateData struct {
 	// (see renderCondition) that references the internal/matomo package.
 	NeedsMatomoImport bool
 	// NeedsBoolPlanModifierImport/NeedsInt64PlanModifierImport/
-	// NeedsFloat64PlanModifierImport/NeedsListPlanModifierImport are true
-	// when at least one non-Required parameter of that Go type exists -
-	// every non-Required attribute is marked Optional+Computed with a
-	// UseStateForUnknown plan modifier (see the Params loop in
+	// NeedsFloat64PlanModifierImport are true when at least one
+	// non-Required parameter of that Go type exists - every non-Required
+	// String/Bool/Int64/Float64 attribute is marked Optional+Computed
+	// with a UseStateForUnknown plan modifier (see the Params loop in
 	// schema.go.tmpl) so that a value Matomo defaults server-side (e.g.
 	// Cookie's urlDecode coming back as false even though it was never
 	// sent) doesn't leave Terraform reporting a perpetual "refresh plan
 	// not empty" diff against the null a bare unset config produces -
 	// confirmed as the single largest remaining acceptance-test failure
 	// category in a live CI run, the same pattern the hand-written
-	// "status" tag attribute already used for exactly this reason.
+	// "status" tag attribute already used for exactly this reason. List
+	// is deliberately excluded (see block_trigger_ids' comment in
+	// schema.go.tmpl): its generated Go field type, []types.String,
+	// can't represent an unknown list at all, so Computed there produces
+	// an outright decode failure rather than a diff - confirmed against
+	// a real acceptance-test run.
 	NeedsBoolPlanModifierImport    bool
 	NeedsInt64PlanModifierImport   bool
 	NeedsFloat64PlanModifierImport bool
-	NeedsListPlanModifierImport    bool
 }
 
 func newTemplateData(spec TypeSpec) templateData {
@@ -86,10 +90,6 @@ func newTemplateData(spec TypeSpec) templateData {
 			}
 		}
 	}
-	// block_trigger_ids (every tag type's hand-templated common attribute,
-	// see the Kind=="tag" block in schema.go.tmpl) always needs
-	// listplanmodifier too.
-	needsListPM := spec.Kind == "tag"
 	var needsBoolPM, needsInt64PM, needsFloat64PM bool
 	for _, p := range spec.Params {
 		if p.ConditionallyRequired {
@@ -103,8 +103,6 @@ func newTemplateData(spec TypeSpec) templateData {
 				needsInt64PM = true
 			case "Float64":
 				needsFloat64PM = true
-			case "List":
-				needsListPM = true
 			}
 		}
 	}
@@ -122,7 +120,6 @@ func newTemplateData(spec TypeSpec) templateData {
 		NeedsBoolPlanModifierImport:    needsBoolPM,
 		NeedsInt64PlanModifierImport:   needsInt64PM,
 		NeedsFloat64PlanModifierImport: needsFloat64PM,
-		NeedsListPlanModifierImport:    needsListPM,
 	}
 }
 

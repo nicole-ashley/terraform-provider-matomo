@@ -114,12 +114,16 @@ func TestRenderSchema_conditionallyRequired(t *testing.T) {
 
 // TestRenderSchema_optionalFieldsAreComputed exercises every Go type's
 // Optional-field code path (String/Bool/Int64/Float64/List) to prove each
-// renders a compiling Computed + UseStateForUnknown attribute (with the
-// matching plan modifier import) - the fix for a live-acceptance-test
-// failure where a Matomo-defaulted value for an unset Optional field
-// (e.g. a boolean parameter coming back false rather than absent) caused
-// a perpetual "refresh plan not empty" diff against a bare Optional
-// attribute.
+// renders valid, compiling Go: String/Bool/Int64/Float64 get a Computed +
+// UseStateForUnknown attribute (with the matching plan modifier import) -
+// the fix for a live-acceptance-test failure where a Matomo-defaulted
+// value for an unset Optional field (e.g. a boolean parameter coming
+// back false rather than absent) caused a perpetual "refresh plan not
+// empty" diff against a bare Optional attribute. List is deliberately
+// NOT made Computed - its generated Go field type ([]types.String) can't
+// represent an unknown list, and a live acceptance-test run confirmed
+// that combination fails outright ("Value Conversion Error ... Received
+// unknown value").
 func TestRenderSchema_optionalFieldsAreComputed(t *testing.T) {
 	spec := TypeSpec{
 		Kind:         "trigger",
@@ -151,15 +155,22 @@ func TestRenderSchema_optionalFieldsAreComputed(t *testing.T) {
 		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"`,
 		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"`,
 		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"`,
-		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"`,
 		`PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}`,
 		`PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}`,
 		`PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}`,
 		`PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()}`,
-		`PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("generated source missing %q; full source:\n%s", want, got)
 		}
+	}
+	if strings.Contains(got, "listplanmodifier") {
+		t.Errorf("generated source references listplanmodifier, want none (List params are not Computed): full source:\n%s", got)
+	}
+	// The "l" field itself must still be Optional (not Computed) - only
+	// check its own attribute block, not "L []types.String" the struct
+	// field declaration.
+	if regexp.MustCompile(`"l":\s*schema\.ListAttribute\{[^}]*Computed`).MatchString(got) {
+		t.Errorf("generated source marks the List param \"l\" Computed, want Optional only: full source:\n%s", got)
 	}
 }

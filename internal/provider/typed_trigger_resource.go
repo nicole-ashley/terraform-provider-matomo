@@ -94,7 +94,24 @@ func (r *typedTriggerResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	// Read the trigger back rather than assembling state by hand: every
+	// generated model's Optional parameter is now Optional+Computed (see
+	// tools/gen/emit.go's NeedsBoolPlanModifierImport doc comment), so
+	// terraform-plugin-framework requires Create to resolve them all the
+	// way to known values before Set - state.Set refuses to persist an
+	// Unknown value, which is exactly what an unset Optional+Computed
+	// field still holds straight out of req.Plan.Get.
+	trig, err := r.client.GetContainerTrigger(ctx, siteID, idContainer, versionID, idTrigger)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading back created Matomo Tag Manager trigger", err.Error())
+		return
+	}
+
 	common.ID = types.StringValue(buildEntityID(siteID, idContainer, idTrigger))
+	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
+	common.Name = types.StringValue(trig.Name)
+
+	model.FromParams(trig.Parameters)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 

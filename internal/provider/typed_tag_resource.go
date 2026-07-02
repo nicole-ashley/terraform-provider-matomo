@@ -121,8 +121,29 @@ func (r *typedTagResource) Create(ctx context.Context, req resource.CreateReques
 		}
 	}
 
+	// Read the tag back rather than assembling state by hand: every
+	// Optional parameter (both the common fields here and each
+	// generated model's own type-specific ones, via FromParams) is now
+	// Optional+Computed (see tools/gen/emit.go's
+	// NeedsBoolPlanModifierImport doc comment), so terraform-plugin-
+	// framework requires Create to resolve them all the way to known
+	// values before Set - state.Set refuses to persist an Unknown
+	// value, which is exactly what an unset Optional+Computed field
+	// still holds straight out of req.Plan.Get.
+	tag, err := r.client.GetContainerTag(ctx, siteID, idContainer, versionID, idTag)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading back created Matomo Tag Manager tag", err.Error())
+		return
+	}
+
 	common.ID = types.StringValue(buildEntityID(siteID, idContainer, idTag))
-	common.Status = types.StringValue(status)
+	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
+	common.Name = types.StringValue(tag.Name)
+	common.Status = types.StringValue(tag.Status)
+	common.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.FireTriggerIDs)))
+	common.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
+
+	model.FromParams(tag.Parameters)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 
