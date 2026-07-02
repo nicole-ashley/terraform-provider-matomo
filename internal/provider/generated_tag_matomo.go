@@ -313,6 +313,9 @@ func tagMatomoSchema() schema.Schema {
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "The event's action, for example Play, Pause, Duration, Add Playlist, Downloaded, Clicked…",
+				Validators: []validator.String{
+					conditionRequiredValidator{Condition: matomo.EqNode{Field: "tracking_type", Value: "event", Negate: false}},
+				},
 			},
 			"event_name": schema.StringAttribute{
 				Required: false,

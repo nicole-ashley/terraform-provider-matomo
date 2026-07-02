@@ -35,24 +35,8 @@ func variableUrlparameterSchema() schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"parameter_name": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				// Computed + UseStateForUnknown: Matomo can return a
-				// non-empty default for this field even when it was never
-				// sent (e.g. a boolean parameter defaulting to false
-				// server-side), which a bare Optional attribute can't
-				// reconcile against an unset (null) config without
-				// reporting a spurious diff on every subsequent plan - see
-				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go. Skipped for List: the generated Go
-				// field type is a bare []types.String, which can't
-				// represent "the whole list is unknown" the way
-				// Computed's plan semantics require (see
-				// block_trigger_ids' comment above for the same
-				// limitation and the confirmed failure it caused).
-				Computed:      true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-				Description:   "For example when your page has URL parameters such as \"?lang=NZ\" and you want to get the value \"NZ\", then you need to enter \"lang\".",
+				Required:    true,
+				Description: "For example when your page has URL parameters such as \"?lang=NZ\" and you want to get the value \"NZ\", then you need to enter \"lang\".",
 			},
 		},
 	}
@@ -75,9 +59,7 @@ func (m *variableUrlparameterModel) Meta() typedMeta {
 // simply absent from the parameters map).
 func (m *variableUrlparameterModel) ToParams() map[string]string {
 	p := map[string]string{}
-	if !m.ParameterName.IsNull() && !m.ParameterName.IsUnknown() {
-		p["parameterName"] = m.ParameterName.ValueString()
-	}
+	p["parameterName"] = m.ParameterName.ValueString()
 	return p
 }
 
@@ -90,11 +72,7 @@ func (m *variableUrlparameterModel) ToParams() map[string]string {
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
 func (m *variableUrlparameterModel) FromParams(p map[string]string) {
-	if v, ok := p["parameterName"]; ok {
-		m.ParameterName = types.StringValue(v)
-	} else {
-		m.ParameterName = types.StringNull()
-	}
+	m.ParameterName = types.StringValue(p["parameterName"])
 }
 
 func (m *variableUrlparameterModel) Common() *typedVariableCommon {
