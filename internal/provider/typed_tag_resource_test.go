@@ -10,6 +10,7 @@ import (
 )
 
 type fakeTagModel struct {
+	typedTagCommon
 	Value types.String `tfsdk:"value"`
 }
 
@@ -29,9 +30,10 @@ func (m *fakeTagModel) ToParams() map[string]string {
 	return map[string]string{"value": m.Value.ValueString()}
 }
 func (m *fakeTagModel) FromParams(p map[string]string) { m.Value = types.StringValue(p["value"]) }
+func (m *fakeTagModel) Common() *typedTagCommon        { return &m.typedTagCommon }
 
 func TestTypedTagResource_metadataAndSchemaDispatchToModel(t *testing.T) {
-	r := newTypedTagResource(func() typedModel { return &fakeTagModel{} }).(*typedTagResource)
+	r := newTypedTagResource(func() typedTagModel { return &fakeTagModel{} }).(*typedTagResource)
 
 	var metaResp resource.MetadataResponse
 	r.Metadata(context.Background(), resource.MetadataRequest{}, &metaResp)
@@ -46,4 +48,4 @@ func TestTypedTagResource_metadataAndSchemaDispatchToModel(t *testing.T) {
 	}
 }
 
-var _ typedModel = &fakeTagModel{}
+var _ typedTagModel = &fakeTagModel{}

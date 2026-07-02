@@ -12,7 +12,8 @@ import (
 )
 
 // typedVariableCommon holds the fields every generated variable model
-// declares identically (see tools/gen/templates/schema.go.tmpl).
+// embeds (anonymously) identically (see
+// tools/gen/templates/schema.go.tmpl).
 type typedVariableCommon struct {
 	ID           types.String `tfsdk:"id"`
 	ContainerID  types.String `tfsdk:"container_id"`
@@ -31,10 +32,10 @@ var (
 // a fresh, zero-valued instance of that type's generated model.
 type typedVariableResource struct {
 	client   *matomo.Client
-	newModel func() typedModel
+	newModel func() typedVariableModel
 }
 
-func newTypedVariableResource(newModel func() typedModel) resource.Resource {
+func newTypedVariableResource(newModel func() typedVariableModel) resource.Resource {
 	return &typedVariableResource{newModel: newModel}
 }
 
@@ -69,11 +70,7 @@ func (r *typedVariableResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var common typedVariableCommon
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	common := model.Common()
 
 	siteID, idContainer, err := parseContainerID(common.ContainerID.ValueString())
 	if err != nil {
@@ -105,19 +102,16 @@ func (r *typedVariableResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	common.ID = types.StringValue(buildEntityID(siteID, idContainer, idVariable))
-	resp.Diagnostics.Append(resp.State.Set(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 
 func (r *typedVariableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var common typedVariableCommon
-	resp.Diagnostics.Append(req.State.Get(ctx, &common)...)
+	model := r.newModel()
+	resp.Diagnostics.Append(req.State.Get(ctx, model)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	common := model.Common()
 
 	siteID, idContainer, idVariable, err := parseEntityID(common.ID.ValueString())
 	if err != nil {
@@ -148,12 +142,7 @@ func (r *typedVariableResource) Read(ctx context.Context, req resource.ReadReque
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(v.Name)
 	common.DefaultValue = types.StringValue(v.DefaultValue)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
-	model := r.newModel()
 	model.FromParams(v.Parameters)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
@@ -164,11 +153,7 @@ func (r *typedVariableResource) Update(ctx context.Context, req resource.UpdateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var common typedVariableCommon
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	common := model.Common()
 
 	siteID, idContainer, idVariable, err := parseEntityID(common.ID.ValueString())
 	if err != nil {
@@ -198,19 +183,16 @@ func (r *typedVariableResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 
 func (r *typedVariableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var common typedVariableCommon
-	resp.Diagnostics.Append(req.State.Get(ctx, &common)...)
+	model := r.newModel()
+	resp.Diagnostics.Append(req.State.Get(ctx, model)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	common := model.Common()
 
 	siteID, idContainer, idVariable, err := parseEntityID(common.ID.ValueString())
 	if err != nil {

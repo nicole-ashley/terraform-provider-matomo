@@ -19,15 +19,46 @@ type typedMeta struct {
 
 // typedModel is satisfied by every generated model type (Task 7's
 // emitter output). ToParams/FromParams only handle a type's
-// Matomo-specific parameters - the common fields shared by every tag (or
-// trigger, or variable) are declared identically by every generated
-// model (same tfsdk tags, same order) and are read directly by the
-// shared runtime via req.Plan.Get/resp.State.Set against that common
-// schema shape, not through this interface.
+// Matomo-specific parameters.
 type typedModel interface {
 	Meta() typedMeta
 	ToParams() map[string]string
 	FromParams(params map[string]string)
+}
+
+// typedTagModel/typedTriggerModel/typedVariableModel are satisfied by
+// every generated model of that kind. Each generated model struct
+// anonymously embeds the matching typed{Tag,Trigger,Variable}Common
+// struct (see tools/gen/templates/schema.go.tmpl), so a single
+// req.Plan.Get(ctx, model)/resp.State.Set(ctx, model) call decodes or
+// encodes both the common fields and the type-specific ones together in
+// one pass - terraform-plugin-framework's reflection walks promoted
+// fields from embedded structs as if they were declared directly on the
+// outer struct. Common() returns a pointer into that same embedded
+// struct, so mutations the shared CRUD runtime makes (setting a new id
+// after create, a value read back from Matomo, etc.) are mutations of
+// the model itself, not a separate copy.
+//
+// This replaced an earlier design (a second, disjoint Get/Set call
+// against a bare typed*Common struct) that failed at the first real live
+// Matomo run: terraform-plugin-framework's Get() requires the
+// destination struct to have a field for every attribute in the
+// schema it's being decoded against, so decoding a full tag/trigger/
+// variable object into just its common subset always errored with a
+// "mismatch between struct and object" diagnostic.
+type typedTagModel interface {
+	typedModel
+	Common() *typedTagCommon
+}
+
+type typedTriggerModel interface {
+	typedModel
+	Common() *typedTriggerCommon
+}
+
+type typedVariableModel interface {
+	typedModel
+	Common() *typedVariableCommon
 }
 
 // Matomo's Tag Manager "parameters" wire field is always a flat

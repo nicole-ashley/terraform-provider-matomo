@@ -15,17 +15,7 @@ import (
 )
 
 type {{.GoModelName}} struct {
-	ID              types.String   `tfsdk:"id"`
-	ContainerID     types.String   `tfsdk:"container_id"`
-	Name            types.String   `tfsdk:"name"`
-{{- if eq .Kind "tag"}}
-	Status          types.String   `tfsdk:"status"`
-	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
-{{- end}}
-{{- if eq .Kind "variable"}}
-	DefaultValue    types.String   `tfsdk:"default_value"`
-{{- end}}
+	{{.CommonTypeName}}
 {{- range .Params}}
 {{- if eq .GoType "List"}}
 	{{.GoFieldName}} []types.String `tfsdk:"{{.TFName}}"`
@@ -134,6 +124,10 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p map[string]string) {
 {{- end}}
 }
 
-func new{{.GoTypeName}}Model() typedModel {
+func ({{.GoModelReceiver}} *{{.GoModelName}}) Common() *{{.CommonTypeName}} {
+	return &{{.GoModelReceiver}}.{{.CommonTypeName}}
+}
+
+func new{{.GoTypeName}}Model() {{.ModelInterfaceName}} {
 	return &{{.GoModelName}}{}
 }

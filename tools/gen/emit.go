@@ -28,6 +28,19 @@ type templateData struct {
 	// caught the hard way against real discovered types with no
 	// AvailableValues params (e.g. PageView, DomReady).
 	NeedsValidatorImports bool
+	// CommonTypeName is the name of the hand-written typed{Tag,Trigger,
+	// Variable}Common struct (internal/provider/typed_{tag,trigger,
+	// variable}_resource.go) this kind's generated model anonymously
+	// embeds, so a single req.Plan.Get/resp.State.Set call decodes or
+	// encodes both the common fields and the type-specific ones together
+	// (terraform-plugin-framework's reflection walks promoted fields from
+	// embedded structs as if declared directly on the outer struct).
+	CommonTypeName string
+	// ModelInterfaceName is the per-kind interface (typedTagModel/
+	// typedTriggerModel/typedVariableModel, internal/provider/
+	// typed_model.go) the generated model's constructor returns, so the
+	// shared runtime can call Common() without a type assertion.
+	ModelInterfaceName string
 }
 
 func newTemplateData(spec TypeSpec) templateData {
@@ -48,6 +61,8 @@ func newTemplateData(spec TypeSpec) templateData {
 		GoTypeName:            typeName,
 		GoModelReceiver:       "m",
 		NeedsValidatorImports: needsValidatorImports,
+		CommonTypeName:        "typed" + ExportedName(spec.Kind) + "Common",
+		ModelInterfaceName:    "typed" + ExportedName(spec.Kind) + "Model",
 	}
 }
 

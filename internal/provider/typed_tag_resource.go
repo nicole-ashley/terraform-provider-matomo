@@ -11,13 +11,10 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
-// typedTagCommon holds the fields every generated tag model declares
-// identically (see tools/gen/templates/schema.go.tmpl). Reading/writing
-// through this shape (via req.Plan.Get / resp.State.Set, which populate
-// only the fields present in both the config's object type and this
-// struct's tfsdk tags) lets the shared runtime handle common fields
-// without per-type reflection, while each model's own ToParams/FromParams
-// handles the type-specific remainder.
+// typedTagCommon holds the fields every generated tag model embeds
+// (anonymously) identically (see tools/gen/templates/schema.go.tmpl).
+// Each model's own ToParams/FromParams handles the type-specific
+// remainder.
 type typedTagCommon struct {
 	ID              types.String   `tfsdk:"id"`
 	ContainerID     types.String   `tfsdk:"container_id"`
@@ -38,10 +35,10 @@ var (
 // fresh, zero-valued instance of that type's generated model.
 type typedTagResource struct {
 	client   *matomo.Client
-	newModel func() typedModel
+	newModel func() typedTagModel
 }
 
-func newTypedTagResource(newModel func() typedModel) resource.Resource {
+func newTypedTagResource(newModel func() typedTagModel) resource.Resource {
 	return &typedTagResource{newModel: newModel}
 }
 
@@ -76,11 +73,7 @@ func (r *typedTagResource) Create(ctx context.Context, req resource.CreateReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var common typedTagCommon
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	common := model.Common()
 
 	siteID, idContainer, err := parseContainerID(common.ContainerID.ValueString())
 	if err != nil {
@@ -130,19 +123,16 @@ func (r *typedTagResource) Create(ctx context.Context, req resource.CreateReques
 
 	common.ID = types.StringValue(buildEntityID(siteID, idContainer, idTag))
 	common.Status = types.StringValue(status)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 
 func (r *typedTagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var common typedTagCommon
-	resp.Diagnostics.Append(req.State.Get(ctx, &common)...)
+	model := r.newModel()
+	resp.Diagnostics.Append(req.State.Get(ctx, model)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	common := model.Common()
 
 	siteID, idContainer, idTag, err := parseEntityID(common.ID.ValueString())
 	if err != nil {
@@ -171,12 +161,7 @@ func (r *typedTagResource) Read(ctx context.Context, req resource.ReadRequest, r
 	common.Status = types.StringValue(tag.Status)
 	common.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.FireTriggerIDs)))
 	common.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
-	resp.Diagnostics.Append(resp.State.Set(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
-	model := r.newModel()
 	model.FromParams(tag.Parameters)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
@@ -187,11 +172,7 @@ func (r *typedTagResource) Update(ctx context.Context, req resource.UpdateReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var common typedTagCommon
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	common := model.Common()
 
 	siteID, idContainer, idTag, err := parseEntityID(common.ID.ValueString())
 	if err != nil {
@@ -242,19 +223,16 @@ func (r *typedTagResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	common.Status = types.StringValue(status)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &common)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 
 func (r *typedTagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var common typedTagCommon
-	resp.Diagnostics.Append(req.State.Get(ctx, &common)...)
+	model := r.newModel()
+	resp.Diagnostics.Append(req.State.Get(ctx, model)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	common := model.Common()
 
 	siteID, idContainer, idTag, err := parseEntityID(common.ID.ValueString())
 	if err != nil {
