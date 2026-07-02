@@ -15,13 +15,88 @@ import "fmt"
 // RequiredParams fails loudly for any (kind, typeID) with no entry here,
 // specifically so a newly-discovered type can never silently ship with
 // every parameter marked Optional by omission.
+// Populated against matomo-org/tag-manager @ 5.x-dev. Conditionally-required
+// fields (required only when a sibling field has a particular value, e.g.
+// EtrackerTag's etrackerConfig when trackingType is "pageview"/"wrapper", or
+// MatomoTag's idGoal/eventCategory/eventAction when trackingType is
+// "goal"/"event") are deliberately left out of this table - conditional
+// relationships are expressed separately via each parameter's Matomo
+// `condition` string, parsed by tools/gen/condition.go into
+// ConflictsWith/AlsoRequires/Eq validators (see tools/gen/spec.go,
+// internal/provider/condition_validators.go). This table only records
+// unconditional requiredness (an unconditional `$field->validators[] = new
+// NotEmpty()`).
 var requiredParams = map[string]map[string][]string{
 	"tag": {
-		"CustomHtml": {"customHtml"},
+		"AddThis":                  {"AddThisPubId"},
+		"Axeptio":                  {"projectId"},
+		"BingUET":                  {"bingAdID"},
+		"Bugsnag":                  {"apiKey"},
+		"Cookiebot":                {"cookiebotId"},
+		"CookieYes":                {"cookieYesWebsiteKey"},
+		"CustomHtml":               {"customHtml"},
+		"CustomImage":              {"customImageSrc"},
+		"Drift":                    {"driftId"},
+		"Emarsys":                  {"merchantId"},
+		"Etracker":                 {"trackingType"},
+		"FacebookPixel":            {"pixelId"},
+		"GoogleAdsConversion":      {"googleAdsConversionId", "googleAdsConversionLabel"},
+		"GoogleAnalytics4":         {"measurementId"},
+		"GoogleAnalytics4Event":    {"eventName"},
+		"GoogleAnalyticsUniversal": {"propertyId", "trackingType"},
+		"GoogleConsentModeV2":      {"consentAction"},
+		"GoogleTag":                {"googleTagId"},
+		"Honeybadger":              {"honeybadgerApiKey"},
+		"Hotjar":                   {"hjid", "hjsv"},
+		"LinkedinInsight":          {"partnerId"},
+		"LivezillaDynamic":         {"LivezillaDynamicID", "LivezillaDynamicDomain"},
+		"Matomo":                   {"matomoConfig", "trackingType"},
+		"OneTrust":                 {"domain"},
+		"PingdomRUM":               {"pingdomROMId"},
+		"Raygun":                   {"raygunApiKey"},
+		"SentryRaven":              {"sentryDSN"},
+		"Shareaholic":              {"shareaholicSiteId"},
+		"TawkTo":                   {"tawkToId", "tawkToWidgetId"},
+		"ThemeColor":               {"themeColor"},
+		"VisualWebsiteOptimizer":   {"accountId"},
+		"ZendeskChat":              {"zendeskChatId"},
 	},
-	"trigger": {},
+	"trigger": {
+		"AllDownloadsClick": {"downloadExtensions"},
+		"AllElementsClick":  {},
+		"AllLinksClick":     {},
+		"CustomEvent":       {"eventName"},
+		"DomReady":          {},
+		"ElementVisibility": {"selectionMethod", "fireTriggerWhen"},
+		"FormSubmit":        {},
+		"Fullscreen":        {"triggerAction"},
+		"HistoryChange":     {},
+		"JavaScriptError":   {},
+		"PageView":          {},
+		"ScrollReach":       {"scrollType"},
+		"Timer":             {"triggerInterval"},
+		"UserInteraction":   {},
+		"WindowLeave":       {},
+		"WindowLoaded":      {},
+		"WindowUnload":      {},
+	},
 	"variable": {
-		"Constant": {"value"},
+		"ClickDataAttribute":      {"dataAttribute"},
+		"ClickHtmlAttribute":      {"htmlAttribute"},
+		"Constant":                {"constantValue"},
+		"Cookie":                  {"cookieName"},
+		"CustomJsFunction":        {"jsFunction"},
+		"CustomRequestProcessing": {"jsFunction"},
+		"DataLayer":               {"dataLayerName"},
+		"DomElement":              {"selectionMethod"},
+		"EtrackerConfiguration":   {"etrackerID"},
+		"JavaScript":              {"variableName"},
+		"MatomoConfiguration":     {"matomoUrl", "idSite"},
+		"MetaContent":             {"metaName"},
+		"ReferrerUrl":             {"urlPart"},
+		"TimeSinceLoad":           {"unit"},
+		"UrlParameter":            {},
+		"Url":                     {"urlPart"},
 	},
 }
 
