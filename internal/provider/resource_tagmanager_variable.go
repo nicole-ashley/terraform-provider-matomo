@@ -162,13 +162,10 @@ func (r *tagManagerVariableResource) Read(ctx context.Context, req resource.Read
 
 	v, err := r.client.GetContainerVariable(ctx, siteID, idContainer, versionID, idVariable)
 	if err != nil {
-		// NOTE: "Variable does not exist" is the exact error string this
-		// provider assumes TagManager.getContainerVariable returns for an
-		// unknown variable, but it has never been verified against a live
-		// Matomo instance. If the real wire format differs, a variable
-		// deleted out of band will surface as a hard error here instead of
-		// being silently removed from state. Verifying this string is a gate
-		// for the acceptance-test plan that stands up a real Matomo fixture.
+		// "Variable does not exist" is confirmed (via the _disappears
+		// acceptance test against a real Matomo instance) to be the exact
+		// error string TagManager.getContainerVariable returns for an
+		// unknown variable.
 		if apiErr, ok := err.(*matomo.APIError); ok && apiErr.Message == "Variable does not exist" {
 			resp.State.RemoveResource(ctx)
 			return

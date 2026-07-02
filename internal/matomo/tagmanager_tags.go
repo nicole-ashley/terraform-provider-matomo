@@ -2,20 +2,25 @@ package matomo
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 	"strconv"
 )
 
 // Tag is a Matomo Tag Manager tag within a container version.
 type Tag struct {
-	IDTag           string            `json:"idtag"`
-	Name            string            `json:"name"`
-	Type            string            `json:"type"`
-	Status          string            `json:"status"`
-	Parameters      map[string]string `json:"parameters"`
-	FireTriggerIDs  []string          `json:"fireTriggerIds"`
-	BlockTriggerIDs []string          `json:"blockTriggerIds"`
+	IDTag      int       `json:"idtag"`
+	Name       string    `json:"name"`
+	Type       string    `json:"type"`
+	Status     string    `json:"status"`
+	Parameters stringMap `json:"parameters"`
+	// Confirmed against Matomo's own TagTest.php fixture: the response keys
+	// are fire_trigger_ids/block_trigger_ids (snake_case), unlike the
+	// fireTriggerIds/blockTriggerIds (camelCase) request parameters used to
+	// set them. Confirmed against a live instance: unlike most other
+	// Matomo ids, these array elements are unquoted JSON numbers, not
+	// strings.
+	FireTriggerIDs  []int `json:"fire_trigger_ids"`
+	BlockTriggerIDs []int `json:"block_trigger_ids"`
 }
 
 // TagParams holds the fields accepted by addContainerTag/updateContainerTag.
@@ -27,7 +32,7 @@ type TagParams struct {
 	BlockTriggerIDs []string
 }
 
-func tagParamsToValues(idSite int, idContainer, idContainerVersion string, p TagParams) (url.Values, error) {
+func tagParamsToValues(idSite int, idContainer, idContainerVersion string, p TagParams) url.Values {
 	v := url.Values{
 		"idSite":             {strconv.Itoa(idSite)},
 		"idContainer":        {idContainer},
@@ -35,60 +40,28 @@ func tagParamsToValues(idSite int, idContainer, idContainerVersion string, p Tag
 		"type":               {p.Type},
 		"name":               {p.Name},
 	}
-	params := p.Parameters
-	if params == nil {
-		params = map[string]string{}
-	}
-	paramsJSON, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
-	}
-	v.Set("parameters", string(paramsJSON))
+	addMapParam(v, "parameters", p.Parameters)
+	addArrayParam(v, "fireTriggerIds", p.FireTriggerIDs)
+	addArrayParam(v, "blockTriggerIds", p.BlockTriggerIDs)
 
-	fireIDs := p.FireTriggerIDs
-	if fireIDs == nil {
-		fireIDs = []string{}
-	}
-	fireJSON, err := json.Marshal(fireIDs)
-	if err != nil {
-		return nil, err
-	}
-	v.Set("fireTriggerIds", string(fireJSON))
-
-	blockIDs := p.BlockTriggerIDs
-	if blockIDs == nil {
-		blockIDs = []string{}
-	}
-	blockJSON, err := json.Marshal(blockIDs)
-	if err != nil {
-		return nil, err
-	}
-	v.Set("blockTriggerIds", string(blockJSON))
-
-	return v, nil
+	return v
 }
 
 // AddContainerTag creates a tag in a container's version and returns its ID.
 func (c *Client) AddContainerTag(ctx context.Context, idSite int, idContainer, idContainerVersion string, p TagParams) (string, error) {
-	v, err := tagParamsToValues(idSite, idContainer, idContainerVersion, p)
-	if err != nil {
-		return "", err
-	}
+	v := tagParamsToValues(idSite, idContainer, idContainerVersion, p)
 	var out struct {
-		IDTag string `json:"idtag"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "TagManager.addContainerTag", v, &out); err != nil {
 		return "", err
 	}
-	return out.IDTag, nil
+	return strconv.Itoa(out.Value), nil
 }
 
 // UpdateContainerTag updates an existing tag.
 func (c *Client) UpdateContainerTag(ctx context.Context, idSite int, idContainer, idContainerVersion, idTag string, p TagParams) error {
-	v, err := tagParamsToValues(idSite, idContainer, idContainerVersion, p)
-	if err != nil {
-		return err
-	}
+	v := tagParamsToValues(idSite, idContainer, idContainerVersion, p)
 	v.Set("idTag", idTag)
 	return c.call(ctx, "TagManager.updateContainerTag", v, nil)
 }

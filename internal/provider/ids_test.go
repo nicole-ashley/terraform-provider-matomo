@@ -26,16 +26,16 @@ func TestParseContainerID_invalid(t *testing.T) {
 }
 
 func TestBuildParseDimensionID(t *testing.T) {
-	id := buildDimensionID(3, 1)
-	if id != "3/1" {
-		t.Fatalf("buildDimensionID() = %q, want 3/1", id)
+	id := buildDimensionID(3, "visit", 1)
+	if id != "3/visit/1" {
+		t.Fatalf("buildDimensionID() = %q, want 3/visit/1", id)
 	}
-	siteID, index, err := parseDimensionID(id)
+	siteID, scope, index, err := parseDimensionID(id)
 	if err != nil {
 		t.Fatalf("parseDimensionID() error = %v", err)
 	}
-	if siteID != 3 || index != 1 {
-		t.Errorf("parseDimensionID() = (%d, %d), want (3, 1)", siteID, index)
+	if siteID != 3 || scope != "visit" || index != 1 {
+		t.Errorf("parseDimensionID() = (%d, %q, %d), want (3, \"visit\", 1)", siteID, scope, index)
 	}
 }
 

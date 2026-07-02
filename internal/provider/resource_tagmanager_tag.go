@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -85,11 +86,17 @@ func (r *tagManagerTagResource) Schema(_ context.Context, _ resource.SchemaReque
 				Validators: []validator.String{
 					stringvalidator.OneOf("active", "paused"),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"fire_trigger_ids": schema.ListAttribute{
-				Optional:    true,
+				Required:    true,
 				ElementType: types.StringType,
-				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that fire this tag. Note: writing an explicit empty list (`[]`) rather than omitting this attribute will produce a one-time diff to null on the first refresh after apply; this is harmless and converges after one plan/apply cycle.",
+				Description: "Trigger ids (matomo_tagmanager_trigger.x.id) that fire this tag. Matomo requires at least one.",
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+				},
 			},
 			"block_trigger_ids": schema.ListAttribute{
 				Optional:    true,
@@ -234,13 +241,9 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 
 	tag, err := r.client.GetContainerTag(ctx, siteID, idContainer, versionID, idTag)
 	if err != nil {
-		// NOTE: "Tag does not exist" is the exact error string this provider
-		// assumes TagManager.getContainerTag returns for an unknown tag, but
-		// it has never been verified against a live Matomo instance. If the
-		// real wire format differs, a tag deleted out of band will surface
-		// as a hard error here instead of being silently removed from state.
-		// Verifying this string is a gate for the acceptance-test plan that
-		// stands up a real Matomo fixture.
+		// "Tag does not exist" is confirmed (via the _disappears acceptance
+		// test against a real Matomo instance) to be the exact error string
+		// TagManager.getContainerTag returns for an unknown tag.
 		if apiErr, ok := err.(*matomo.APIError); ok && apiErr.Message == "Tag does not exist" {
 			resp.State.RemoveResource(ctx)
 			return
@@ -253,8 +256,8 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 	state.Type = types.StringValue(tag.Type)
 	state.Name = types.StringValue(tag.Name)
 	state.Status = types.StringValue(tag.Status)
-	state.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, tag.FireTriggerIDs))
-	state.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, tag.BlockTriggerIDs))
+	state.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.FireTriggerIDs)))
+	state.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
 
 	params := make([]tagParameterModel, 0, len(tag.Parameters))
 	for name, value := range tag.Parameters {

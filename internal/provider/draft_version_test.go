@@ -13,9 +13,9 @@ import (
 func TestResolveDraftVersionID_found(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"idcontainerversion": "1", "name": "Draft", "isDraft": true},
-			{"idcontainerversion": "2", "name": "v1", "isDraft": false},
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"idcontainer": "abc123", "idsite": 3, "context": "web", "name": "Main",
+			"draft": map[string]any{"idcontainerversion": 1},
 		})
 	}))
 	defer srv.Close()
@@ -33,8 +33,9 @@ func TestResolveDraftVersionID_found(t *testing.T) {
 func TestResolveDraftVersionID_notFound(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode([]map[string]any{
-			{"idcontainerversion": "2", "name": "v1", "isDraft": false},
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"idcontainer": "abc123", "idsite": 3, "context": "web", "name": "Main",
+			"draft": nil,
 		})
 	}))
 	defer srv.Close()

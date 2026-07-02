@@ -2,7 +2,6 @@ package matomo
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 	"strconv"
 )
@@ -11,16 +10,16 @@ import (
 type Condition struct {
 	Comparison            string `json:"comparison"`
 	ActualValueVariableID string `json:"actual"`
-	ExpectedValue         string `json:"value"`
+	ExpectedValue         string `json:"expected"`
 }
 
 // Trigger is a Matomo Tag Manager trigger within a container version.
 type Trigger struct {
-	IDTrigger  string            `json:"idtrigger"`
-	Name       string            `json:"name"`
-	Type       string            `json:"type"`
-	Parameters map[string]string `json:"parameters"`
-	Conditions []Condition       `json:"conditions"`
+	IDTrigger  int         `json:"idtrigger"`
+	Name       string      `json:"name"`
+	Type       string      `json:"type"`
+	Parameters stringMap   `json:"parameters"`
+	Conditions []Condition `json:"conditions"`
 }
 
 // TriggerParams holds the fields accepted by
@@ -32,7 +31,7 @@ type TriggerParams struct {
 	Conditions []Condition
 }
 
-func triggerParamsToValues(idSite int, idContainer, idContainerVersion string, p TriggerParams) (url.Values, error) {
+func triggerParamsToValues(idSite int, idContainer, idContainerVersion string, p TriggerParams) url.Values {
 	v := url.Values{
 		"idSite":             {strconv.Itoa(idSite)},
 		"idContainer":        {idContainer},
@@ -40,51 +39,28 @@ func triggerParamsToValues(idSite int, idContainer, idContainerVersion string, p
 		"type":               {p.Type},
 		"name":               {p.Name},
 	}
-	params := p.Parameters
-	if params == nil {
-		params = map[string]string{}
-	}
-	paramsJSON, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
-	}
-	v.Set("parameters", string(paramsJSON))
+	addMapParam(v, "parameters", p.Parameters)
+	addConditionsParam(v, "conditions", p.Conditions)
 
-	conditions := p.Conditions
-	if conditions == nil {
-		conditions = []Condition{}
-	}
-	conditionsJSON, err := json.Marshal(conditions)
-	if err != nil {
-		return nil, err
-	}
-	v.Set("conditions", string(conditionsJSON))
-
-	return v, nil
+	return v
 }
 
 // AddContainerTrigger creates a trigger in a container's version and
 // returns its ID.
 func (c *Client) AddContainerTrigger(ctx context.Context, idSite int, idContainer, idContainerVersion string, p TriggerParams) (string, error) {
-	v, err := triggerParamsToValues(idSite, idContainer, idContainerVersion, p)
-	if err != nil {
-		return "", err
-	}
+	v := triggerParamsToValues(idSite, idContainer, idContainerVersion, p)
 	var out struct {
-		IDTrigger string `json:"idtrigger"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "TagManager.addContainerTrigger", v, &out); err != nil {
 		return "", err
 	}
-	return out.IDTrigger, nil
+	return strconv.Itoa(out.Value), nil
 }
 
 // UpdateContainerTrigger updates an existing trigger.
 func (c *Client) UpdateContainerTrigger(ctx context.Context, idSite int, idContainer, idContainerVersion, idTrigger string, p TriggerParams) error {
-	v, err := triggerParamsToValues(idSite, idContainer, idContainerVersion, p)
-	if err != nil {
-		return err
-	}
+	v := triggerParamsToValues(idSite, idContainer, idContainerVersion, p)
 	v.Set("idTrigger", idTrigger)
 	return c.call(ctx, "TagManager.updateContainerTrigger", v, nil)
 }

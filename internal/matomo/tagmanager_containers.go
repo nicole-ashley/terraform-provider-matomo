@@ -9,10 +9,21 @@ import (
 // Container is a Matomo Tag Manager container.
 type Container struct {
 	IDContainer string `json:"idcontainer"`
-	IDSite      int    `json:"idsite,string"`
+	IDSite      int    `json:"idsite"`
 	Context     string `json:"context"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	// Draft is the container's mutable draft version, always present on a
+	// real container (confirmed against Matomo's own TagManager source:
+	// TagManager.getContainer's response nests it as draft.idcontainerversion
+	// - there is no dedicated API method to fetch just the draft, and
+	// getContainerVersions' entries have no boolean "isDraft" field to pick
+	// it out from the version list). Unlike most other Matomo ids, this one
+	// comes back as an unquoted JSON number, confirmed against a live
+	// instance.
+	Draft *struct {
+		IDContainerVersion int `json:"idcontainerversion"`
+	} `json:"draft"`
 }
 
 // AddContainer creates a new Tag Manager container and returns its ID.
@@ -24,12 +35,12 @@ func (c *Client) AddContainer(ctx context.Context, idSite int, tmContext, name, 
 		"description": {description},
 	}
 	var out struct {
-		IDContainer string `json:"idcontainer"`
+		Value string `json:"value"`
 	}
 	if err := c.call(ctx, "TagManager.addContainer", v, &out); err != nil {
 		return "", err
 	}
-	return out.IDContainer, nil
+	return out.Value, nil
 }
 
 // UpdateContainer updates a container's name and description.

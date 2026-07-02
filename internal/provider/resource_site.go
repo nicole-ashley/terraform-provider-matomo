@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -123,15 +124,7 @@ func (r *siteResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	site, err := r.client.GetSiteFromID(ctx, idSite)
 	if err != nil {
-		// NOTE: "Website id Not found" is the exact error string this provider
-		// has always assumed Matomo's getSiteFromId returns for an unknown
-		// idSite, but it has never been verified against a live Matomo
-		// instance. If Matomo's real wire format differs, a site deleted out
-		// of band (e.g. directly in Matomo) will surface as a hard error here
-		// instead of being silently removed from state. Verifying this string
-		// is a gate for the acceptance-test plan that stands up a real
-		// Matomo fixture.
-		if apiErr, ok := err.(*matomo.APIError); ok && apiErr.Message == "Website id Not found" {
+		if isSiteNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -198,9 +191,26 @@ func (r *siteResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteSite(ctx, idSite); err != nil {
+	if err := r.client.DeleteSite(ctx, idSite); err != nil && !isSiteNotFoundError(err) {
 		resp.Diagnostics.AddError("Error deleting Matomo site", err.Error())
 	}
+}
+
+// isSiteNotFoundError reports whether err is Matomo's response for an
+// unknown/already-deleted site id. Matomo uses two different messages for
+// this depending on the API method (both confirmed against a live
+// instance): getSiteFromId/getSiteUrlsFromId say `An unexpected website was
+// found in the request: website id was set to '<id>' .`, while deleteSite
+// says `website id = <id> not found` (a plain, untranslated exception
+// message, per Matomo's own SitesManager API source). Both interpolate the
+// id, so match on fixed substrings rather than exact equality.
+func isSiteNotFoundError(err error) bool {
+	apiErr, ok := err.(*matomo.APIError)
+	if !ok {
+		return false
+	}
+	return strings.HasPrefix(apiErr.Message, "An unexpected website was found in the request") ||
+		(strings.HasPrefix(apiErr.Message, "website id = ") && strings.HasSuffix(apiErr.Message, " not found"))
 }
 
 func (r *siteResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

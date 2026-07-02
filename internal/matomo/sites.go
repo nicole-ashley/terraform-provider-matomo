@@ -2,23 +2,47 @@ package matomo
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Site is a Matomo website as returned by SitesManager.getSiteFromId /
 // getAllSites.
 type Site struct {
-	IDSite             int      `json:"idsite,string"`
-	Name               string   `json:"name"`
-	Timezone           string   `json:"timezone"`
-	Currency           string   `json:"currency"`
-	URLs               []string `json:"urls"`
-	Ecommerce          bool     `json:"-"`
-	ExcludedIPs        []string `json:"excluded_ips"`
-	ExcludeUnknownUrls bool     `json:"-"`
-	Type               string   `json:"type"`
-	Group              string   `json:"group"`
+	IDSite             int                `json:"idsite"`
+	Name               string             `json:"name"`
+	Timezone           string             `json:"timezone"`
+	Currency           string             `json:"currency"`
+	URLs               []string           `json:"urls"`
+	Ecommerce          bool               `json:"-"`
+	ExcludedIPs        commaSeparatedList `json:"excluded_ips"`
+	ExcludeUnknownUrls bool               `json:"-"`
+	Type               string             `json:"type"`
+	Group              string             `json:"group"`
+}
+
+// commaSeparatedList decodes a field Matomo returns as a single
+// comma-separated string (e.g. Site.excluded_ips - confirmed against a real
+// instance) into a []string, treating an empty string as an empty list.
+type commaSeparatedList []string
+
+func (l *commaSeparatedList) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	if s == "" {
+		*l = nil
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	for i, p := range parts {
+		parts[i] = strings.TrimSpace(p)
+	}
+	*l = parts
+	return nil
 }
 
 // AddSiteParams holds the subset of SitesManager.addSite's parameters this
@@ -83,7 +107,7 @@ func boolToIntString(b bool) string {
 // AddSite creates a website and returns its new site ID.
 func (c *Client) AddSite(ctx context.Context, p AddSiteParams) (int, error) {
 	var out struct {
-		Value int `json:"value,string"`
+		Value int `json:"value"`
 	}
 	if err := c.call(ctx, "SitesManager.addSite", p.toValues(), &out); err != nil {
 		return 0, err
@@ -111,6 +135,11 @@ func (c *Client) GetSiteFromID(ctx context.Context, idSite int) (*Site, error) {
 	if err := c.call(ctx, "SitesManager.getSiteFromId", v, &site); err != nil {
 		return nil, err
 	}
+	urls, err := c.getSiteURLsFromID(ctx, idSite)
+	if err != nil {
+		return nil, err
+	}
+	site.URLs = urls
 	return &site, nil
 }
 
@@ -120,5 +149,26 @@ func (c *Client) GetAllSites(ctx context.Context) ([]Site, error) {
 	if err := c.call(ctx, "SitesManager.getAllSites", nil, &sites); err != nil {
 		return nil, err
 	}
+	for i := range sites {
+		urls, err := c.getSiteURLsFromID(ctx, sites[i].IDSite)
+		if err != nil {
+			return nil, err
+		}
+		sites[i].URLs = urls
+	}
 	return sites, nil
+}
+
+// getSiteURLsFromID fetches a site's full URL list (main URL first, then
+// aliases). SitesManager.getSiteFromId/getAllSites only return a site's
+// main_url - confirmed against a real Matomo instance, where the "urls"
+// field this provider previously expected on those responses simply isn't
+// present - so the full list always requires this separate call.
+func (c *Client) getSiteURLsFromID(ctx context.Context, idSite int) ([]string, error) {
+	v := url.Values{"idSite": {strconv.Itoa(idSite)}}
+	var urls []string
+	if err := c.call(ctx, "SitesManager.getSiteUrlsFromId", v, &urls); err != nil {
+		return nil, err
+	}
+	return urls, nil
 }

@@ -30,13 +30,24 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Acceptance Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Test Tag"
+  type         = "PageView"
+  name         = "Tag Acceptance Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Test Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script>console.log('acceptance test')</script>"
+  }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
@@ -44,6 +55,7 @@ resource "matomo_tagmanager_tag" "test" {
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "name", "Acceptance Test Tag"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "status", "active"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "parameter.0.name", "customHtml"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "fire_trigger_ids.#", "1"),
 				),
 			},
 			{
@@ -61,14 +73,25 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Acceptance Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Test Tag"
-  status       = "paused"
+  type         = "PageView"
+  name         = "Tag Acceptance Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Test Tag"
+  status           = "paused"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script>console.log('acceptance test')</script>"
+  }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
@@ -99,29 +122,28 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Multi-Param Acceptance Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Multi-Param Tag"
+  type         = "PageView"
+  name         = "Tag Multi-Param Acceptance Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Multi-Param Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
-    name  = "alpha"
-    value = "1"
+    name  = "customHtml"
+    value = "<script>console.log('multi-param acceptance test')</script>"
   }
   parameter {
-    name  = "bravo"
-    value = "2"
-  }
-  parameter {
-    name  = "charlie"
-    value = "3"
-  }
-  parameter {
-    name  = "delta"
-    value = "4"
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
-				Check: resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "parameter.#", "4"),
+				Check: resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "parameter.#", "2"),
 			},
 		},
 	})
@@ -148,13 +170,24 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Import Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Import Tag"
+  type         = "PageView"
+  name         = "Tag Import Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Import Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script></script>"
+  }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
@@ -189,13 +222,24 @@ resource "matomo_tagmanager_container" "test" {
   name    = "Tag Disappears Container"
 }
 
-resource "matomo_tagmanager_tag" "test" {
+resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
-  type         = "CustomHtml"
-  name         = "Acceptance Disappears Tag"
+  type         = "PageView"
+  name         = "Tag Disappears Trigger"
+}
+
+resource "matomo_tagmanager_tag" "test" {
+  container_id     = matomo_tagmanager_container.test.id
+  type             = "CustomHtml"
+  name             = "Acceptance Disappears Tag"
+  fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
     value = "<script></script>"
+  }
+  parameter {
+    name  = "htmlPosition"
+    value = "bodyEnd"
   }
 }
 `,
