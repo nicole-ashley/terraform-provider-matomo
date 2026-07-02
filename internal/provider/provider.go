@@ -121,5 +121,7 @@ func (p *MatomoProvider) DataSources(_ context.Context) []func() datasource.Data
 		NewTagManagerContextsDataSource,
 		NewTagManagerEnvironmentsDataSource,
 		NewTagManagerTagTypesDataSource,
+		NewTagManagerTriggerTypesDataSource,
+		NewTagManagerVariableTypesDataSource,
 	}
 }
