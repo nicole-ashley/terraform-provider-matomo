@@ -51,11 +51,6 @@ type templateData struct {
 	// all, producing an "imported and not used" error - caught the hard
 	// way against real discovered types with no parameters.
 	NeedsTypesImport bool
-	// NeedsMatomoImport is true when at least one parameter is
-	// ConditionallyRequired, meaning the generated schema embeds a
-	// conditionRequiredValidator{Condition: matomo.EqNode{...}} literal
-	// (see renderCondition) that references the internal/matomo package.
-	NeedsMatomoImport bool
 	// NeedsBoolPlanModifierImport/NeedsInt64PlanModifierImport/
 	// NeedsFloat64PlanModifierImport are true when at least one
 	// non-Required parameter of that Go type exists - every non-Required
@@ -81,7 +76,6 @@ type templateData struct {
 func newTemplateData(spec TypeSpec) templateData {
 	typeName := ExportedName(spec.Kind) + ExportedName(spec.Slug)
 	needsValidatorImports := spec.Kind == "tag"
-	needsMatomoImport := false
 	if !needsValidatorImports {
 		for _, p := range spec.Params {
 			if len(p.AvailableValues) > 0 || p.ConditionallyRequired {
@@ -92,9 +86,6 @@ func newTemplateData(spec TypeSpec) templateData {
 	}
 	var needsBoolPM, needsInt64PM, needsFloat64PM bool
 	for _, p := range spec.Params {
-		if p.ConditionallyRequired {
-			needsMatomoImport = true
-		}
 		if !p.Required {
 			switch p.GoType {
 			case "Bool":
@@ -116,7 +107,6 @@ func newTemplateData(spec TypeSpec) templateData {
 		CommonTypeName:                 "typed" + ExportedName(spec.Kind) + "Common",
 		ModelInterfaceName:             "typed" + ExportedName(spec.Kind) + "Model",
 		NeedsTypesImport:               spec.Kind == "tag" || len(spec.Params) > 0,
-		NeedsMatomoImport:              needsMatomoImport,
 		NeedsBoolPlanModifierImport:    needsBoolPM,
 		NeedsInt64PlanModifierImport:   needsInt64PM,
 		NeedsFloat64PlanModifierImport: needsFloat64PM,

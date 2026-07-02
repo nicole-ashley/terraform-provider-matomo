@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type fakeListModel struct {
@@ -14,11 +16,11 @@ type fakeListModel struct {
 }
 
 func (m *fakeListModel) Meta() typedMeta { return typedMeta{} }
-func (m *fakeListModel) ToParams() map[string]string {
+func (m *fakeListModel) ToParams() matomo.ParamsMap {
 	return nil
 }
-func (m *fakeListModel) FromParams(map[string]string) {}
-func (m *fakeListModel) Common() *typedTagCommon      { return &m.typedTagCommon }
+func (m *fakeListModel) FromParams(matomo.ParamsMap) {}
+func (m *fakeListModel) Common() *typedTagCommon     { return &m.typedTagCommon }
 
 var _ typedTagModel = &fakeListModel{}
 

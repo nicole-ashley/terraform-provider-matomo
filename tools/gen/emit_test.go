@@ -174,3 +174,53 @@ func TestRenderSchema_optionalFieldsAreComputed(t *testing.T) {
 		t.Errorf("generated source marks the List param \"l\" Computed, want Optional only: full source:\n%s", got)
 	}
 }
+
+// TestRenderSchema_listParamsUseNativeArrayEncoding proves ToParams/
+// FromParams wire a List-typed parameter through matomo.ListParam/
+// ParamValue.List, not a delimiter-joined string - a live acceptance
+// test only ever exercised a single-element list, which can't tell a
+// correct array encoding apart from the lossy comma-joined-string
+// encoding it replaced (a multi-element value, or any element
+// containing a comma, would have round-tripped corrupted, and Matomo's
+// dispatcher rejects a joined string for a genuinely array-typed field
+// outright in the first place).
+func TestRenderSchema_listParamsUseNativeArrayEncoding(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "ListExample",
+		Slug:         "listexample",
+		ResourceName: "matomo_tagmanager_tag_listexample",
+		Description:  "exercises List param wire encoding",
+		Params: []ParamSpec{
+			{MatomoName: "requiredList", TFName: "required_list", GoFieldName: "RequiredList", GoType: "List", Required: true},
+			{MatomoName: "optionalList", TFName: "optional_list", GoFieldName: "OptionalList", GoType: "List", Required: false},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "tag_listexample.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		`func (m *tagListexampleModel) ToParams() matomo.ParamsMap {`,
+		`p["requiredList"] = matomo.ListParam(stringSliceFromModel(m.RequiredList))`,
+		`p["optionalList"] = matomo.ListParam(stringSliceFromModel(m.OptionalList))`,
+		`func (m *tagListexampleModel) FromParams(p matomo.ParamsMap) {`,
+		`m.RequiredList = paramListValue(p["requiredList"].List)`,
+		`m.OptionalList = paramListValue(v.List)`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "paramListString") || strings.Contains(got, `strings.Join`) {
+		t.Errorf("generated source still comma-joins a List param; full source:\n%s", got)
+	}
+}

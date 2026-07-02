@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type fakeTagModel struct {
@@ -26,11 +28,11 @@ func (m *fakeTagModel) Meta() typedMeta {
 	}
 }
 
-func (m *fakeTagModel) ToParams() map[string]string {
-	return map[string]string{"value": m.Value.ValueString()}
+func (m *fakeTagModel) ToParams() matomo.ParamsMap {
+	return matomo.ParamsMap{"value": matomo.ScalarParam(m.Value.ValueString())}
 }
-func (m *fakeTagModel) FromParams(p map[string]string) { m.Value = types.StringValue(p["value"]) }
-func (m *fakeTagModel) Common() *typedTagCommon        { return &m.typedTagCommon }
+func (m *fakeTagModel) FromParams(p matomo.ParamsMap) { m.Value = types.StringValue(p["value"].Scalar) }
+func (m *fakeTagModel) Common() *typedTagCommon       { return &m.typedTagCommon }
 
 func TestTypedTagResource_metadataAndSchemaDispatchToModel(t *testing.T) {
 	r := newTypedTagResource(func() typedTagModel { return &fakeTagModel{} }).(*typedTagResource)

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -130,12 +131,29 @@ func (r *tagManagerTagResource) Configure(_ context.Context, req resource.Config
 	r.client = client
 }
 
-func parametersToMap(params []tagParameterModel) map[string]string {
-	m := make(map[string]string, len(params))
+// parametersToMap builds the flat parameters map the generic tag/trigger/
+// variable resources send: every entry is user-typed as a single string
+// (there's no way to declare an array-typed parameter through the
+// generic parameter{name=...,value=...} block), so every value is a
+// matomo.ScalarParam.
+func parametersToMap(params []tagParameterModel) matomo.ParamsMap {
+	m := make(matomo.ParamsMap, len(params))
 	for _, p := range params {
-		m[p.Name.ValueString()] = p.Value.ValueString()
+		m[p.Name.ValueString()] = matomo.ScalarParam(p.Value.ValueString())
 	}
 	return m
+}
+
+// paramValueDisplayString renders a matomo.ParamValue for the generic
+// resources' string-only parameter{} block - a list-typed value (which
+// that block has no way to represent structurally) is joined with commas
+// for read-only display purposes only; it is never sent back to Matomo
+// in this form (parametersToMap above always sends a plain scalar).
+func paramValueDisplayString(v matomo.ParamValue) string {
+	if v.IsList() {
+		return strings.Join(v.List, ",")
+	}
+	return v.Scalar
 }
 
 func stringSliceFromModel(in []types.String) []string {
@@ -261,7 +279,7 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 
 	params := make([]tagParameterModel, 0, len(tag.Parameters))
 	for name, value := range tag.Parameters {
-		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(value)})
+		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(paramValueDisplayString(value))})
 	}
 	// tag.Parameters is a map, so Go's iteration order above is randomized
 	// per-process. Sort by name so Read's output is deterministic across

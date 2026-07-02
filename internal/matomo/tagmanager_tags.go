@@ -12,7 +12,7 @@ type Tag struct {
 	Name       string    `json:"name"`
 	Type       string    `json:"type"`
 	Status     string    `json:"status"`
-	Parameters stringMap `json:"parameters"`
+	Parameters ParamsMap `json:"parameters"`
 	// Confirmed against Matomo's own TagTest.php fixture: the response keys
 	// are fire_trigger_ids/block_trigger_ids (snake_case), unlike the
 	// fireTriggerIds/blockTriggerIds (camelCase) request parameters used to
@@ -27,7 +27,7 @@ type Tag struct {
 type TagParams struct {
 	Type            string
 	Name            string
-	Parameters      map[string]string
+	Parameters      ParamsMap
 	FireTriggerIDs  []string
 	BlockTriggerIDs []string
 }
@@ -40,7 +40,7 @@ func tagParamsToValues(idSite int, idContainer, idContainerVersion string, p Tag
 		"type":               {p.Type},
 		"name":               {p.Name},
 	}
-	addMapParam(v, "parameters", p.Parameters)
+	addParamsMap(v, "parameters", p.Parameters)
 	addArrayParam(v, "fireTriggerIds", p.FireTriggerIDs)
 	addArrayParam(v, "blockTriggerIds", p.BlockTriggerIDs)
 

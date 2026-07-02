@@ -23,10 +23,8 @@ import (
 {{- if .NeedsTypesImport}}
 	"github.com/hashicorp/terraform-plugin-framework/types"
 {{- end}}
-{{- if .NeedsMatomoImport}}
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
-{{- end}}
 )
 
 type {{.GoModelName}} struct {
@@ -151,37 +149,39 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) Meta() typedMeta {
 // on live enum/format-constrained parameters (confirmed against a real
 // acceptance-test run: an unset htmlPosition sent as "" was rejected by
 // CustomHtml's own field validator, which never happens for a key that's
-// simply absent from the parameters map).
-func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() map[string]string {
-	p := map[string]string{}
+// simply absent from the parameters map). A List-typed parameter is sent
+// via matomo.ListParam, never joined into a single string - see
+// matomo.ParamValue's doc comment for why.
+func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() matomo.ParamsMap {
+	p := matomo.ParamsMap{}
 {{- range .Params}}
 {{- if .Required}}
 {{- if eq .GoType "String"}}
-	p[{{printf "%q" .MatomoName}}] = {{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString()
+	p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString())
 {{- else if eq .GoType "Bool"}}
-	p[{{printf "%q" .MatomoName}}] = paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool())
+	p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam(paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool()))
 {{- else if eq .GoType "Int64"}}
-	p[{{printf "%q" .MatomoName}}] = paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64())
+	p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam(paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64()))
 {{- else if eq .GoType "Float64"}}
-	p[{{printf "%q" .MatomoName}}] = paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64())
+	p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam(paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64()))
 {{- else if eq .GoType "List"}}
-	p[{{printf "%q" .MatomoName}}] = paramListString({{$.GoModelReceiver}}.{{.GoFieldName}})
+	p[{{printf "%q" .MatomoName}}] = matomo.ListParam(stringSliceFromModel({{$.GoModelReceiver}}.{{.GoFieldName}}))
 {{- end}}
 {{- else}}
 {{- if eq .GoType "List"}}
 	if {{$.GoModelReceiver}}.{{.GoFieldName}} != nil {
-		p[{{printf "%q" .MatomoName}}] = paramListString({{$.GoModelReceiver}}.{{.GoFieldName}})
+		p[{{printf "%q" .MatomoName}}] = matomo.ListParam(stringSliceFromModel({{$.GoModelReceiver}}.{{.GoFieldName}}))
 	}
 {{- else}}
 	if !{{$.GoModelReceiver}}.{{.GoFieldName}}.IsNull() && !{{$.GoModelReceiver}}.{{.GoFieldName}}.IsUnknown() {
 {{- if eq .GoType "String"}}
-		p[{{printf "%q" .MatomoName}}] = {{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString()
+		p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString())
 {{- else if eq .GoType "Bool"}}
-		p[{{printf "%q" .MatomoName}}] = paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool())
+		p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam(paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool()))
 {{- else if eq .GoType "Int64"}}
-		p[{{printf "%q" .MatomoName}}] = paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64())
+		p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam(paramInt64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueInt64()))
 {{- else if eq .GoType "Float64"}}
-		p[{{printf "%q" .MatomoName}}] = paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64())
+		p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam(paramFloat64String({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueFloat64()))
 {{- end}}
 	}
 {{- end}}
@@ -198,40 +198,40 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() map[string]string {
 // produced and left Terraform reporting a perpetual "refresh plan not
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
-func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p map[string]string) {
+func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p matomo.ParamsMap) {
 {{- range .Params}}
 {{- if .Required}}
 {{- if eq .GoType "String"}}
-	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(p[{{printf "%q" .MatomoName}}])
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(p[{{printf "%q" .MatomoName}}].Scalar)
 {{- else if eq .GoType "Bool"}}
-	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolValue(paramBoolValue(p[{{printf "%q" .MatomoName}}]))
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolValue(paramBoolValue(p[{{printf "%q" .MatomoName}}].Scalar))
 {{- else if eq .GoType "Int64"}}
-	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Value(paramInt64Value(p[{{printf "%q" .MatomoName}}]))
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Value(paramInt64Value(p[{{printf "%q" .MatomoName}}].Scalar))
 {{- else if eq .GoType "Float64"}}
-	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Value(paramFloat64Value(p[{{printf "%q" .MatomoName}}]))
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Value(paramFloat64Value(p[{{printf "%q" .MatomoName}}].Scalar))
 {{- else if eq .GoType "List"}}
-	{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(p[{{printf "%q" .MatomoName}}])
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(p[{{printf "%q" .MatomoName}}].List)
 {{- end}}
 {{- else}}
 	if v, ok := p[{{printf "%q" .MatomoName}}]; ok {
 {{- if eq .GoType "String"}}
-		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(v)
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(v.Scalar)
 	} else {
 		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringNull()
 {{- else if eq .GoType "Bool"}}
-		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolValue(paramBoolValue(v))
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolNull()
 {{- else if eq .GoType "Int64"}}
-		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Value(paramInt64Value(v))
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Value(paramInt64Value(v.Scalar))
 	} else {
 		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Int64Null()
 {{- else if eq .GoType "Float64"}}
-		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Value(paramFloat64Value(v))
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Value(paramFloat64Value(v.Scalar))
 	} else {
 		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.Float64Null()
 {{- else if eq .GoType "List"}}
-		{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(v)
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(v.List)
 	} else {
 		{{$.GoModelReceiver}}.{{.GoFieldName}} = nil
 {{- end}}

@@ -3,10 +3,11 @@ package provider
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 // typedMeta is the per-type metadata a generated model supplies to the
@@ -22,8 +23,8 @@ type typedMeta struct {
 // Matomo-specific parameters.
 type typedModel interface {
 	Meta() typedMeta
-	ToParams() map[string]string
-	FromParams(params map[string]string)
+	ToParams() matomo.ParamsMap
+	FromParams(params matomo.ParamsMap)
 }
 
 // typedTagModel/typedTriggerModel/typedVariableModel are satisfied by
@@ -61,12 +62,15 @@ type typedVariableModel interface {
 	Common() *typedVariableCommon
 }
 
-// Matomo's Tag Manager "parameters" wire field is always a flat
-// map[string]string (confirmed against real create/read responses earlier
-// in this project), regardless of a parameter's declared Terraform type -
-// these helpers convert non-string typed-model fields to/from that string
-// representation. Generated ToParams()/FromParams() methods (Task 7's
-// emitter output) call these for Bool/Int64/Float64/List parameters.
+// Matomo's Tag Manager "parameters" wire field is a flat
+// matomo.ParamsMap (see internal/matomo/formencoding.go) whose scalar
+// entries are always strings on the wire (confirmed against real
+// create/read responses earlier in this project), regardless of a
+// parameter's declared Terraform type - these helpers convert non-string
+// typed-model fields to/from that string representation. Generated
+// ToParams()/FromParams() methods (Task 7's emitter output) call these
+// for Bool/Int64/Float64 parameters (List parameters use ParamValue's
+// own List field directly - see paramListValue below).
 //
 // Bool encoding ("1"/"0") is a reasonable first guess based on common PHP
 // form-checkbox convention, not yet confirmed against a live Matomo
@@ -110,17 +114,9 @@ func paramFloat64Value(s string) float64 {
 	return f
 }
 
-// paramListString/paramListValue's comma-joined encoding is likewise an
-// unconfirmed first guess for how Matomo represents an array-typed Tag
-// Manager parameter within the flat parameters map - see the Bool note
-// above for the same caveat.
-func paramListString(list []types.String) string {
-	return strings.Join(stringSliceFromModel(list), ",")
-}
-
-func paramListValue(s string) []types.String {
-	if s == "" {
-		return nil
-	}
-	return stringModelFromSlice(strings.Split(s, ","))
+// paramListValue converts a matomo.ParamValue's List (already a plain
+// []string, decoded from Matomo's own JSON array response - see
+// matomo.ParamsMap.UnmarshalJSON) into its tfsdk model form.
+func paramListValue(list []string) []types.String {
+	return stringModelFromSlice(list)
 }

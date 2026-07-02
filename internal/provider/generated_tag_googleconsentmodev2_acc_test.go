@@ -10,6 +10,13 @@ import (
 // Once present, tools/gen never overwrites it - edit freely to add real
 // assertions (this scaffold only proves create+read-back with placeholder
 // values).
+//
+// Hand-strengthened: consent_action is set to a real two-element list
+// below specifically to exercise Matomo's native array wire encoding for
+// List-typed parameters (matomo.ParamsMap/ParamValue) - a single-element
+// list can't distinguish a correct encoding from the lossy
+// comma-joined-string encoding it replaced, so this asserts both
+// elements round-trip in order, not just that "id" got set.
 func TestAccTagGoogleconsentmodev2_createAndReadBack(t *testing.T) {
 	testAccPreCheck(t)
 	resourceName := "matomo_tagmanager_tag_googleconsentmodev2.test"
@@ -21,6 +28,9 @@ func TestAccTagGoogleconsentmodev2_createAndReadBack(t *testing.T) {
 				Config: testAccTagGoogleconsentmodev2Config(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
+					resource.TestCheckResourceAttr(resourceName, "consent_action.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "consent_action.0", "default"),
+					resource.TestCheckResourceAttr(resourceName, "consent_action.1", "update"),
 				),
 			},
 			{
@@ -57,7 +67,7 @@ resource "matomo_tagmanager_tag_googleconsentmodev2" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-googleconsentmodev2"
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
-  consent_action = ["test-value"]
+  consent_action = ["default", "update"]
 }
 `
 }

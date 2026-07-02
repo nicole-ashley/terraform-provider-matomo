@@ -181,7 +181,7 @@ func (r *tagManagerVariableResource) Read(ctx context.Context, req resource.Read
 
 	params := make([]tagParameterModel, 0, len(v.Parameters))
 	for name, value := range v.Parameters {
-		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(value)})
+		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(paramValueDisplayString(value))})
 	}
 	// v.Parameters is a map, so Go's iteration order above is randomized per
 	// process. Sort by name so Read's output is deterministic across runs,
