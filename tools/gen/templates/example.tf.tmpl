@@ -1,0 +1,48 @@
+{{/* tools/gen/templates/example.tf.tmpl */}}
+provider "matomo" {}
+
+resource "matomo_site" "example" {
+  name = "Example {{.TypeID}} Site"
+  urls = ["https://example-{{.Slug}}.example.com"]
+}
+
+resource "matomo_tagmanager_container" "example" {
+  site_id = matomo_site.example.id
+  context = "web"
+  name    = "Example {{.TypeID}} Container"
+}
+{{- if eq .Kind "tag"}}
+
+resource "matomo_tagmanager_trigger" "example" {
+  container_id = matomo_tagmanager_container.example.id
+  type         = "PageView"
+  name         = "Example {{.TypeID}} Trigger"
+}
+{{- end}}
+
+resource "{{.ResourceName}}" "example" {
+  container_id = matomo_tagmanager_container.example.id
+  name         = "example-{{.Slug}}"
+{{- if eq .Kind "tag"}}
+  fire_trigger_ids = [matomo_tagmanager_trigger.example.id]
+{{- end}}
+{{- range .Params}}
+{{- if or .Required .ConditionallyRequired}}
+{{- if eq .GoType "String"}}
+{{- if .AvailableValues}}
+  {{.TFName}} = {{printf "%q" (index .AvailableValues 0)}}
+{{- else}}
+  {{.TFName}} = "example-value"
+{{- end}}
+{{- else if eq .GoType "Bool"}}
+  {{.TFName}} = true
+{{- else if eq .GoType "Int64"}}
+  {{.TFName}} = 1
+{{- else if eq .GoType "Float64"}}
+  {{.TFName}} = 1.0
+{{- else if eq .GoType "List"}}
+  {{.TFName}} = ["example-value"]
+{{- end}}
+{{- end}}
+{{- end}}
+}

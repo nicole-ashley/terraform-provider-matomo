@@ -30,16 +30,16 @@ jobs:
           name: generated-tagmanager-resources
           path: internal/provider/generated_*.go
           retention-days: 1
-      # Drift check: the generated resources committed to the repo must
-      # match what tools/gen produces against the live Matomo instance
-      # right now. If this fails, someone edited a generated_*.go file by
-      # hand, or a codegen change wasn't followed by a real regeneration
-      # + commit (the bootstrap-commit pattern used earlier in this
-      # branch's history, temporarily, whenever that happened).
-      - name: Fail if generated resources have drifted
+      # Drift check: the generated resources and examples committed to the
+      # repo must match what tools/gen produces against the live Matomo
+      # instance right now. If this fails, someone edited a generated
+      # file by hand, or a codegen change wasn't followed by a real
+      # regeneration + commit (the bootstrap-commit pattern used earlier
+      # in this branch's history, temporarily, whenever that happened).
+      - name: Fail if generated resources or examples have drifted
         run: |
-          git add -A -- 'internal/provider/generated_*.go'
-          git diff --cached --exit-code -- 'internal/provider/generated_*.go'
+          git add -A -- 'internal/provider/generated_*.go' 'examples/resources/*'
+          git diff --cached --exit-code -- 'internal/provider/generated_*.go' 'examples/resources/*'
       - run: TF_ACC=1 go test ./... -run TestAcc -v -count=1 -timeout 20m
       - if: always()
         run: docker compose down -v
