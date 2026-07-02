@@ -111,3 +111,55 @@ func TestRenderSchema_conditionallyRequired(t *testing.T) {
 		}
 	}
 }
+
+// TestRenderSchema_optionalFieldsAreComputed exercises every Go type's
+// Optional-field code path (String/Bool/Int64/Float64/List) to prove each
+// renders a compiling Computed + UseStateForUnknown attribute (with the
+// matching plan modifier import) - the fix for a live-acceptance-test
+// failure where a Matomo-defaulted value for an unset Optional field
+// (e.g. a boolean parameter coming back false rather than absent) caused
+// a perpetual "refresh plan not empty" diff against a bare Optional
+// attribute.
+func TestRenderSchema_optionalFieldsAreComputed(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "trigger",
+		TypeID:       "Everything",
+		Slug:         "everything",
+		ResourceName: "matomo_tagmanager_trigger_everything",
+		Description:  "exercises every optional Go type",
+		Params: []ParamSpec{
+			{MatomoName: "s", TFName: "s", GoFieldName: "S", GoType: "String", Required: false},
+			{MatomoName: "b", TFName: "b", GoFieldName: "B", GoType: "Bool", Required: false},
+			{MatomoName: "i", TFName: "i", GoFieldName: "I", GoType: "Int64", Required: false},
+			{MatomoName: "f", TFName: "f", GoFieldName: "F", GoType: "Float64", Required: false},
+			{MatomoName: "l", TFName: "l", GoFieldName: "L", GoType: "List", Required: false},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "trigger_everything.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"`,
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"`,
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"`,
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"`,
+		`PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}`,
+		`PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}`,
+		`PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}`,
+		`PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()}`,
+		`PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+}

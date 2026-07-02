@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"go/format"
+	"strings"
 	"text/template"
 )
 
@@ -55,6 +56,22 @@ type templateData struct {
 	// conditionRequiredValidator{Condition: matomo.EqNode{...}} literal
 	// (see renderCondition) that references the internal/matomo package.
 	NeedsMatomoImport bool
+	// NeedsBoolPlanModifierImport/NeedsInt64PlanModifierImport/
+	// NeedsFloat64PlanModifierImport/NeedsListPlanModifierImport are true
+	// when at least one non-Required parameter of that Go type exists -
+	// every non-Required attribute is marked Optional+Computed with a
+	// UseStateForUnknown plan modifier (see the Params loop in
+	// schema.go.tmpl) so that a value Matomo defaults server-side (e.g.
+	// Cookie's urlDecode coming back as false even though it was never
+	// sent) doesn't leave Terraform reporting a perpetual "refresh plan
+	// not empty" diff against the null a bare unset config produces -
+	// confirmed as the single largest remaining acceptance-test failure
+	// category in a live CI run, the same pattern the hand-written
+	// "status" tag attribute already used for exactly this reason.
+	NeedsBoolPlanModifierImport    bool
+	NeedsInt64PlanModifierImport   bool
+	NeedsFloat64PlanModifierImport bool
+	NeedsListPlanModifierImport    bool
 }
 
 func newTemplateData(spec TypeSpec) templateData {
@@ -69,23 +86,43 @@ func newTemplateData(spec TypeSpec) templateData {
 			}
 		}
 	}
+	// block_trigger_ids (every tag type's hand-templated common attribute,
+	// see the Kind=="tag" block in schema.go.tmpl) always needs
+	// listplanmodifier too.
+	needsListPM := spec.Kind == "tag"
+	var needsBoolPM, needsInt64PM, needsFloat64PM bool
 	for _, p := range spec.Params {
 		if p.ConditionallyRequired {
 			needsMatomoImport = true
-			break
+		}
+		if !p.Required {
+			switch p.GoType {
+			case "Bool":
+				needsBoolPM = true
+			case "Int64":
+				needsInt64PM = true
+			case "Float64":
+				needsFloat64PM = true
+			case "List":
+				needsListPM = true
+			}
 		}
 	}
 	return templateData{
-		TypeSpec:              spec,
-		GoModelName:           spec.Kind + ExportedName(spec.Slug) + "Model",
-		GoSchemaFuncName:      spec.Kind + ExportedName(spec.Slug) + "Schema",
-		GoTypeName:            typeName,
-		GoModelReceiver:       "m",
-		NeedsValidatorImports: needsValidatorImports,
-		CommonTypeName:        "typed" + ExportedName(spec.Kind) + "Common",
-		ModelInterfaceName:    "typed" + ExportedName(spec.Kind) + "Model",
-		NeedsTypesImport:      spec.Kind == "tag" || len(spec.Params) > 0,
-		NeedsMatomoImport:     needsMatomoImport,
+		TypeSpec:                       spec,
+		GoModelName:                    spec.Kind + ExportedName(spec.Slug) + "Model",
+		GoSchemaFuncName:               spec.Kind + ExportedName(spec.Slug) + "Schema",
+		GoTypeName:                     typeName,
+		GoModelReceiver:                "m",
+		NeedsValidatorImports:          needsValidatorImports,
+		CommonTypeName:                 "typed" + ExportedName(spec.Kind) + "Common",
+		ModelInterfaceName:             "typed" + ExportedName(spec.Kind) + "Model",
+		NeedsTypesImport:               spec.Kind == "tag" || len(spec.Params) > 0,
+		NeedsMatomoImport:              needsMatomoImport,
+		NeedsBoolPlanModifierImport:    needsBoolPM,
+		NeedsInt64PlanModifierImport:   needsInt64PM,
+		NeedsFloat64PlanModifierImport: needsFloat64PM,
+		NeedsListPlanModifierImport:    needsListPM,
 	}
 }
 
@@ -94,7 +131,7 @@ var schemaTemplateFS embed.FS
 
 var schemaTemplate = template.Must(
 	template.New("schema.go.tmpl").
-		Funcs(template.FuncMap{"renderCondition": renderCondition}).
+		Funcs(template.FuncMap{"renderCondition": renderCondition, "lower": strings.ToLower}).
 		ParseFS(schemaTemplateFS, "templates/schema.go.tmpl"),
 )
 

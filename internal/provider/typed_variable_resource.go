@@ -141,7 +141,16 @@ func (r *typedVariableResource) Read(ctx context.Context, req resource.ReadReque
 
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(v.Name)
-	common.DefaultValue = types.StringValue(v.DefaultValue)
+	// Matomo's API always returns default_value as a string, empty when
+	// unset - decoding an empty string straight to StringValue("") left
+	// an unset default_value looking non-null forever, the same
+	// "refresh plan not empty" bug the generated FromParams methods hit
+	// for their own Optional fields (see the comment on those).
+	if v.DefaultValue == "" {
+		common.DefaultValue = types.StringNull()
+	} else {
+		common.DefaultValue = types.StringValue(v.DefaultValue)
+	}
 
 	model.FromParams(v.Parameters)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
