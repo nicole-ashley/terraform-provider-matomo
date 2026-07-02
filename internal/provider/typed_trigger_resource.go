@@ -71,6 +71,7 @@ func (r *typedTriggerResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 	common := model.Common()
+	savedListFields := snapshotListFields(model)
 
 	siteID, idContainer, err := parseContainerID(common.ContainerID.ValueString())
 	if err != nil {
@@ -112,6 +113,7 @@ func (r *typedTriggerResource) Create(ctx context.Context, req resource.CreateRe
 	common.Name = types.StringValue(trig.Name)
 
 	model.FromParams(trig.Parameters)
+	restoreListFields(model, savedListFields)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 

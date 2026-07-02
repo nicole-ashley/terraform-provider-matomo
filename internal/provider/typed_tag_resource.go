@@ -74,6 +74,7 @@ func (r *typedTagResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 	common := model.Common()
+	savedListFields := snapshotListFields(model)
 
 	siteID, idContainer, err := parseContainerID(common.ContainerID.ValueString())
 	if err != nil {
@@ -144,6 +145,7 @@ func (r *typedTagResource) Create(ctx context.Context, req resource.CreateReques
 	common.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
 
 	model.FromParams(tag.Parameters)
+	restoreListFields(model, savedListFields)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 

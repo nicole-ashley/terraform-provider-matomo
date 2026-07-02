@@ -84,6 +84,7 @@ func (r *typedVariableResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 	common := model.Common()
+	savedListFields := snapshotListFields(model)
 
 	siteID, idContainer, err := parseContainerID(common.ContainerID.ValueString())
 	if err != nil {
@@ -134,6 +135,7 @@ func (r *typedVariableResource) Create(ctx context.Context, req resource.CreateR
 	common.DefaultValue = variableDefaultValueFromAPI(v.DefaultValue)
 
 	model.FromParams(v.Parameters)
+	restoreListFields(model, savedListFields)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 
