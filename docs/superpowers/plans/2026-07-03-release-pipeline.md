@@ -6,7 +6,7 @@
 
 **Architecture:** `.goreleaser.yml` (built from HashiCorp's own `terraform-provider-scaffolding-framework` template, fetched and verified against the live upstream file rather than assumed) drives the build/archive/checksum/sign/release steps; `.github/workflows/release.yml` triggers it on `v*` tag pushes; a static `terraform-registry-manifest.json` declares the plugin protocol version. No new Go code - this phase only adds config, workflow YAML, and docs.
 
-**Tech Stack:** GoReleaser v2 (consumed via `go tool`, matching this repo's existing `tfplugindocs` pattern), GitHub Actions (`crazy-max/ghaction-import-gpg`, `goreleaser/goreleaser-action`), GPG.
+**Tech Stack:** GoReleaser v2 (installed as a standalone binary via `goreleaser/goreleaser-action` in CI - NOT a `go tool` dependency, see Global Constraints), GitHub Actions (`crazy-max/ghaction-import-gpg`, `goreleaser/goreleaser-action`), GPG.
 
 ## Global Constraints
 
@@ -14,36 +14,35 @@
 - No GPG private key material, passphrase, or any other secret is ever written into the repo. Task 2's release workflow only *references* `secrets.GPG_PRIVATE_KEY` / `secrets.PASSPHRASE` / `secrets.GITHUB_TOKEN` - actually creating those secrets is a manual, one-time step the user performs in GitHub Settings, documented in the spec (`docs/superpowers/specs/2026-07-03-release-pipeline-design.md`, section 5) and referenced, not repeated, from this plan.
 - Actual Terraform Registry submission (public key upload, listing) is out of scope for this plan.
 - Existing repo convention for GitHub Actions dependencies is tag-pinned (`@v4`, `@v5`, `@v7`), not SHA-pinned - follow that convention for consistency with `.github/workflows/ci.yml` and `.github/workflows/acceptance.yml`, even though upstream's own release.yml uses SHA pins.
-- `go tool` is this repo's established pattern for CLI dependencies that aren't imported by any `.go` file (see `go.mod`'s `tool github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs` line and the `GNUmakefile`'s `docs` target) - GoReleaser must be added the same way, not as a bare `go install`.
+- **GoReleaser is NOT a `go tool` dependency, despite this repo's established `go tool` pattern for other CLI dependencies (e.g. `tfplugindocs`).** This was tried and reverted: GoReleaser's own transitive dependencies (`code.gitea.io/sdk/gitea`, `modelcontextprotocol/registry`) require Go >=1.26, which forces this repo's `go.mod` `go` directive to 1.26 - but no released `golangci-lint` build (as of this writing, including the latest) is compiled with Go >=1.26, and `golangci-lint` refuses to analyze a module whose `go` directive is newer than its own build's Go version. That's an unresolvable conflict between the two tools' release cadences. Install GoReleaser as a standalone binary instead: `goreleaser/goreleaser-action@v6` in both CI workflows that need it, and a plain `go install github.com/goreleaser/goreleaser/v2@latest` (an ordinary, non-`-tool` install of a fully-qualified `pkg@version`, which builds in its own isolated module context and does not read or modify this repo's `go.mod`/`go.sum` at all) for local development - never `go get -tool` for GoReleaser specifically, since that's what pulls its dependency tree into this repo's own module graph and forces the `go` directive bump.
 
 ---
 
 ### Task 1: GoReleaser config + registry manifest
 
 **Files:**
-- Modify: `go.mod` (add GoReleaser as a `tool` dependency)
 - Create: `.goreleaser.yml`
 - Create: `terraform-registry-manifest.json`
 - Modify: `GNUmakefile` (add `release-check` and `release-snapshot` targets)
 
 **Interfaces:**
 - Consumes: nothing from other tasks.
-- Produces: `go tool goreleaser` becomes runnable from anywhere in the repo; `make release-check` and `make release-snapshot` become the standard local verification commands, reused in Task 4's full verification pass.
+- Produces: a locally-installed `goreleaser` binary on `PATH`; `make release-check` and `make release-snapshot` become the standard local verification commands, reused in Task 4's full verification pass. `go.mod`/`go.sum` are NOT touched by this task (see Global Constraints - GoReleaser is deliberately not a `go tool` dependency).
 
-- [ ] **Step 1: Add GoReleaser as a go tool dependency**
+- [ ] **Step 1: Install GoReleaser as a standalone binary (not a go tool dependency)**
 
 Run:
 
 ```bash
-go get -tool github.com/goreleaser/goreleaser/v2@latest
+go install github.com/goreleaser/goreleaser/v2@latest
 ```
 
-This adds a `require` line for `github.com/goreleaser/goreleaser/v2` and a second `tool github.com/goreleaser/goreleaser/v2` line to `go.mod` (alongside the existing `tfplugindocs` tool line), and updates `go.sum`.
+This is a plain `go install` of a fully-qualified `pkg@version`, which Go builds in its own isolated module context and does NOT read or modify the current directory's `go.mod`/`go.sum` (confirmed: `git status --short go.mod go.sum` shows no changes after running this from within the repo). The binary lands in `$(go env GOPATH)/bin/goreleaser` - ensure that directory is on `PATH`.
 
-- [ ] **Step 2: Verify the tool resolves**
+- [ ] **Step 2: Verify the binary resolves**
 
-Run: `go tool goreleaser --version`
-Expected: prints a GoReleaser version banner (e.g. `GoReleaser version X.Y.Z`), confirming the module was fetched and builds cleanly. Non-zero exit or a Go compile error means Step 1 didn't complete correctly - re-run `go mod tidy` and retry.
+Run: `goreleaser --version`
+Expected: prints a GoReleaser version banner (`GitVersion:` line, etc.), confirming the binary installed and runs. If `goreleaser: command not found`, `$(go env GOPATH)/bin` isn't on `PATH` - add it (`export PATH="$(go env GOPATH)/bin:$PATH"`) and retry.
 
 - [ ] **Step 3: Create `.goreleaser.yml`**
 
@@ -123,7 +122,7 @@ changelog:
 
 - [ ] **Step 5: Validate the config without building**
 
-Run: `go tool goreleaser check`
+Run: `goreleaser check`
 Expected: `configuration is valid` (or similar success message), exit code 0. If it reports a schema error, the most likely cause is a typo introduced while copying Step 3's YAML - diff it against the block above.
 
 - [ ] **Step 6: Run a snapshot build (no tag, no signing, no publish)**
@@ -131,7 +130,7 @@ Expected: `configuration is valid` (or similar success message), exit code 0. If
 Run:
 
 ```bash
-go tool goreleaser release --snapshot --clean --skip=sign,publish
+goreleaser release --snapshot --clean --skip=sign,publish
 ```
 
 Expected: exits 0, creates a `dist/` directory. `--snapshot` lets GoReleaser run without a git tag present (it fabricates a pseudo-version like `0.1.0-next`); `--skip=sign,publish` avoids needing a GPG key or `GITHUB_TOKEN` for this local check.
@@ -154,11 +153,11 @@ Add to `GNUmakefile` (after the existing `docs` target):
 ```makefile
 .PHONY: release-check
 release-check:
-	go tool goreleaser check
+	goreleaser check
 
 .PHONY: release-snapshot
 release-snapshot:
-	go tool goreleaser release --snapshot --clean --skip=sign,publish
+	goreleaser release --snapshot --clean --skip=sign,publish
 ```
 
 - [ ] **Step 9: Re-run via the new Makefile targets to confirm they work**
@@ -176,9 +175,11 @@ rm -rf dist/
 ```
 
 ```bash
-git add go.mod go.sum .goreleaser.yml terraform-registry-manifest.json GNUmakefile .gitignore
+git add .goreleaser.yml terraform-registry-manifest.json GNUmakefile .gitignore
 git commit -m "Add GoReleaser config and Terraform Registry manifest"
 ```
+
+`go.mod`/`go.sum` should NOT appear in this commit's file list - if they show modifications, something in Steps 1-2 touched them; re-check Step 1's `git status` output before proceeding.
 
 ---
 
@@ -189,12 +190,12 @@ git commit -m "Add GoReleaser config and Terraform Registry manifest"
 - Modify: `.github/workflows/ci.yml` (add a `goreleaser check` step)
 
 **Interfaces:**
-- Consumes: `make release-check` / `go tool goreleaser check` from Task 1 (must already pass before this task's CI step is added, since the new CI step will fail the build otherwise).
+- Consumes: `make release-check` / `goreleaser check` from Task 1 (must already pass before this task's CI step is added, since the new CI step will fail the build otherwise).
 - Produces: a `release` GitHub Actions workflow that fires on `v*` tag pushes; nothing downstream in this plan consumes it further (Task 4 exercises it manually via a scratch tag, not via code).
 
 - [ ] **Step 1: Create `.github/workflows/release.yml`**
 
-Tag-pinned to match this repo's existing convention (`ci.yml` uses `actions/checkout@v4`, `actions/setup-go@v5`):
+Tag-pinned to match this repo's existing convention (`ci.yml` uses `actions/checkout@v4`, `actions/setup-go@v5`). Uses `goreleaser/goreleaser-action`, NOT `go tool goreleaser` - GoReleaser is deliberately not a `go tool` dependency in this repo (see Global Constraints: its transitive deps force Go >=1.26, which no `golangci-lint` release can currently analyze):
 
 ```yaml
 name: Release
@@ -218,19 +219,21 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v7
+        uses: crazy-max/ghaction-import-gpg@v6
         id: import_gpg
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
       - name: Run GoReleaser
-        run: go tool goreleaser release --clean
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 ```
 
-Note this uses `go tool goreleaser` (via `go run`, consistent with Task 1's `go.mod` tool dependency) rather than `goreleaser/goreleaser-action`, since the tool dependency already pins the exact version in `go.sum` - a separate action would need its own independent version pin and could drift out of sync.
+`actions/setup-go` is still needed here even though GoReleaser itself comes from `goreleaser-action`, not `go build`/`go install` - GoReleaser's `before.hooks` runs `go mod tidy`, and its build step cross-compiles this repo's own Go source, both of which need a Go toolchain on `PATH`.
 
 - [ ] **Step 2: Sanity-check the new workflow YAML parses**
 
@@ -244,16 +247,20 @@ Expected: `valid YAML`. This only checks YAML syntax, not GitHub Actions semanti
 
 - [ ] **Step 3: Add a `goreleaser check` step to `ci.yml`**
 
-Modify `.github/workflows/ci.yml`'s `test` job by adding a new step after the existing "Check docs are up to date" step (so any future edit to `.goreleaser.yml` that breaks validation fails fast on every push, not just on a real tag):
+Modify `.github/workflows/ci.yml`'s `test` job: add a `goreleaser/goreleaser-action` step (install-only, no args - just makes the `goreleaser` binary available on `PATH` for the following step) plus a config-check step, both placed after the existing "Check docs are up to date" step (so any future edit to `.goreleaser.yml` that breaks validation fails fast on every push, not just on a real tag):
 
 ```yaml
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
       - name: Check GoReleaser config is valid
-        run: go tool goreleaser check
+        run: goreleaser check
 ```
 
-- [ ] **Step 4: Verify the new CI step locally**
+- [ ] **Step 4: Verify the check command locally**
 
-Run: `go tool goreleaser check`
+Run: `make release-check` (uses the `goreleaser` binary installed in Task 1 Step 1 - CI installs its own copy via `goreleaser-action`, but the command being run, `goreleaser check`, is identical either way).
 Expected: same success output confirmed in Task 1 Step 5 - this just confirms the exact command about to run in CI still passes before pushing.
 
 - [ ] **Step 5: Sanity-check the modified `ci.yml` still parses**

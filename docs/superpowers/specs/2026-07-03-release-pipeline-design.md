@@ -26,7 +26,23 @@ publish.
 
 Follows HashiCorp's standard `terraform-provider-scaffolding-framework`
 template, since it produces exactly the artifact shapes and naming the
-registry's ingestion pipeline expects:
+registry's ingestion pipeline expects.
+
+**Not installed via `go tool`.** This repo's `tfplugindocs` dependency is a
+`go tool` dependency (see `go.mod`), and GoReleaser was initially added the
+same way - but GoReleaser's own transitive dependencies (e.g.
+`code.gitea.io/sdk/gitea`, `modelcontextprotocol/registry`) require Go
+&gt;=1.26, which would force this repo's `go.mod` `go` directive up to 1.26.
+As of this writing, no released version of `golangci-lint` - including the
+latest - is built with Go &gt;=1.26, and `golangci-lint` refuses to analyze a
+module whose `go` directive is newer than the Go version it was itself
+compiled with. That's a hard, unresolvable conflict between the two tools'
+release cadences, not a config mistake. GoReleaser is therefore installed
+as a standalone binary, fully decoupled from this repo's own Go toolchain
+version: via `goreleaser/goreleaser-action` in CI (both the release
+workflow and the `ci.yml` config-check step), and via GoReleaser's own
+official install script/binary release for local development (see
+`https://goreleaser.com/install/`).
 
 - **Build matrix**: goos `{freebsd, windows, linux, darwin}` x goarch
   `{amd64, 386, arm, arm64}`, minus two combinations HashiCorp's own template
@@ -153,14 +169,16 @@ registry publication.
   config, and docs only), so there's nothing to unit-test.
 - Verification is: push a test tag (e.g. `v0.0.1-test1`) to a scratch branch
   or the real repo, confirm the `release` workflow runs green and produces a
-  GitHub Release with all expected artifacts (11 zips, SHA256SUMS,
+  GitHub Release with all expected artifacts (13 zips, SHA256SUMS,
   SHA256SUMS.sig, manifest.json), then actually walk through the private
   filesystem-mirror guide against that release to confirm `terraform init`
   and a basic `plan` succeed against a signed, downloaded artifact (not a
   local build).
 - `goreleaser check` (validates `.goreleaser.yml` syntax without building)
   can run in regular CI (`ci.yml`) as a fast sanity check on every push,
-  independent of the tag-gated release workflow itself.
+  independent of the tag-gated release workflow itself, using the same
+  `goreleaser-action`-installed binary described in section 2 below - not a
+  `go tool` dependency (see that section for why).
 
 ## 8. Repo layout additions
 
