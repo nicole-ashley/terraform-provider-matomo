@@ -77,7 +77,7 @@ func (r *customDimensionResource) Schema(_ context.Context, _ resource.SchemaReq
 			},
 			"index": schema.Int64Attribute{
 				Required:    true,
-				Description: "The dimension's slot number within its scope. You choose this; Matomo does not support picking a slot on creation, so Create verifies the slot it assigns matches this value.",
+				Description: "The dimension's slot number within its scope (1-based, sequential per site+scope). Matomo assigns slots automatically in creation order rather than letting you pick one; declare the index you expect this dimension to land on (typically the next free slot for this scope), and Create verifies Matomo actually assigned that slot, failing loudly if it didn't (e.g. something else claimed the slot first).",
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},

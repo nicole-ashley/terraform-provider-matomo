@@ -43,6 +43,7 @@ func (r *tagManagerVariableResource) Metadata(_ context.Context, req resource.Me
 
 func (r *tagManagerVariableResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "A generic Tag Manager variable, configured with untyped name/value parameter pairs. Use this only for variable types that don't have their own dedicated matomo_tagmanager_variable_<type> resource (e.g. a third-party-plugin-contributed type, or a type newer than this provider's last regeneration) - every built-in Matomo variable type has a typed resource with real, validated fields; see the matomo_tagmanager_variable_types data source to check what's available.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
