@@ -141,10 +141,10 @@ Run: `ls dist/*.zip | wc -l`
 Expected: `13` - the actual valid Go cross-compile targets (confirmed via `go tool dist list`, since `darwin/arm` and `windows/arm` are not real Go build targets at all, making the corresponding .goreleaser.yml ignore entries defensive/vestigial rather than load-bearing): freebsd x4 (386, amd64, arm, arm64), windows x3 (386, amd64, arm64), linux x4 (386, amd64, arm, arm64), darwin x2 (amd64, arm64) = 4+3+4+2 = 13.
 
 Run: `ls dist/ | grep -E 'SHA256SUMS$|manifest.json$'`
-Expected: two lines - `terraform-provider-matomo_0.1.0-next_SHA256SUMS` (or similar snapshot-versioned name) and `terraform-provider-matomo_0.1.0-next_manifest.json`.
+Expected: one line - `terraform-provider-matomo_0.0.0-SNAPSHOT-<commit>_SHA256SUMS` only. With `--skip=publish`, GoReleaser does NOT duplicate `checksum.extra_files`/`release.extra_files` entries (like `terraform-registry-manifest.json`) into `dist/` under a versioned name - that copy happens as part of the upload/publish step, which is disabled here. This is expected, not a bug.
 
-Run: `cat dist/terraform-provider-matomo_*_manifest.json`
-Expected: contents identical to Step 4's `terraform-registry-manifest.json` (GoReleaser copies it through under the versioned name), confirming the `release.extra_files` / `checksum.extra_files` wiring is correct.
+Run: `grep manifest.json dist/terraform-provider-matomo_*_SHA256SUMS`
+Expected: one line, a checksum for `terraform-provider-matomo_<version>_manifest.json` - proving the file was read from its repo-root path and hashed correctly even though it isn't duplicated into `dist/` locally. The full real-release behavior (an actual `..._manifest.json` file attached to the GitHub Release) is confirmed by Task 4's live scratch-tag test, which runs without `--skip=publish`.
 
 - [ ] **Step 8: Add Makefile convenience targets**
 
@@ -420,7 +420,7 @@ Run:
 make release-snapshot
 ls dist/*.zip | wc -l          # expect 13
 ls dist/ | grep SHA256SUMS     # expect exactly one file
-ls dist/ | grep manifest.json  # expect exactly one file
+grep manifest.json dist/terraform-provider-matomo_*_SHA256SUMS  # expect one checksum line (see Task 1 Step 7 - the file itself isn't duplicated into dist/ under --skip=publish)
 unzip -l dist/terraform-provider-matomo_*_linux_amd64.zip
 ```
 
