@@ -139,7 +139,7 @@ Expected: exits 0, creates a `dist/` directory. `--snapshot` lets GoReleaser run
 - [ ] **Step 7: Confirm the artifact set**
 
 Run: `ls dist/*.zip | wc -l`
-Expected: `14` (the 14 build targets from the matrix: freebsd x4, windows x2 (386, amd64, arm64), linux x4, darwin x3 (amd64, arm, arm64) = 4+3+4+3 = 14).
+Expected: `13` - the actual valid Go cross-compile targets (confirmed via `go tool dist list`, since `darwin/arm` and `windows/arm` are not real Go build targets at all, making the corresponding .goreleaser.yml ignore entries defensive/vestigial rather than load-bearing): freebsd x4 (386, amd64, arm, arm64), windows x3 (386, amd64, arm64), linux x4 (386, amd64, arm, arm64), darwin x2 (amd64, arm64) = 4+3+4+2 = 13.
 
 Run: `ls dist/ | grep -E 'SHA256SUMS$|manifest.json$'`
 Expected: two lines - `terraform-provider-matomo_0.1.0-next_SHA256SUMS` (or similar snapshot-versioned name) and `terraform-provider-matomo_0.1.0-next_manifest.json`.
@@ -411,7 +411,7 @@ Run:
 
 ```bash
 make release-snapshot
-ls dist/*.zip | wc -l          # expect 14
+ls dist/*.zip | wc -l          # expect 13
 ls dist/ | grep SHA256SUMS     # expect exactly one file
 ls dist/ | grep manifest.json  # expect exactly one file
 unzip -l dist/terraform-provider-matomo_*_linux_amd64.zip
@@ -431,7 +431,7 @@ git push origin v0.0.1-test1
 ```
 
 Then check the `release` workflow run in GitHub Actions.
-Expected: green run, producing a GitHub Release named `v0.0.1-test1` with 14 zips, one `SHA256SUMS`, one `SHA256SUMS.sig`, and one `manifest.json` attached.
+Expected: green run, producing a GitHub Release named `v0.0.1-test1` with 13 zips, one `SHA256SUMS`, one `SHA256SUMS.sig`, and one `manifest.json` attached.
 
 - [ ] **Step 4: Walk through the private-testing guide against the real release**
 

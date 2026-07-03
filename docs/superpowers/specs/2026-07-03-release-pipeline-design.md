@@ -31,10 +31,14 @@ registry's ingestion pipeline expects:
 - **Build matrix**: goos `{freebsd, windows, linux, darwin}` x goarch
   `{amd64, 386, arm, arm64}`, minus two combinations HashiCorp's own template
   ignores (`darwin/386`, `windows/arm`) - i.e. `freebsd` and `linux` each get
-  all 4 arches, `darwin` gets `amd64`/`arm`/`arm64`, `windows` gets
-  `386`/`amd64`/`arm64`. 14 total build targets. Verified against the live
-  `.goreleaser.yml` in `hashicorp/terraform-provider-scaffolding-framework`
-  rather than assumed, since this exact ignore list is easy to misremember.
+  all 4 arches, `darwin` gets `amd64`/`arm64`, `windows` gets
+  `386`/`amd64`/`arm64`. `darwin/arm` and `windows/arm` aren't valid Go
+  cross-compile targets at all (confirmed via `go tool dist list`), so the
+  `windows/arm` ignore entry is defensive/vestigial rather than
+  load-proportional - 13 total build targets in practice (4+3+4+2). Verified
+  against the live `.goreleaser.yml` in
+  `hashicorp/terraform-provider-scaffolding-framework` rather than assumed,
+  since this exact ignore list is easy to misremember.
 - `CGO_ENABLED=0` (GoReleaser cross-compilation doesn't support CGO).
 - Binaries are built with `-trimpath` and `-ldflags="-s -w -X
   main.version={{.Version}} -X main.commit={{.Commit}}"`, consistent with
