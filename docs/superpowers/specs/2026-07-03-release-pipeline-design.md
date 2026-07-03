@@ -28,14 +28,19 @@ Follows HashiCorp's standard `terraform-provider-scaffolding-framework`
 template, since it produces exactly the artifact shapes and naming the
 registry's ingestion pipeline expects:
 
-- **Build matrix**: `darwin` (amd64, arm64), `freebsd` (386, amd64, arm,
-  arm64), `linux` (386, amd64, arm, arm64), `windows` (386, amd64, arm) - the
-  standard HashiCorp combination (11 total build targets; `arm` on Windows
-  omits `arm64` and freebsd includes it, matching the upstream template
-  exactly rather than a naive cross product).
-- Binaries are built with `-ldflags="-X main.version={{.Version}} -X
-  main.commit={{.Commit}}"`, consistent with `main.go`'s existing `var
-  version = "dev"`.
+- **Build matrix**: goos `{freebsd, windows, linux, darwin}` x goarch
+  `{amd64, 386, arm, arm64}`, minus two combinations HashiCorp's own template
+  ignores (`darwin/386`, `windows/arm`) - i.e. `freebsd` and `linux` each get
+  all 4 arches, `darwin` gets `amd64`/`arm`/`arm64`, `windows` gets
+  `386`/`amd64`/`arm64`. 14 total build targets. Verified against the live
+  `.goreleaser.yml` in `hashicorp/terraform-provider-scaffolding-framework`
+  rather than assumed, since this exact ignore list is easy to misremember.
+- `CGO_ENABLED=0` (GoReleaser cross-compilation doesn't support CGO).
+- Binaries are built with `-trimpath` and `-ldflags="-s -w -X
+  main.version={{.Version}} -X main.commit={{.Commit}}"`, consistent with
+  `main.go`'s existing `var version = "dev"`, and named
+  `{{.ProjectName}}_v{{.Version}}` (no os/arch suffix on the binary itself -
+  only the zip filename carries that).
 - **Archives**: one zip per build target, named
   `terraform-provider-matomo_{{.Version}}_{{.Os}}_{{.Arch}}.zip`, containing
   just the binary and `LICENSE`.
