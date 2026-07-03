@@ -36,3 +36,4 @@ go.work.sum
 
 # subagent-driven-development scratch state
 .superpowers/
+dist/
