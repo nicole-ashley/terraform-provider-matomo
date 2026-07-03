@@ -76,10 +76,10 @@ func (r *customDimensionResource) Schema(_ context.Context, _ resource.SchemaReq
 				},
 			},
 			"index": schema.Int64Attribute{
-				Required:    true,
-				Description: "The dimension's slot number within its scope. You choose this; Matomo does not support picking a slot on creation, so Create verifies the slot it assigns matches this value.",
+				Computed:    true,
+				Description: "The dimension's slot number within its scope (1-based, sequential per site+scope), known only after apply. Matomo assigns slots automatically in creation order; there is no way to request a specific slot. To bring an existing dimension at a known slot under management, use `terraform import` instead (e.g. `terraform import matomo_custom_dimension.example \"site_id/scope/index\"`).",
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 			"scope": schema.StringAttribute{
@@ -129,7 +129,6 @@ func (r *customDimensionResource) Create(ctx context.Context, req resource.Creat
 		resp.Diagnostics.AddError("Invalid site_id", err.Error())
 		return
 	}
-	declaredIndex := int(plan.Index.ValueInt64())
 	scope := plan.Scope.ValueString()
 	name := plan.Name.ValueString()
 	active := true
@@ -137,65 +136,40 @@ func (r *customDimensionResource) Create(ctx context.Context, req resource.Creat
 		active = plan.Active.ValueBool()
 	}
 
-	existing, err := r.client.GetConfiguredCustomDimensions(ctx, siteID)
+	// index is Computed-only: Matomo assigns the next free slot for this
+	// site+scope automatically, with no way to request a specific one.
+	// Bringing an existing dimension at a known slot under management is
+	// a `terraform import` operation instead (see Read(), which already
+	// populates every field, including index, purely from the imported
+	// composite id - no config-declared index is ever needed for that).
+	configureNewCustomDimensionMu.Lock()
+	newID, err := r.client.ConfigureNewCustomDimension(ctx, siteID, name, scope, active)
+	var afterCreate []matomo.CustomDimension
+	if err == nil {
+		afterCreate, err = r.client.GetConfiguredCustomDimensions(ctx, siteID)
+	}
+	configureNewCustomDimensionMu.Unlock()
 	if err != nil {
-		resp.Diagnostics.AddError("Error listing Matomo custom dimensions", err.Error())
+		resp.Diagnostics.AddError("Error creating Matomo custom dimension", err.Error())
 		return
 	}
-
-	var match *matomo.CustomDimension
-	for i := range existing {
-		if existing[i].Index == declaredIndex && existing[i].Scope == scope {
-			match = &existing[i]
+	var created *matomo.CustomDimension
+	for i := range afterCreate {
+		if afterCreate[i].ID == newID {
+			created = &afterCreate[i]
 			break
 		}
 	}
-
-	if match != nil {
-		if err := r.client.ConfigureExistingCustomDimension(ctx, match.ID, siteID, name, active); err != nil {
-			resp.Diagnostics.AddError("Error adopting existing Matomo custom dimension", err.Error())
-			return
-		}
-	} else {
-		configureNewCustomDimensionMu.Lock()
-		newID, err := r.client.ConfigureNewCustomDimension(ctx, siteID, name, scope, active)
-		var afterCreate []matomo.CustomDimension
-		if err == nil {
-			afterCreate, err = r.client.GetConfiguredCustomDimensions(ctx, siteID)
-		}
-		configureNewCustomDimensionMu.Unlock()
-		if err != nil {
-			resp.Diagnostics.AddError("Error creating Matomo custom dimension", err.Error())
-			return
-		}
-		var created *matomo.CustomDimension
-		for i := range afterCreate {
-			if afterCreate[i].ID == newID {
-				created = &afterCreate[i]
-				break
-			}
-		}
-		if created == nil {
-			resp.Diagnostics.AddError(
-				"Custom dimension not found after creation",
-				fmt.Sprintf("Matomo reported creating dimension id %d, but it was not found when listing configured custom dimensions for site %d.", newID, siteID),
-			)
-			return
-		}
-		if created.Index != declaredIndex {
-			resp.Diagnostics.AddError(
-				"Custom dimension slot mismatch",
-				fmt.Sprintf(
-					"Declared index %d for scope %q, but Matomo assigned slot %d instead (the next free slot was not %d — likely because a lower slot was consumed outside Terraform). "+
-						"Slot %d has already been created in Matomo and cannot be deleted via its API; either declare index = %d for this resource, or bring slot %d under management with its own matomo_custom_dimension resource.",
-					declaredIndex, scope, created.Index, declaredIndex, created.Index, created.Index, created.Index,
-				),
-			)
-			return
-		}
+	if created == nil {
+		resp.Diagnostics.AddError(
+			"Custom dimension not found after creation",
+			fmt.Sprintf("Matomo reported creating dimension id %d, but it was not found when listing configured custom dimensions for site %d.", newID, siteID),
+		)
+		return
 	}
 
-	plan.ID = types.StringValue(buildDimensionID(siteID, scope, declaredIndex))
+	plan.ID = types.StringValue(buildDimensionID(siteID, scope, created.Index))
+	plan.Index = types.Int64Value(int64(created.Index))
 	plan.Active = types.BoolValue(active)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }

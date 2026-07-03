@@ -54,6 +54,7 @@ func (r *tagManagerTagResource) Metadata(_ context.Context, req resource.Metadat
 
 func (r *tagManagerTagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "A generic Tag Manager tag, configured with untyped name/value parameter pairs. Use this only for tag types that don't have their own dedicated matomo_tagmanager_tag_<type> resource (e.g. a third-party-plugin-contributed type, or a type newer than this provider's last regeneration) - every built-in Matomo tag type has a typed resource with real, validated fields; see the matomo_tagmanager_tag_types data source to check what's available.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
