@@ -16,6 +16,14 @@ lint:
 docs:
 	go tool tfplugindocs generate
 
+.PHONY: release-check
+release-check:
+	go tool goreleaser check
+
+.PHONY: release-snapshot
+release-snapshot:
+	go tool goreleaser release --snapshot --clean --skip=sign,publish
+
 .PHONY: fmt
 fmt:
 	gofmt -s -w .
