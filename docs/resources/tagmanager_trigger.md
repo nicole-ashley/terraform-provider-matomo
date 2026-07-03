@@ -3,12 +3,12 @@
 page_title: "matomo_tagmanager_trigger Resource - terraform-provider-matomo"
 subcategory: ""
 description: |-
-  
+  A generic Tag Manager trigger, configured with untyped name/value parameter pairs. Use this only for trigger types that don't have their own dedicated matomo_tagmanager_trigger_ resource (e.g. a third-party-plugin-contributed type, or a type newer than this provider's last regeneration) - every built-in Matomo trigger type has a typed resource with real, validated fields; see the matomo_tagmanager_trigger_types data source to check what's available.
 ---
 
 # matomo_tagmanager_trigger (Resource)
 
-
+A generic Tag Manager trigger, configured with untyped name/value parameter pairs. Use this only for trigger types that don't have their own dedicated matomo_tagmanager_trigger_<type> resource (e.g. a third-party-plugin-contributed type, or a type newer than this provider's last regeneration) - every built-in Matomo trigger type has a typed resource with real, validated fields; see the matomo_tagmanager_trigger_types data source to check what's available.
 
 ## Example Usage
 

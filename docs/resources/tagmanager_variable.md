@@ -3,12 +3,12 @@
 page_title: "matomo_tagmanager_variable Resource - terraform-provider-matomo"
 subcategory: ""
 description: |-
-  
+  A generic Tag Manager variable, configured with untyped name/value parameter pairs. Use this only for variable types that don't have their own dedicated matomo_tagmanager_variable_ resource (e.g. a third-party-plugin-contributed type, or a type newer than this provider's last regeneration) - every built-in Matomo variable type has a typed resource with real, validated fields; see the matomo_tagmanager_variable_types data source to check what's available.
 ---
 
 # matomo_tagmanager_variable (Resource)
 
-
+A generic Tag Manager variable, configured with untyped name/value parameter pairs. Use this only for variable types that don't have their own dedicated matomo_tagmanager_variable_<type> resource (e.g. a third-party-plugin-contributed type, or a type newer than this provider's last regeneration) - every built-in Matomo variable type has a typed resource with real, validated fields; see the matomo_tagmanager_variable_types data source to check what's available.
 
 ## Example Usage
 
