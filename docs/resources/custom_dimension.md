@@ -26,7 +26,6 @@ resource "matomo_custom_dimension" "user_type" {
 
 ### Required
 
-- `index` (Number) The dimension's slot number within its scope. You choose this; Matomo does not support picking a slot on creation, so Create verifies the slot it assigns matches this value.
 - `name` (String) The dimension's display name.
 - `scope` (String) "visit" or "action".
 - `site_id` (String) The owning site's id (matomo_site.x.id).
@@ -38,3 +37,4 @@ resource "matomo_custom_dimension" "user_type" {
 ### Read-Only
 
 - `id` (String) Composite "site_id/scope/index".
+- `index` (Number) The dimension's slot number within its scope (1-based, sequential per site+scope), known only after apply. Matomo assigns slots automatically in creation order; there is no way to request a specific slot. To bring an existing dimension at a known slot under management, use `terraform import` instead (e.g. `terraform import matomo_custom_dimension.example "site_id/scope/index"`).
