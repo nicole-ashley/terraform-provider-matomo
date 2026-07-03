@@ -18,11 +18,11 @@ docs:
 
 .PHONY: release-check
 release-check:
-	go tool goreleaser check
+	goreleaser check
 
 .PHONY: release-snapshot
 release-snapshot:
-	go tool goreleaser release --snapshot --clean --skip=sign,publish
+	goreleaser release --snapshot --clean --skip=sign,publish
 
 .PHONY: fmt
 fmt:

@@ -23,8 +23,12 @@ jobs:
           make docs
           git add -A -- docs/
           git diff --cached --exit-code -- docs/ || (echo "::error::docs/ is out of date - run 'make docs' and commit the result" && exit 1)
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
       - name: Check GoReleaser config is valid
-        run: go tool goreleaser check
+        run: goreleaser check
 
   lint:
     runs-on: ubuntu-latest
