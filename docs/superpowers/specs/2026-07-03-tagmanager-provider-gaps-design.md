@@ -99,7 +99,7 @@ it - built-in identifiers like `PagePath` and user-defined
 makes sense paired against "expected," and reads unclearly as a standalone
 Terraform attribute name.
 
-## 4. Built-in variable catalog, validation, and reference data source
+## 4. Built-in variable catalog and reference data source
 
 Matomo ships 68 built-in "pre-configured" variables
 (`Template/Variable/PreConfigured/*.php`) usable as a trigger condition's
@@ -108,6 +108,18 @@ valid - confirmed to exist as a real, distinct catalog from the
 user-instantiable variable types this provider already generates typed
 resources for (they live in a separate subdirectory, and are never
 user-creatable resources - they're always available, like a global constant).
+
+**No validation is added against this catalog.** `variable` stays an
+unvalidated string, same as `actual` is today. Reasoning (corrected during
+spec review): a fixed `OneOf` list sourced only from Matomo core's own
+repository would incorrectly reject two classes of legitimate value it
+doesn't know about - a third-party plugin can contribute its own
+pre-configured variables beyond Matomo core's 68, and `variable` can also
+reference any user-created `matomo_tagmanager_variable*` resource by name via
+`{{Name}}`, which is inherently open-ended and can never be enumerated ahead
+of time. The catalog and its data source (below) exist purely so the *known*
+built-in names are discoverable and referenceable without memorizing exact
+casing - not as a completeness gate on what's valid.
 
 **Investigation task (before finalizing the exact list):** the file-name-derived
 candidate identifiers need confirming against live Matomo, for two things:
@@ -149,50 +161,36 @@ the parent directory, which is not itself a selectable variable type) rather
 than real selectable types - the investigation task must confirm and exclude
 them if so, leaving 66 real entries.
 
-Once confirmed, two things get built:
+Once confirmed, a new data source, `matomo_tagmanager_builtin_variable` (final
+name TBD in the plan), exposes each catalog entry as a named, `Computed`
+string attribute (snake_case name -> the real PascalCase identifier), purely
+so users get real editor autocomplete - Terraform's plugin protocol has no
+enum concept at all, so a validator would be invisible to any static tooling
+anyway (confirmed: autocomplete only works for known resource/attribute names
+and cross-resource references, never validator-constrained string values). A
+reference to a *known schema attribute*, by contrast, is exactly what editor
+autocomplete already handles correctly:
 
-1. **Validation** on the `variable` attribute (both generic and typed trigger
-   conditions), matching this provider's existing `stringvalidator.OneOf`
-   pattern (`resource_custom_dimension.go:89`):
-   ```go
-   Validators: []validator.String{
-       stringvalidator.Any(
-           stringvalidator.OneOf(/* confirmed 68 identifiers */),
-           stringvalidator.RegexMatches(regexp.MustCompile(`^\{\{.+\}\}$`), "must be a {{Variable}} macro reference"),
-       ),
-   },
-   ```
-   This catches typos at `terraform plan` time instead of a condition silently
-   never matching at runtime with no error at all - the strongest argument for
-   building this.
+```hcl
+data "matomo_tagmanager_builtin_variable" "this" {}
 
-2. **A new data source**, `matomo_tagmanager_builtin_variable` (final name TBD
-   in the plan), exposing each catalog entry as a named, `Computed` string
-   attribute (snake_case name -> the real PascalCase identifier), purely so
-   users get real editor autocomplete - Terraform's plugin protocol has no
-   enum concept at all, so a `OneOf` validator is invisible to any static
-   tooling (confirmed: autocomplete only works for known resource/attribute
-   names and cross-resource references, never validator-constrained string
-   values). A reference to a *known schema attribute*, by contrast, is exactly
-   what editor autocomplete already handles correctly:
-   ```hcl
-   data "matomo_tagmanager_builtin_variable" "this" {}
+resource "matomo_tagmanager_trigger_pageview" "example" {
+  # ...
+  condition {
+    comparison = "equals"
+    variable   = data.matomo_tagmanager_builtin_variable.this.page_path
+    value      = "/checkout"
+  }
+}
+```
 
-   resource "matomo_tagmanager_trigger_pageview" "example" {
-     # ...
-     condition {
-       comparison = "equals"
-       variable   = data.matomo_tagmanager_builtin_variable.this.page_path
-       value      = "/checkout"
-     }
-   }
-   ```
-   `variable = data.matomo_tagmanager_builtin_variable.this.page_path` and
-   `variable = "PagePath"` are wire-identical - this is purely a
-   discoverability layer, not new capability. Documentation must show *both*
-   forms (bare string literal, and the data-source reference), since the
-   verbosity tradeoff is a real, user-facing decision, not something this
-   design should make on the user's behalf.
+`variable = data.matomo_tagmanager_builtin_variable.this.page_path` and
+`variable = "PagePath"` are wire-identical - this is purely a discoverability
+layer, not new capability, and not a completeness/correctness gate (see
+above - it must not reject anything `variable` accepts today). Documentation
+must show *both* forms (bare string literal, and the data-source reference),
+since the verbosity tradeoff is a real, user-facing decision, not something
+this design should make on the user's behalf.
 
 ## 5. List-of-object parameters
 
@@ -341,9 +339,8 @@ fields is identical (section 5.3) - this investigation only affects whether
   kinds per this provider's existing convention).
 - Unit tests for the new `ParamValue.ListOfObjects` wire encoding/decoding in
   `formencoding.go`, and for `wrapSingleKeyParam`.
-- The `variable` validator and the new builtin-variable data source get
-  ordinary acceptance-test coverage once section 4's investigation confirms
-  the final catalog.
+- The new builtin-variable data source gets ordinary acceptance-test coverage
+  once section 4's investigation confirms the final catalog.
 
 ## 7. Out of scope
 
