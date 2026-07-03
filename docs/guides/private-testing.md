@@ -71,8 +71,10 @@ provider "matomo" {
 ```
 
 Run `terraform init`. Terraform will read the binary straight from the
-mirror instead of contacting the registry, while verifying it against the
-release's checksums exactly as it would for a registry-hosted provider.
+mirror instead of contacting the registry, computing its own hash of the
+binary and recording it in `.terraform.lock.hcl` on first install (unlike a
+real registry install, a filesystem mirror does not fetch `SHA256SUMS` or
+verify the GPG signature - it trusts whatever's on disk at that path).
 There is no `dev_overrides` block and no special provider source syntax
 here - the configuration above is identical to what you'd write once the
 provider is actually published, so nothing needs to change later.
