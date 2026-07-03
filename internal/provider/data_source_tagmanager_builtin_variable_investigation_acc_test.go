@@ -8,7 +8,7 @@ import (
 // Throwaway investigation, not a real test - deleted once its output
 // confirms or corrects the candidate built-in variable list this plan's
 // Task 2 depends on. See docs/superpowers/plans/2026-07-03-builtin-variable-datasource.md.
-func TestInvestigateBuiltinVariables(t *testing.T) {
+func TestAccInvestigateBuiltinVariables(t *testing.T) {
 	testAccPreCheck(t)
 	client := testAccMatomoClient(t)
 

@@ -88,7 +88,7 @@ import (
 // Throwaway investigation, not a real test - deleted once its output
 // confirms or corrects the candidate built-in variable list this plan's
 // Task 2 depends on. See docs/superpowers/plans/2026-07-03-builtin-variable-datasource.md.
-func TestInvestigateBuiltinVariables(t *testing.T) {
+func TestAccInvestigateBuiltinVariables(t *testing.T) {
 	testAccPreCheck(t)
 	client := testAccMatomoClient(t)
 
@@ -109,7 +109,7 @@ way by the release-actions acceptance tests for out-of-band verification.)
 - [ ] **Step 2: Run it and capture the output**
 
 This requires a live Matomo instance - run via this repo's normal acceptance
-workflow (`TF_ACC=1 go test ./internal/provider/... -run TestInvestigateBuiltinVariables -v`
+workflow (`TF_ACC=1 go test ./internal/provider/... -run TestAccInvestigateBuiltinVariables -v`
 against the docker-compose fixture, or via CI if run locally is unavailable).
 Expected: a log line per variable type Matomo's discovery API returns for the
 "web" context.
