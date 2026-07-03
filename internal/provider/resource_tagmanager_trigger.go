@@ -30,7 +30,7 @@ type tagManagerTriggerResource struct {
 
 type triggerConditionModel struct {
 	Comparison types.String `tfsdk:"comparison"`
-	Actual     types.String `tfsdk:"actual"`
+	Actual     types.String `tfsdk:"variable"`
 	Value      types.String `tfsdk:"value"`
 }
 
@@ -92,7 +92,7 @@ func (r *tagManagerTriggerResource) Schema(_ context.Context, _ resource.SchemaR
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"comparison": schema.StringAttribute{Required: true},
-						"actual":     schema.StringAttribute{Required: true, Description: "A Matomo \"actual value\" identifier (e.g. \"url_path\") or a variable macro reference (e.g. \"{{My Variable}}\")."},
+						"variable":   schema.StringAttribute{Required: true, Description: "A reference to a Matomo built-in variable (e.g. \"PagePath\" - see the matomo_tagmanager_builtin_variable data source) or a user-defined variable macro (e.g. \"{{My Variable}}\")."},
 						"value":      schema.StringAttribute{Required: true},
 					},
 				},
