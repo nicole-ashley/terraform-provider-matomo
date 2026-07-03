@@ -26,7 +26,6 @@ resource "matomo_site" "test" {
 
 resource "matomo_custom_dimension" "test" {
   site_id = matomo_site.test.id
-  index   = 1
   scope   = "visit"
   name    = "Acceptance Test Dimension"
 }
@@ -34,6 +33,7 @@ resource "matomo_custom_dimension" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("matomo_custom_dimension.test", "name", "Acceptance Test Dimension"),
 					resource.TestCheckResourceAttr("matomo_custom_dimension.test", "active", "true"),
+					resource.TestCheckResourceAttrSet("matomo_custom_dimension.test", "index"),
 				),
 			},
 			{
@@ -47,7 +47,6 @@ resource "matomo_site" "test" {
 
 resource "matomo_custom_dimension" "test" {
   site_id = matomo_site.test.id
-  index   = 1
   scope   = "visit"
   name    = "Acceptance Test Dimension Renamed"
 }
@@ -75,7 +74,6 @@ resource "matomo_site" "test" {
 
 resource "matomo_custom_dimension" "test" {
   site_id = matomo_site.test.id
-  index   = 1
   scope   = "action"
   name    = "Acceptance Import Dimension"
 }
@@ -107,7 +105,6 @@ resource "matomo_site" "test" {
 
 resource "matomo_custom_dimension" "test" {
   site_id = matomo_site.test.id
-  index   = 1
   scope   = "visit"
   name    = "Acceptance Disappears Dimension"
   active  = true
@@ -158,14 +155,12 @@ resource "matomo_site" "test" {
 
 resource "matomo_custom_dimension" "visit_dim" {
   site_id = matomo_site.test.id
-  index   = 1
   scope   = "visit"
   name    = "Visit Dimension"
 }
 
 resource "matomo_custom_dimension" "action_dim" {
   site_id = matomo_site.test.id
-  index   = 1
   scope   = "action"
   name    = "Action Dimension"
 }
