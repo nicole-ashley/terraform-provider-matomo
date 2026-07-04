@@ -19,6 +19,27 @@ type TemplateParam struct {
 	Condition       string            `json:"condition"`
 	DefaultValue    any               `json:"defaultValue"`
 	AvailableValues map[string]string `json:"availableValues"`
+	// UIControl and UIControlAttributes are only populated for a handful
+	// of presentation hints - the one this provider cares about is
+	// "multituple" (Piwik\Settings\FieldConfig::UI_CONTROL_MULTI_TUPLE),
+	// Matomo's real wire shape for a "list of rows, each a named set of
+	// string sub-fields" parameter (e.g. customDimensions' {index, value}
+	// pairs). Confirmed generically exposed by the live discovery API,
+	// not just for one hard-coded field - UIControlAttributes' "field1",
+	// "field2", etc. keys give each row's real sub-field name via their
+	// own nested "key" property, letting tools/gen auto-detect this shape
+	// and its exact row keys instead of needing a hand-curated override
+	// table (see tools/gen/spec.go's multiTupleRowKeys).
+	UIControl           string                    `json:"uiControl"`
+	UIControlAttributes map[string]UIControlField `json:"uiControlAttributes"`
+}
+
+// UIControlField is one "fieldN" entry of a UI_CONTROL_MULTI_TUPLE
+// parameter's uiControlAttributes - only Key (the row's real sub-field
+// name, e.g. "index") matters to this provider; every other key
+// Matomo returns here is presentation-only and not captured.
+type UIControlField struct {
+	Key string `json:"key"`
 }
 
 // Template describes one Tag Manager tag/trigger/variable type, as

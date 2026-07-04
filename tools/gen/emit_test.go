@@ -224,3 +224,92 @@ func TestRenderSchema_listParamsUseNativeArrayEncoding(t *testing.T) {
 		t.Errorf("generated source still comma-joins a List param; full source:\n%s", got)
 	}
 }
+
+// TestRenderSchema_listOfObjectsAndSingleKeyList exercises both auto-detected
+// MULTI_TUPLE shapes end-to-end through the real emitter and template - a
+// two-key ListOfObjects parameter (mirroring the real customDimensions,
+// confirmed generically exposed via live CI) and a one-key SingleKeyName
+// parameter (mirroring the real domains) on the same synthetic type. Since
+// RenderSchema gofmt's its output, a template bug that produces invalid Go
+// (mismatched braces, a bad field reference, etc.) fails this test even
+// without a live Matomo instance.
+func TestRenderSchema_listOfObjectsAndSingleKeyList(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "variable",
+		TypeID:       "MultiTupleExample",
+		Slug:         "multituplexample",
+		ResourceName: "matomo_tagmanager_variable_multituplexample",
+		Description:  "exercises ListOfObjects and single-key List param wire encoding",
+		Params: []ParamSpec{
+			{
+				MatomoName: "customDimensions", TFName: "custom_dimensions", GoFieldName: "CustomDimensions",
+				Description: "Custom dimensions", GoType: "List", Required: false,
+				IsListOfObjects: true,
+				BlockName:       "custom_dimension",
+				RowKeys: []RowKeySpec{
+					{MatomoKey: "index", TFName: "index", GoFieldName: "Index"},
+					{MatomoKey: "value", TFName: "value", GoFieldName: "Value"},
+				},
+			},
+			{
+				MatomoName: "domains", TFName: "domains", GoFieldName: "Domains",
+				Description: "Domains", GoType: "List", Required: false,
+				SingleKeyName: "domain",
+			},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "variable_multituplexample.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		"type variableMultituplexampleCustomDimensionModel struct {",
+		`"custom_dimension": schema.ListNestedBlock{`,
+		`"index": schema.StringAttribute{`,
+		`"value": schema.StringAttribute{`,
+		"rows := make([]map[string]string, len(m.CustomDimensions))",
+		"rows[i] = map[string]string{",
+		`p["customDimensions"] = matomo.ListOfObjectsParam(rows)`,
+		`p["domains"] = matomo.WrapSingleKeyParam("domain", stringSliceFromModel(m.Domains))`,
+		"m.CustomDimensions = make([]variableMultituplexampleCustomDimensionModel, len(v.ListOfObjects))",
+		"vals := make([]string, len(v.ListOfObjects))",
+		`vals[i] = row["domain"]`,
+		"m.Domains = paramListValue(vals)",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+
+	// gofmt column-aligns struct field declarations and map-literal
+	// key/value pairs, so the amount of whitespace varies with sibling
+	// widths - match loosely with regexps instead of literal substrings
+	// (same reasoning as TestRenderSchema_parsesAsValidGo above).
+	for _, wantPattern := range []string{
+		`CustomDimensions\s+\[\]variableMultituplexampleCustomDimensionModel\s+` + "`tfsdk:\"custom_dimension\"`",
+		`Domains\s+\[\]types\.String\s+` + "`tfsdk:\"domains\"`",
+		`"index":\s+row\.Index\.ValueString\(\),`,
+		`"value":\s+row\.Value\.ValueString\(\),`,
+		`Index:\s+types\.StringValue\(row\["index"\]\),`,
+		`Value:\s+types\.StringValue\(row\["value"\]\),`,
+	} {
+		if !regexp.MustCompile(wantPattern).MatchString(got) {
+			t.Errorf("generated source missing pattern %q; full source:\n%s", wantPattern, got)
+		}
+	}
+
+	if strings.Contains(got, "ListParam(stringSliceFromModel(m.Domains))") {
+		t.Errorf("domains still uses plain ListParam instead of WrapSingleKeyParam; full source:\n%s", got)
+	}
+	if strings.Contains(got, `"custom_dimensions": schema.ListAttribute{`) {
+		t.Errorf("customDimensions should not appear as a flat Attributes entry (it moved to Blocks); full source:\n%s", got)
+	}
+}

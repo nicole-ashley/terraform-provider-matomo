@@ -129,6 +129,116 @@ func TestBuildTypeSpec_conditionallyRequired(t *testing.T) {
 	}
 }
 
+// TestBuildTypeSpec_multiTupleDetection mirrors the real customDimensions
+// parameter confirmed via live CI (uiControl="multituple",
+// uiControlAttributes.field1.key="index", field2.key="value") - two row
+// keys means a real ListOfObjects nested block, not a flat list.
+func TestBuildTypeSpec_multiTupleDetection(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "MatomoConfiguration",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "customDimensions", Type: "array",
+				UIControl: "multituple",
+				UIControlAttributes: map[string]matomo.UIControlField{
+					"field1": {Key: "index"},
+					"field2": {Key: "value"},
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("variable", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if !p.IsListOfObjects {
+		t.Fatal("customDimensions.IsListOfObjects = false, want true")
+	}
+	if p.SingleKeyName != "" {
+		t.Errorf("customDimensions.SingleKeyName = %q, want empty", p.SingleKeyName)
+	}
+	if p.BlockName != "custom_dimension" {
+		t.Errorf("customDimensions.BlockName = %q, want custom_dimension", p.BlockName)
+	}
+	if len(p.RowKeys) != 2 {
+		t.Fatalf("len(customDimensions.RowKeys) = %d, want 2", len(p.RowKeys))
+	}
+	if p.RowKeys[0] != (RowKeySpec{MatomoKey: "index", TFName: "index", GoFieldName: "Index"}) {
+		t.Errorf("customDimensions.RowKeys[0] = %+v, want {index index Index}", p.RowKeys[0])
+	}
+	if p.RowKeys[1] != (RowKeySpec{MatomoKey: "value", TFName: "value", GoFieldName: "Value"}) {
+		t.Errorf("customDimensions.RowKeys[1] = %+v, want {value value Value}", p.RowKeys[1])
+	}
+}
+
+// TestBuildTypeSpec_singleKeyMultiTuple mirrors the real domains
+// parameter: also UI_CONTROL_MULTI_TUPLE, but with only one row key - it
+// stays a flat List (no nested block), only its wire encoding differs.
+func TestBuildTypeSpec_singleKeyMultiTuple(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "MatomoConfiguration",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "domains", Type: "array",
+				UIControl: "multituple",
+				UIControlAttributes: map[string]matomo.UIControlField{
+					"field1": {Key: "domain"},
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("variable", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if p.IsListOfObjects {
+		t.Error("domains.IsListOfObjects = true, want false")
+	}
+	if p.GoType != "List" {
+		t.Errorf("domains.GoType = %q, want List", p.GoType)
+	}
+	if p.SingleKeyName != "domain" {
+		t.Errorf("domains.SingleKeyName = %q, want domain", p.SingleKeyName)
+	}
+}
+
+// TestBuildTypeSpec_consentTypesKeyOverride mirrors the real consentTypes
+// parameter, confirming rowKeyNameOverrides renames its raw
+// consent_type/consent_state wire keys to the shorter type/state
+// Terraform-facing names per this project's naming decision, without
+// changing the wire key used in RowKeySpec.MatomoKey.
+func TestBuildTypeSpec_consentTypesKeyOverride(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "GoogleConsentModeV2",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "consentTypes", Type: "array",
+				UIControl: "multituple",
+				UIControlAttributes: map[string]matomo.UIControlField{
+					"field1": {Key: "consent_type"},
+					"field2": {Key: "consent_state"},
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("tag", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if p.RowKeys[0] != (RowKeySpec{MatomoKey: "consent_type", TFName: "type", GoFieldName: "Type"}) {
+		t.Errorf("consentTypes.RowKeys[0] = %+v, want {consent_type type Type}", p.RowKeys[0])
+	}
+	if p.RowKeys[1] != (RowKeySpec{MatomoKey: "consent_state", TFName: "state", GoFieldName: "State"}) {
+		t.Errorf("consentTypes.RowKeys[1] = %+v, want {consent_state state State}", p.RowKeys[1])
+	}
+}
+
 func TestBuildTypeSpec_conditionallyRequiredWithoutCondition(t *testing.T) {
 	// A parameter listed in conditionallyRequiredParams but with no
 	// `condition` string from Matomo's API is a data-entry mistake in

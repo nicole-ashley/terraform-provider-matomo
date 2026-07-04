@@ -48,3 +48,48 @@ func ExportedName(s string) string {
 	}
 	return string(r)
 }
+
+// SnakeToPascal converts a snake_case word (as used for a ListOfObjects
+// row key, e.g. "consent_type") into an exported Go identifier
+// ("ConsentType"), for use as a generated row struct field name. Unlike
+// ExportedName (which only capitalizes an already-camelCase Matomo
+// parameter name's first letter), this also removes underscores and
+// capitalizes the letter after each one.
+func SnakeToPascal(s string) string {
+	var b strings.Builder
+	for _, part := range strings.Split(s, "_") {
+		b.WriteString(ExportedName(part))
+	}
+	return b.String()
+}
+
+// singularIrregulars holds the plural->singular mappings that plain
+// trailing-"s" stripping gets wrong. Only "data"->"datum" is known to
+// occur in a Matomo UI_CONTROL_MULTI_TUPLE parameter name today
+// (MatomoConfiguration's customData) - add further entries here if a
+// future field needs one, rather than teaching Singularize new grammar
+// rules for a single word.
+var singularIrregulars = map[string]string{
+	"data": "datum",
+}
+
+// Singularize converts a plural snake_case word (as used in a generated
+// Terraform attribute name, e.g. "custom_dimensions") into its singular
+// form ("custom_dimension"), for naming the nested block a
+// UI_CONTROL_MULTI_TUPLE list-of-objects parameter's rows live under -
+// this project's convention names the block after one row, not the list
+// (see docs/superpowers/plans/2026-07-03-list-of-object-parameters.md).
+// Only the last underscore-separated word is singularized, so a
+// multi-word attribute name like "custom_dimensions" correctly becomes
+// "custom_dimension", not some other word in the name getting mangled.
+func Singularize(s string) string {
+	i := strings.LastIndex(s, "_")
+	prefix, last := "", s
+	if i >= 0 {
+		prefix, last = s[:i+1], s[i+1:]
+	}
+	if singular, ok := singularIrregulars[last]; ok {
+		return prefix + singular
+	}
+	return prefix + strings.TrimSuffix(last, "s")
+}

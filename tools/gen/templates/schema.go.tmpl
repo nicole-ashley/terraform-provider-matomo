@@ -27,10 +27,22 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
+{{- range .Params}}
+{{- if .IsListOfObjects}}
+type {{$.GoModelBaseName}}{{pascal .BlockName}}Model struct {
+{{- range .RowKeys}}
+	{{.GoFieldName}} types.String `tfsdk:"{{.TFName}}"`
+{{- end}}
+}
+{{- end}}
+{{- end}}
+
 type {{.GoModelName}} struct {
 	{{.CommonTypeName}}
 {{- range .Params}}
-{{- if eq .GoType "List"}}
+{{- if .IsListOfObjects}}
+	{{.GoFieldName}} []{{$.GoModelBaseName}}{{pascal .BlockName}}Model `tfsdk:"{{.BlockName}}"`
+{{- else if eq .GoType "List"}}
 	{{.GoFieldName}} []types.String `tfsdk:"{{.TFName}}"`
 {{- else}}
 	{{.GoFieldName}} types.{{.GoType}} `tfsdk:"{{.TFName}}"`
@@ -93,6 +105,7 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 			},
 {{- end}}
 {{- range .Params}}
+{{- if not .IsListOfObjects}}
 			{{printf "%q" .TFName}}: schema.{{.GoType}}Attribute{
 {{- if eq .GoType "List"}}
 				ElementType: types.StringType,
@@ -131,7 +144,28 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 {{- end}}
 			},
 {{- end}}
+{{- end}}
 		},
+{{- if .HasListOfObjectsBlocks}}
+		Blocks: map[string]schema.Block{
+{{- range .Params}}
+{{- if .IsListOfObjects}}
+			{{printf "%q" .BlockName}}: schema.ListNestedBlock{
+				Description: {{printf "%q" .Description}},
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+{{- range .RowKeys}}
+						{{printf "%q" .TFName}}: schema.StringAttribute{
+							Required: true,
+						},
+{{- end}}
+					},
+				},
+			},
+{{- end}}
+{{- end}}
+		},
+{{- end}}
 	}
 }
 
@@ -151,12 +185,31 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 {{- range .Params}}
 {{- if .Required}}
-{{- if eq .GoType "String"}}
+{{- if .IsListOfObjects}}
+	{
+		rows := make([]map[string]string, len({{$.GoModelReceiver}}.{{.GoFieldName}}))
+		for i, row := range {{$.GoModelReceiver}}.{{.GoFieldName}} {
+			rows[i] = map[string]string{
+{{- range .RowKeys}}
+				{{printf "%q" .MatomoKey}}: row.{{.GoFieldName}}.ValueString(),
+{{- end}}
+			}
+		}
+		p[{{printf "%q" .MatomoName}}] = matomo.ListOfObjectsParam(rows)
+	}
+{{- else if .SingleKeyName}}
+	p[{{printf "%q" .MatomoName}}] = matomo.WrapSingleKeyParam({{printf "%q" .SingleKeyName}}, stringSliceFromModel({{$.GoModelReceiver}}.{{.GoFieldName}}))
+{{- else if eq .GoType "String"}}
 	p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueString())
 {{- else if eq .GoType "Bool"}}
 	p[{{printf "%q" .MatomoName}}] = matomo.ScalarParam(paramBoolString({{$.GoModelReceiver}}.{{.GoFieldName}}.ValueBool()))
@@ -168,7 +221,23 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() matomo.ParamsMap {
 	p[{{printf "%q" .MatomoName}}] = matomo.ListParam(stringSliceFromModel({{$.GoModelReceiver}}.{{.GoFieldName}}))
 {{- end}}
 {{- else}}
-{{- if eq .GoType "List"}}
+{{- if .IsListOfObjects}}
+	if {{$.GoModelReceiver}}.{{.GoFieldName}} != nil {
+		rows := make([]map[string]string, len({{$.GoModelReceiver}}.{{.GoFieldName}}))
+		for i, row := range {{$.GoModelReceiver}}.{{.GoFieldName}} {
+			rows[i] = map[string]string{
+{{- range .RowKeys}}
+				{{printf "%q" .MatomoKey}}: row.{{.GoFieldName}}.ValueString(),
+{{- end}}
+			}
+		}
+		p[{{printf "%q" .MatomoName}}] = matomo.ListOfObjectsParam(rows)
+	}
+{{- else if .SingleKeyName}}
+	if {{$.GoModelReceiver}}.{{.GoFieldName}} != nil {
+		p[{{printf "%q" .MatomoName}}] = matomo.WrapSingleKeyParam({{printf "%q" .SingleKeyName}}, stringSliceFromModel({{$.GoModelReceiver}}.{{.GoFieldName}}))
+	}
+{{- else if eq .GoType "List"}}
 	if {{$.GoModelReceiver}}.{{.GoFieldName}} != nil {
 		p[{{printf "%q" .MatomoName}}] = matomo.ListParam(stringSliceFromModel({{$.GoModelReceiver}}.{{.GoFieldName}}))
 	}
@@ -201,7 +270,24 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() matomo.ParamsMap {
 func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p matomo.ParamsMap) {
 {{- range .Params}}
 {{- if .Required}}
-{{- if eq .GoType "String"}}
+{{- if .IsListOfObjects}}
+	{{$.GoModelReceiver}}.{{.GoFieldName}} = make([]{{$.GoModelBaseName}}{{pascal .BlockName}}Model, len(p[{{printf "%q" .MatomoName}}].ListOfObjects))
+	for i, row := range p[{{printf "%q" .MatomoName}}].ListOfObjects {
+		{{$.GoModelReceiver}}.{{.GoFieldName}}[i] = {{$.GoModelBaseName}}{{pascal .BlockName}}Model{
+{{- range .RowKeys}}
+			{{.GoFieldName}}: types.StringValue(row[{{printf "%q" .MatomoKey}}]),
+{{- end}}
+		}
+	}
+{{- else if .SingleKeyName}}
+	{
+		vals := make([]string, len(p[{{printf "%q" .MatomoName}}].ListOfObjects))
+		for i, row := range p[{{printf "%q" .MatomoName}}].ListOfObjects {
+			vals[i] = row[{{printf "%q" .SingleKeyName}}]
+		}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(vals)
+	}
+{{- else if eq .GoType "String"}}
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.StringValue(p[{{printf "%q" .MatomoName}}].Scalar)
 {{- else if eq .GoType "Bool"}}
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = types.BoolValue(paramBoolValue(p[{{printf "%q" .MatomoName}}].Scalar))
@@ -212,6 +298,30 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p matomo.ParamsMap) {
 {{- else if eq .GoType "List"}}
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(p[{{printf "%q" .MatomoName}}].List)
 {{- end}}
+{{- else}}
+{{- if .IsListOfObjects}}
+	if v, ok := p[{{printf "%q" .MatomoName}}]; ok {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = make([]{{$.GoModelBaseName}}{{pascal .BlockName}}Model, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			{{$.GoModelReceiver}}.{{.GoFieldName}}[i] = {{$.GoModelBaseName}}{{pascal .BlockName}}Model{
+{{- range .RowKeys}}
+				{{.GoFieldName}}: types.StringValue(row[{{printf "%q" .MatomoKey}}]),
+{{- end}}
+			}
+		}
+	} else {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = nil
+	}
+{{- else if .SingleKeyName}}
+	if v, ok := p[{{printf "%q" .MatomoName}}]; ok {
+		vals := make([]string, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			vals[i] = row[{{printf "%q" .SingleKeyName}}]
+		}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(vals)
+	} else {
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = nil
+	}
 {{- else}}
 	if v, ok := p[{{printf "%q" .MatomoName}}]; ok {
 {{- if eq .GoType "String"}}
@@ -236,6 +346,7 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p matomo.ParamsMap) {
 		{{$.GoModelReceiver}}.{{.GoFieldName}} = nil
 {{- end}}
 	}
+{{- end}}
 {{- end}}
 {{- end}}
 }

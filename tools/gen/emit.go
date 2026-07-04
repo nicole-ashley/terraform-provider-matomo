@@ -71,6 +71,18 @@ type templateData struct {
 	NeedsBoolPlanModifierImport    bool
 	NeedsInt64PlanModifierImport   bool
 	NeedsFloat64PlanModifierImport bool
+	// GoModelBaseName is GoModelName without its "Model" suffix
+	// (spec.Kind + ExportedName(spec.Slug), e.g.
+	// "variableMatomoconfiguration") - the prefix a ListOfObjects
+	// parameter's generated row struct type name is built from (e.g.
+	// "variableMatomoconfigurationCustomDimensionModel"), matching this
+	// file's existing unexported-struct naming convention.
+	GoModelBaseName string
+	// HasListOfObjectsBlocks is true when at least one parameter is
+	// IsListOfObjects - the generated Schema() only emits a Blocks: map
+	// when this is true, since a type with no such parameter has nothing
+	// to put there.
+	HasListOfObjectsBlocks bool
 }
 
 func newTemplateData(spec TypeSpec) templateData {
@@ -85,6 +97,7 @@ func newTemplateData(spec TypeSpec) templateData {
 		}
 	}
 	var needsBoolPM, needsInt64PM, needsFloat64PM bool
+	var hasListOfObjectsBlocks bool
 	for _, p := range spec.Params {
 		if !p.Required {
 			switch p.GoType {
@@ -95,6 +108,9 @@ func newTemplateData(spec TypeSpec) templateData {
 			case "Float64":
 				needsFloat64PM = true
 			}
+		}
+		if p.IsListOfObjects {
+			hasListOfObjectsBlocks = true
 		}
 	}
 	return templateData{
@@ -110,6 +126,8 @@ func newTemplateData(spec TypeSpec) templateData {
 		NeedsBoolPlanModifierImport:    needsBoolPM,
 		NeedsInt64PlanModifierImport:   needsInt64PM,
 		NeedsFloat64PlanModifierImport: needsFloat64PM,
+		GoModelBaseName:                spec.Kind + ExportedName(spec.Slug),
+		HasListOfObjectsBlocks:         hasListOfObjectsBlocks,
 	}
 }
 
@@ -118,7 +136,7 @@ var schemaTemplateFS embed.FS
 
 var schemaTemplate = template.Must(
 	template.New("schema.go.tmpl").
-		Funcs(template.FuncMap{"renderCondition": renderCondition, "lower": strings.ToLower}).
+		Funcs(template.FuncMap{"renderCondition": renderCondition, "lower": strings.ToLower, "pascal": SnakeToPascal}).
 		ParseFS(schemaTemplateFS, "templates/schema.go.tmpl"),
 )
 
