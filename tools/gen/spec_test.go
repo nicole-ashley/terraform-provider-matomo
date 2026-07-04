@@ -2,10 +2,24 @@
 package main
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
+
+// rawUIField builds the json.RawMessage form of a matomo.UIControlField
+// {"key": key}, matching the real shape multiTupleRowKeys decodes -
+// UIControlAttributes is map[string]json.RawMessage precisely because
+// not every UIControl kind's attribute values share this shape (see
+// TemplateParam's doc comment).
+func rawUIField(key string) json.RawMessage {
+	b, err := json.Marshal(matomo.UIControlField{Key: key})
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
 
 func TestBuildTypeSpec(t *testing.T) {
 	tmpl := matomo.Template{
@@ -140,9 +154,9 @@ func TestBuildTypeSpec_multiTupleDetection(t *testing.T) {
 			{
 				Name: "customDimensions", Type: "array",
 				UIControl: "multituple",
-				UIControlAttributes: map[string]matomo.UIControlField{
-					"field1": {Key: "index"},
-					"field2": {Key: "value"},
+				UIControlAttributes: map[string]json.RawMessage{
+					"field1": rawUIField("index"),
+					"field2": rawUIField("value"),
 				},
 			},
 		},
@@ -183,8 +197,8 @@ func TestBuildTypeSpec_singleKeyMultiTuple(t *testing.T) {
 			{
 				Name: "domains", Type: "array",
 				UIControl: "multituple",
-				UIControlAttributes: map[string]matomo.UIControlField{
-					"field1": {Key: "domain"},
+				UIControlAttributes: map[string]json.RawMessage{
+					"field1": rawUIField("domain"),
 				},
 			},
 		},
@@ -218,9 +232,9 @@ func TestBuildTypeSpec_consentTypesKeyOverride(t *testing.T) {
 			{
 				Name: "consentTypes", Type: "array",
 				UIControl: "multituple",
-				UIControlAttributes: map[string]matomo.UIControlField{
-					"field1": {Key: "consent_type"},
-					"field2": {Key: "consent_state"},
+				UIControlAttributes: map[string]json.RawMessage{
+					"field1": rawUIField("consent_type"),
+					"field2": rawUIField("consent_state"),
 				},
 			},
 		},
@@ -236,6 +250,40 @@ func TestBuildTypeSpec_consentTypesKeyOverride(t *testing.T) {
 	}
 	if p.RowKeys[1] != (RowKeySpec{MatomoKey: "consent_state", TFName: "state", GoFieldName: "State"}) {
 		t.Errorf("consentTypes.RowKeys[1] = %+v, want {consent_state state State}", p.RowKeys[1])
+	}
+}
+
+// TestBuildTypeSpec_nonMultiTupleUIControlAttributesShape is a regression
+// test for a real failure hit against live CI: some other UIControl kind
+// (confirmed to be UI_CONTROL_SINGLE_SELECT, a different, unrelated
+// presentation hint per the design spec's section 4) has at least one
+// uiControlAttributes value that is a plain JSON string, not an object
+// with a "key" field - decoding every parameter's uiControlAttributes
+// eagerly as map[string]matomo.UIControlField broke discovery for every
+// type at once with "cannot unmarshal string into ... UIControlField".
+// BuildTypeSpec must never touch UIControlAttributes at all unless
+// UIControl == "multituple" first.
+func TestBuildTypeSpec_nonMultiTupleUIControlAttributesShape(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "GoogleConsentModeV2",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "consentAction", Type: "string",
+				UIControl: "singleselect",
+				UIControlAttributes: map[string]json.RawMessage{
+					"formats": json.RawMessage(`"some plain string value"`),
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("tag", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if p.IsListOfObjects || p.SingleKeyName != "" {
+		t.Errorf("consentAction (UIControl=singleselect, GoType=String) should never reach multiTupleRowKeys - got IsListOfObjects=%v SingleKeyName=%q", p.IsListOfObjects, p.SingleKeyName)
 	}
 }
 

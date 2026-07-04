@@ -2,6 +2,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -59,11 +60,15 @@ type RowKeySpec struct {
 // real field order, so this scans sequentially instead and stops at the
 // first missing fieldN, which also naturally excludes any non-field
 // keys a future Matomo version might add alongside field1/field2).
-func multiTupleRowKeys(attrs map[string]matomo.UIControlField) []string {
+func multiTupleRowKeys(attrs map[string]json.RawMessage) []string {
 	var keys []string
 	for i := 1; ; i++ {
-		field, ok := attrs[fmt.Sprintf("field%d", i)]
+		raw, ok := attrs[fmt.Sprintf("field%d", i)]
 		if !ok {
+			break
+		}
+		var field matomo.UIControlField
+		if err := json.Unmarshal(raw, &field); err != nil || field.Key == "" {
 			break
 		}
 		keys = append(keys, field.Key)

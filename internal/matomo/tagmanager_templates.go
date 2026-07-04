@@ -2,6 +2,7 @@ package matomo
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 )
 
@@ -30,8 +31,20 @@ type TemplateParam struct {
 	// own nested "key" property, letting tools/gen auto-detect this shape
 	// and its exact row keys instead of needing a hand-curated override
 	// table (see tools/gen/spec.go's multiTupleRowKeys).
-	UIControl           string                    `json:"uiControl"`
-	UIControlAttributes map[string]UIControlField `json:"uiControlAttributes"`
+	//
+	// UIControlAttributes' value shape is NOT uniform across every
+	// UIControl kind - confirmed against a live discovery run across
+	// every type: UI_CONTROL_SINGLE_SELECT (a different, unrelated
+	// presentation hint - see the design spec's section 4) has at least
+	// one attribute whose value is a plain JSON string, not an object
+	// with a "key" field, which fails a map[string]UIControlField decode
+	// outright. Kept as raw JSON here and only decoded into
+	// UIControlField where actually needed (multiTupleRowKeys, gated on
+	// UIControl == "multituple" first) so a UIControl kind this provider
+	// doesn't otherwise care about can never break discovery for every
+	// type at once.
+	UIControl           string                     `json:"uiControl"`
+	UIControlAttributes map[string]json.RawMessage `json:"uiControlAttributes"`
 }
 
 // UIControlField is one "fieldN" entry of a UI_CONTROL_MULTI_TUPLE
