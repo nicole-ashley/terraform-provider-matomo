@@ -29,12 +29,13 @@ type tagManagerVariableResource struct {
 }
 
 type tagManagerVariableResourceModel struct {
-	ID           types.String        `tfsdk:"id"`
-	ContainerID  types.String        `tfsdk:"container_id"`
-	Type         types.String        `tfsdk:"type"`
-	Name         types.String        `tfsdk:"name"`
-	DefaultValue types.String        `tfsdk:"default_value"`
-	Parameter    []tagParameterModel `tfsdk:"parameter"`
+	ID            types.String         `tfsdk:"id"`
+	ContainerID   types.String         `tfsdk:"container_id"`
+	Type          types.String         `tfsdk:"type"`
+	Name          types.String         `tfsdk:"name"`
+	DefaultValue  types.String         `tfsdk:"default_value"`
+	Parameter     []tagParameterModel  `tfsdk:"parameter"`
+	ParameterList []parameterListModel `tfsdk:"parameter_list"`
 }
 
 func (r *tagManagerVariableResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -86,6 +87,30 @@ func (r *tagManagerVariableResource) Schema(_ context.Context, _ resource.Schema
 					},
 				},
 			},
+			"parameter_list": schema.ListNestedBlock{
+				Description: "A single named parameter whose value is a list of rows, each with arbitrary key/value items - for parameter types the generic parameter{} block cannot represent (e.g. Matomo's UI_CONTROL_MULTI_TUPLE fields, which need each row's fields sent as name[i][key]=value, not a flat list). Prefer a typed resource over this when one exists for your type - a typed resource's real nested block (e.g. custom_dimension{index,value}) is validated and self-documenting; this generic form is not.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Required: true},
+					},
+					Blocks: map[string]schema.Block{
+						"row": schema.ListNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Blocks: map[string]schema.Block{
+									"item": schema.ListNestedBlock{
+										NestedObject: schema.NestedBlockObject{
+											Attributes: map[string]schema.Attribute{
+												"key":   schema.StringAttribute{Required: true},
+												"value": schema.StringAttribute{Required: true},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -127,10 +152,15 @@ func (r *tagManagerVariableResource) Create(ctx context.Context, req resource.Cr
 		defaultValue = &v
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	idVariable, err := r.client.AddContainerVariable(ctx, siteID, idContainer, versionID, matomo.VariableParams{
 		Type:         plan.Type.ValueString(),
 		Name:         plan.Name.ValueString(),
-		Parameters:   parametersToMap(plan.Parameter),
+		Parameters:   params,
 		DefaultValue: defaultValue,
 	})
 	if err != nil {
@@ -195,6 +225,7 @@ func (r *tagManagerVariableResource) Read(ctx context.Context, req resource.Read
 		return params[i].Name.ValueString() < params[j].Name.ValueString()
 	})
 	state.Parameter = params
+	state.ParameterList = parameterListsFromAPI(v.Parameters)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -224,10 +255,15 @@ func (r *tagManagerVariableResource) Update(ctx context.Context, req resource.Up
 		defaultValue = &v
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	if err := r.client.UpdateContainerVariable(ctx, siteID, idContainer, versionID, idVariable, matomo.VariableParams{
 		Type:         plan.Type.ValueString(),
 		Name:         plan.Name.ValueString(),
-		Parameters:   parametersToMap(plan.Parameter),
+		Parameters:   params,
 		DefaultValue: defaultValue,
 	}); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager variable", err.Error())

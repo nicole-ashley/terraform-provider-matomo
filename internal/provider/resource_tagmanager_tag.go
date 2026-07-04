@@ -38,14 +38,15 @@ type tagParameterModel struct {
 }
 
 type tagManagerTagResourceModel struct {
-	ID              types.String        `tfsdk:"id"`
-	ContainerID     types.String        `tfsdk:"container_id"`
-	Type            types.String        `tfsdk:"type"`
-	Name            types.String        `tfsdk:"name"`
-	Status          types.String        `tfsdk:"status"`
-	FireTriggerIDs  []types.String      `tfsdk:"fire_trigger_ids"`
-	BlockTriggerIDs []types.String      `tfsdk:"block_trigger_ids"`
-	Parameter       []tagParameterModel `tfsdk:"parameter"`
+	ID              types.String         `tfsdk:"id"`
+	ContainerID     types.String         `tfsdk:"container_id"`
+	Type            types.String         `tfsdk:"type"`
+	Name            types.String         `tfsdk:"name"`
+	Status          types.String         `tfsdk:"status"`
+	FireTriggerIDs  []types.String       `tfsdk:"fire_trigger_ids"`
+	BlockTriggerIDs []types.String       `tfsdk:"block_trigger_ids"`
+	Parameter       []tagParameterModel  `tfsdk:"parameter"`
+	ParameterList   []parameterListModel `tfsdk:"parameter_list"`
 }
 
 func (r *tagManagerTagResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -116,6 +117,30 @@ func (r *tagManagerTagResource) Schema(_ context.Context, _ resource.SchemaReque
 					},
 				},
 			},
+			"parameter_list": schema.ListNestedBlock{
+				Description: "A single named parameter whose value is a list of rows, each with arbitrary key/value items - for parameter types the generic parameter{} block cannot represent (e.g. Matomo's UI_CONTROL_MULTI_TUPLE fields, which need each row's fields sent as name[i][key]=value, not a flat list). Prefer a typed resource over this when one exists for your type - a typed resource's real nested block (e.g. custom_dimension{index,value}) is validated and self-documenting; this generic form is not.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Required: true},
+					},
+					Blocks: map[string]schema.Block{
+						"row": schema.ListNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Blocks: map[string]schema.Block{
+									"item": schema.ListNestedBlock{
+										NestedObject: schema.NestedBlockObject{
+											Attributes: map[string]schema.Attribute{
+												"key":   schema.StringAttribute{Required: true},
+												"value": schema.StringAttribute{Required: true},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -155,6 +180,79 @@ func paramValueDisplayString(v matomo.ParamValue) string {
 		return strings.Join(v.List, ",")
 	}
 	return v.Scalar
+}
+
+// parameterListModel is the generic resources' equivalent of a typed
+// resource's real nested block (e.g. custom_dimension{index,value}) - since
+// the generic resources have no per-type knowledge of a parameter's real
+// row shape, each row is a generic list of key/value items rather than
+// named attributes.
+type parameterListModel struct {
+	Name types.String        `tfsdk:"name"`
+	Row  []parameterRowModel `tfsdk:"row"`
+}
+
+type parameterRowModel struct {
+	Item []parameterItemModel `tfsdk:"item"`
+}
+
+type parameterItemModel struct {
+	Key   types.String `tfsdk:"key"`
+	Value types.String `tfsdk:"value"`
+}
+
+// parameterListsToMap builds the ListOfObjects-shaped entries of a
+// Tag/Trigger/Variable's "parameters" map from the generic parameter_list
+// blocks - the counterpart to parametersToMap, which only builds scalar
+// entries from the plain parameter{} blocks.
+func parameterListsToMap(lists []parameterListModel) matomo.ParamsMap {
+	m := make(matomo.ParamsMap, len(lists))
+	for _, pl := range lists {
+		rows := make([]map[string]string, len(pl.Row))
+		for i, row := range pl.Row {
+			r := make(map[string]string, len(row.Item))
+			for _, item := range row.Item {
+				r[item.Key.ValueString()] = item.Value.ValueString()
+			}
+			rows[i] = r
+		}
+		m[pl.Name.ValueString()] = matomo.ListOfObjectsParam(rows)
+	}
+	return m
+}
+
+// parameterListsFromAPI extracts every ListOfObjects-shaped entry of params
+// back into parameter_list blocks, sorting each row's items by key
+// alphabetically for deterministic state (Matomo's own response has no
+// inherent key order within a row, since it's decoded from a JSON object).
+func parameterListsFromAPI(params matomo.ParamsMap) []parameterListModel {
+	var lists []parameterListModel
+	names := make([]string, 0, len(params))
+	for name := range params {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		val := params[name]
+		if !val.IsListOfObjects() {
+			continue
+		}
+		rows := make([]parameterRowModel, len(val.ListOfObjects))
+		for i, row := range val.ListOfObjects {
+			keys := make([]string, 0, len(row))
+			for k := range row {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			items := make([]parameterItemModel, len(keys))
+			for j, k := range keys {
+				items[j] = parameterItemModel{Key: types.StringValue(k), Value: types.StringValue(row[k])}
+			}
+			rows[i] = parameterRowModel{Item: items}
+		}
+		lists = append(lists, parameterListModel{Name: types.StringValue(name), Row: rows})
+	}
+	return lists
 }
 
 func stringSliceFromModel(in []types.String) []string {
@@ -211,10 +309,15 @@ func (r *tagManagerTagResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	idTag, err := r.client.AddContainerTag(ctx, siteID, idContainer, versionID, matomo.TagParams{
 		Type:            plan.Type.ValueString(),
 		Name:            plan.Name.ValueString(),
-		Parameters:      parametersToMap(plan.Parameter),
+		Parameters:      params,
 		FireTriggerIDs:  fireIDs,
 		BlockTriggerIDs: blockIDs,
 	})
@@ -292,6 +395,7 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 		return params[i].Name.ValueString() < params[j].Name.ValueString()
 	})
 	state.Parameter = params
+	state.ParameterList = parameterListsFromAPI(tag.Parameters)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -326,10 +430,15 @@ func (r *tagManagerTagResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	if err := r.client.UpdateContainerTag(ctx, siteID, idContainer, versionID, idTag, matomo.TagParams{
 		Type:            plan.Type.ValueString(),
 		Name:            plan.Name.ValueString(),
-		Parameters:      parametersToMap(plan.Parameter),
+		Parameters:      params,
 		FireTriggerIDs:  fireIDs,
 		BlockTriggerIDs: blockIDs,
 	}); err != nil {

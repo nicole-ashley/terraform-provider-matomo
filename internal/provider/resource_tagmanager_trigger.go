@@ -35,12 +35,13 @@ type triggerConditionModel struct {
 }
 
 type tagManagerTriggerResourceModel struct {
-	ID          types.String            `tfsdk:"id"`
-	ContainerID types.String            `tfsdk:"container_id"`
-	Type        types.String            `tfsdk:"type"`
-	Name        types.String            `tfsdk:"name"`
-	Parameter   []tagParameterModel     `tfsdk:"parameter"`
-	Condition   []triggerConditionModel `tfsdk:"condition"`
+	ID            types.String            `tfsdk:"id"`
+	ContainerID   types.String            `tfsdk:"container_id"`
+	Type          types.String            `tfsdk:"type"`
+	Name          types.String            `tfsdk:"name"`
+	Parameter     []tagParameterModel     `tfsdk:"parameter"`
+	ParameterList []parameterListModel    `tfsdk:"parameter_list"`
+	Condition     []triggerConditionModel `tfsdk:"condition"`
 }
 
 func (r *tagManagerTriggerResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -84,6 +85,30 @@ func (r *tagManagerTriggerResource) Schema(_ context.Context, _ resource.SchemaR
 					Attributes: map[string]schema.Attribute{
 						"name":  schema.StringAttribute{Required: true},
 						"value": schema.StringAttribute{Required: true},
+					},
+				},
+			},
+			"parameter_list": schema.ListNestedBlock{
+				Description: "A single named parameter whose value is a list of rows, each with arbitrary key/value items - for parameter types the generic parameter{} block cannot represent (e.g. Matomo's UI_CONTROL_MULTI_TUPLE fields, which need each row's fields sent as name[i][key]=value, not a flat list). Prefer a typed resource over this when one exists for your type - a typed resource's real nested block (e.g. custom_dimension{index,value}) is validated and self-documenting; this generic form is not.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Required: true},
+					},
+					Blocks: map[string]schema.Block{
+						"row": schema.ListNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Blocks: map[string]schema.Block{
+									"item": schema.ListNestedBlock{
+										NestedObject: schema.NestedBlockObject{
+											Attributes: map[string]schema.Attribute{
+												"key":   schema.StringAttribute{Required: true},
+												"value": schema.StringAttribute{Required: true},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -156,10 +181,15 @@ func (r *tagManagerTriggerResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	idTrigger, err := r.client.AddContainerTrigger(ctx, siteID, idContainer, versionID, matomo.TriggerParams{
 		Type:       plan.Type.ValueString(),
 		Name:       plan.Name.ValueString(),
-		Parameters: parametersToMap(plan.Parameter),
+		Parameters: params,
 		Conditions: conditionsToParams(plan.Condition),
 	})
 	if err != nil {
@@ -224,6 +254,7 @@ func (r *tagManagerTriggerResource) Read(ctx context.Context, req resource.ReadR
 		return params[i].Name.ValueString() < params[j].Name.ValueString()
 	})
 	state.Parameter = params
+	state.ParameterList = parameterListsFromAPI(trig.Parameters)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -247,10 +278,15 @@ func (r *tagManagerTriggerResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	if err := r.client.UpdateContainerTrigger(ctx, siteID, idContainer, versionID, idTrigger, matomo.TriggerParams{
 		Type:       plan.Type.ValueString(),
 		Name:       plan.Name.ValueString(),
-		Parameters: parametersToMap(plan.Parameter),
+		Parameters: params,
 		Conditions: conditionsToParams(plan.Condition),
 	}); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager trigger", err.Error())
