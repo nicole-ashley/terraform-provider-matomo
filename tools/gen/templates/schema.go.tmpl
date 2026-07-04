@@ -26,12 +26,15 @@ import (
 {{- if .NeedsTypesImport}}
 	"github.com/hashicorp/terraform-plugin-framework/types"
 {{- end}}
+{{- if .NeedsAttrImport}}
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+{{- end}}
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 {{- range .Params}}
-{{- if .IsListOfObjects}}
+{{- if and .IsListOfObjects (not .AsAttribute)}}
 type {{$.GoModelBaseName}}{{pascal .BlockName}}Model struct {
 {{- range .RowKeys}}
 	{{.GoFieldName}} types.String `tfsdk:"{{.TFName}}"`
@@ -44,7 +47,11 @@ type {{.GoModelName}} struct {
 	{{.CommonTypeName}}
 {{- range .Params}}
 {{- if .IsListOfObjects}}
+{{- if .AsAttribute}}
+	{{.GoFieldName}} types.List `tfsdk:"{{.BlockName}}"`
+{{- else}}
 	{{.GoFieldName}} []{{$.GoModelBaseName}}{{pascal .BlockName}}Model `tfsdk:"{{.BlockName}}"`
+{{- end}}
 {{- else if eq .GoType "List"}}
 	{{.GoFieldName}} []types.String `tfsdk:"{{.TFName}}"`
 {{- else}}
@@ -228,7 +235,21 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 {{- range .Params}}
 {{- if .Required}}
-{{- if .IsListOfObjects}}
+{{- if and .IsListOfObjects .AsAttribute}}
+	{
+		elements := {{$.GoModelReceiver}}.{{.GoFieldName}}.Elements()
+		rows := make([]map[string]string, len(elements))
+		for i, elem := range elements {
+			attrs := elem.(types.Object).Attributes()
+			rows[i] = map[string]string{
+{{- range .RowKeys}}
+				{{printf "%q" .MatomoKey}}: attrs[{{printf "%q" .TFName}}].(types.String).ValueString(),
+{{- end}}
+			}
+		}
+		p[{{printf "%q" .MatomoName}}] = matomo.ListOfObjectsParam(rows)
+	}
+{{- else if .IsListOfObjects}}
 	{
 		rows := make([]map[string]string, len({{$.GoModelReceiver}}.{{.GoFieldName}}))
 		for i, row := range {{$.GoModelReceiver}}.{{.GoFieldName}} {
@@ -254,7 +275,21 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() matomo.ParamsMap {
 	p[{{printf "%q" .MatomoName}}] = matomo.ListParam(stringSliceFromModel({{$.GoModelReceiver}}.{{.GoFieldName}}))
 {{- end}}
 {{- else}}
-{{- if .IsListOfObjects}}
+{{- if and .IsListOfObjects .AsAttribute}}
+	if !{{$.GoModelReceiver}}.{{.GoFieldName}}.IsNull() && !{{$.GoModelReceiver}}.{{.GoFieldName}}.IsUnknown() {
+		elements := {{$.GoModelReceiver}}.{{.GoFieldName}}.Elements()
+		rows := make([]map[string]string, len(elements))
+		for i, elem := range elements {
+			attrs := elem.(types.Object).Attributes()
+			rows[i] = map[string]string{
+{{- range .RowKeys}}
+				{{printf "%q" .MatomoKey}}: attrs[{{printf "%q" .TFName}}].(types.String).ValueString(),
+{{- end}}
+			}
+		}
+		p[{{printf "%q" .MatomoName}}] = matomo.ListOfObjectsParam(rows)
+	}
+{{- else if .IsListOfObjects}}
 	if {{$.GoModelReceiver}}.{{.GoFieldName}} != nil {
 		rows := make([]map[string]string, len({{$.GoModelReceiver}}.{{.GoFieldName}}))
 		for i, row := range {{$.GoModelReceiver}}.{{.GoFieldName}} {
@@ -303,7 +338,24 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) ToParams() matomo.ParamsMap {
 func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p matomo.ParamsMap) {
 {{- range .Params}}
 {{- if .Required}}
-{{- if .IsListOfObjects}}
+{{- if and .IsListOfObjects .AsAttribute}}
+	{
+		attrTypes := map[string]attr.Type{
+{{- range .RowKeys}}
+			{{printf "%q" .TFName}}: types.StringType,
+{{- end}}
+		}
+		elements := make([]attr.Value, len(p[{{printf "%q" .MatomoName}}].ListOfObjects))
+		for i, row := range p[{{printf "%q" .MatomoName}}].ListOfObjects {
+			elements[i] = types.ObjectValueMust(attrTypes, map[string]attr.Value{
+{{- range .RowKeys}}
+				{{printf "%q" .TFName}}: types.StringValue(row[{{printf "%q" .MatomoKey}}]),
+{{- end}}
+			})
+		}
+		{{$.GoModelReceiver}}.{{.GoFieldName}} = types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, elements)
+	}
+{{- else if .IsListOfObjects}}
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = make([]{{$.GoModelBaseName}}{{pascal .BlockName}}Model, len(p[{{printf "%q" .MatomoName}}].ListOfObjects))
 	for i, row := range p[{{printf "%q" .MatomoName}}].ListOfObjects {
 		{{$.GoModelReceiver}}.{{.GoFieldName}}[i] = {{$.GoModelBaseName}}{{pascal .BlockName}}Model{
@@ -332,7 +384,28 @@ func ({{.GoModelReceiver}} *{{.GoModelName}}) FromParams(p matomo.ParamsMap) {
 	{{$.GoModelReceiver}}.{{.GoFieldName}} = paramListValue(p[{{printf "%q" .MatomoName}}].List)
 {{- end}}
 {{- else}}
-{{- if .IsListOfObjects}}
+{{- if and .IsListOfObjects .AsAttribute}}
+	{
+		attrTypes := map[string]attr.Type{
+{{- range .RowKeys}}
+			{{printf "%q" .TFName}}: types.StringType,
+{{- end}}
+		}
+		if v, ok := p[{{printf "%q" .MatomoName}}]; ok {
+			elements := make([]attr.Value, len(v.ListOfObjects))
+			for i, row := range v.ListOfObjects {
+				elements[i] = types.ObjectValueMust(attrTypes, map[string]attr.Value{
+{{- range .RowKeys}}
+					{{printf "%q" .TFName}}: types.StringValue(row[{{printf "%q" .MatomoKey}}]),
+{{- end}}
+				})
+			}
+			{{$.GoModelReceiver}}.{{.GoFieldName}} = types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, elements)
+		} else {
+			{{$.GoModelReceiver}}.{{.GoFieldName}} = types.ListNull(types.ObjectType{AttrTypes: attrTypes})
+		}
+	}
+{{- else if .IsListOfObjects}}
 	if v, ok := p[{{printf "%q" .MatomoName}}]; ok {
 		{{$.GoModelReceiver}}.{{.GoFieldName}} = make([]{{$.GoModelBaseName}}{{pascal .BlockName}}Model, len(v.ListOfObjects))
 		for i, row := range v.ListOfObjects {

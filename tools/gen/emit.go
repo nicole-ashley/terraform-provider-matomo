@@ -89,6 +89,17 @@ type templateData struct {
 	// needs listplanmodifier.UseStateForUnknown() (see ParamSpec.AsAttribute's
 	// doc comment for why this shape exists at all).
 	NeedsListPlanModifierImport bool
+	// NeedsAttrImport is true when at least one parameter is
+	// IsListOfObjects and AsAttribute - its model field is types.List
+	// (not a bare Go slice, which can't represent an Unknown plan value -
+	// confirmed against a real acceptance-test run: "Received unknown
+	// value, however the target type cannot handle unknown values"), so
+	// ToParams/FromParams build/read attr.Value objects by hand instead
+	// of using terraform-plugin-framework's ctx-requiring ElementsAs/
+	// ListValueFrom helpers (this codegen's ToParams/FromParams take no
+	// context.Context, and adding one is a much larger ripple across
+	// every generated file and the shared typed-resource runtime).
+	NeedsAttrImport bool
 }
 
 func newTemplateData(spec TypeSpec) templateData {
@@ -103,7 +114,7 @@ func newTemplateData(spec TypeSpec) templateData {
 		}
 	}
 	var needsBoolPM, needsInt64PM, needsFloat64PM bool
-	var hasListOfObjectsBlocks, needsListPM bool
+	var hasListOfObjectsBlocks, needsListPM, needsAttrImport bool
 	for _, p := range spec.Params {
 		if !p.Required {
 			switch p.GoType {
@@ -118,6 +129,7 @@ func newTemplateData(spec TypeSpec) templateData {
 		if p.IsListOfObjects {
 			if p.AsAttribute {
 				needsListPM = true
+				needsAttrImport = true
 			} else {
 				hasListOfObjectsBlocks = true
 			}
@@ -139,6 +151,7 @@ func newTemplateData(spec TypeSpec) templateData {
 		GoModelBaseName:                spec.Kind + ExportedName(spec.Slug),
 		HasListOfObjectsBlocks:         hasListOfObjectsBlocks,
 		NeedsListPlanModifierImport:    needsListPM,
+		NeedsAttrImport:                needsAttrImport,
 	}
 }
 

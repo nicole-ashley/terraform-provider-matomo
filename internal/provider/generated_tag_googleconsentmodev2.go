@@ -4,6 +4,7 @@ package provider
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -14,15 +15,10 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
-type tagGoogleconsentmodev2ConsentTypeModel struct {
-	Type  types.String `tfsdk:"type"`
-	State types.String `tfsdk:"state"`
-}
-
 type tagGoogleconsentmodev2Model struct {
 	typedTagCommon
-	ConsentAction []types.String                           `tfsdk:"consent_action"`
-	ConsentTypes  []tagGoogleconsentmodev2ConsentTypeModel `tfsdk:"consent_type"`
+	ConsentAction []types.String `tfsdk:"consent_action"`
+	ConsentTypes  types.List     `tfsdk:"consent_type"`
 }
 
 func tagGoogleconsentmodev2Schema() schema.Schema {
@@ -132,12 +128,14 @@ func (m *tagGoogleconsentmodev2Model) Meta() typedMeta {
 func (m *tagGoogleconsentmodev2Model) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["consentAction"] = matomo.ListParam(stringSliceFromModel(m.ConsentAction))
-	if m.ConsentTypes != nil {
-		rows := make([]map[string]string, len(m.ConsentTypes))
-		for i, row := range m.ConsentTypes {
+	if !m.ConsentTypes.IsNull() && !m.ConsentTypes.IsUnknown() {
+		elements := m.ConsentTypes.Elements()
+		rows := make([]map[string]string, len(elements))
+		for i, elem := range elements {
+			attrs := elem.(types.Object).Attributes()
 			rows[i] = map[string]string{
-				"consent_type":  row.Type.ValueString(),
-				"consent_state": row.State.ValueString(),
+				"consent_type":  attrs["type"].(types.String).ValueString(),
+				"consent_state": attrs["state"].(types.String).ValueString(),
 			}
 		}
 		p["consentTypes"] = matomo.ListOfObjectsParam(rows)
@@ -155,16 +153,23 @@ func (m *tagGoogleconsentmodev2Model) ToParams() matomo.ParamsMap {
 // (confirmed against a real acceptance-test run).
 func (m *tagGoogleconsentmodev2Model) FromParams(p matomo.ParamsMap) {
 	m.ConsentAction = paramListValue(p["consentAction"].List)
-	if v, ok := p["consentTypes"]; ok {
-		m.ConsentTypes = make([]tagGoogleconsentmodev2ConsentTypeModel, len(v.ListOfObjects))
-		for i, row := range v.ListOfObjects {
-			m.ConsentTypes[i] = tagGoogleconsentmodev2ConsentTypeModel{
-				Type:  types.StringValue(row["consent_type"]),
-				State: types.StringValue(row["consent_state"]),
-			}
+	{
+		attrTypes := map[string]attr.Type{
+			"type":  types.StringType,
+			"state": types.StringType,
 		}
-	} else {
-		m.ConsentTypes = nil
+		if v, ok := p["consentTypes"]; ok {
+			elements := make([]attr.Value, len(v.ListOfObjects))
+			for i, row := range v.ListOfObjects {
+				elements[i] = types.ObjectValueMust(attrTypes, map[string]attr.Value{
+					"type":  types.StringValue(row["consent_type"]),
+					"state": types.StringValue(row["consent_state"]),
+				})
+			}
+			m.ConsentTypes = types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, elements)
+		} else {
+			m.ConsentTypes = types.ListNull(types.ObjectType{AttrTypes: attrTypes})
+		}
 	}
 }
 

@@ -356,11 +356,16 @@ func TestRenderSchema_listOfObjectsAsAttribute(t *testing.T) {
 
 	got := string(src)
 	for _, want := range []string{
+		`"github.com/hashicorp/terraform-plugin-framework/attr"`,
 		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"`,
 		`"consent_type": schema.ListNestedAttribute{`,
 		"PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}",
 		"NestedObject: schema.NestedAttributeObject{",
 		`p["consentTypes"] = matomo.ListOfObjectsParam(rows)`,
+		`if !m.ConsentTypes.IsNull() && !m.ConsentTypes.IsUnknown() {`,
+		"types.ObjectValueMust(attrTypes,",
+		"types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, elements)",
+		"types.ListNull(types.ObjectType{AttrTypes: attrTypes})",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("generated source missing %q; full source:\n%s", want, got)
@@ -371,5 +376,17 @@ func TestRenderSchema_listOfObjectsAsAttribute(t *testing.T) {
 	}
 	if strings.Contains(got, `"consent_type": schema.ListNestedBlock{`) {
 		t.Errorf("consent_type should be an Attribute, not a Block; full source:\n%s", got)
+	}
+	// The whole reason AsAttribute exists is that a bare Go slice can't
+	// represent an Unknown plan value (confirmed against a real
+	// acceptance-test failure: "Received unknown value, however the
+	// target type cannot handle unknown values"). The model field must
+	// be types.List, not a generated row-struct slice, and no row struct
+	// type should be emitted at all for an AsAttribute param.
+	if !regexp.MustCompile(`ConsentTypes\s+types\.List`).MatchString(got) {
+		t.Errorf("ConsentTypes model field should be types.List, not a row-struct slice; full source:\n%s", got)
+	}
+	if strings.Contains(got, "ConsentTypeModel struct {") {
+		t.Errorf("AsAttribute param should not emit a row struct type; full source:\n%s", got)
 	}
 }
