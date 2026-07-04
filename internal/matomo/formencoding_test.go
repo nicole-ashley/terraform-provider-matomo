@@ -96,3 +96,68 @@ func TestAddArrayParam(t *testing.T) {
 		t.Errorf(`v["fireTriggerIds[]"] = %#v, want %#v`, got, want)
 	}
 }
+
+func TestParamValue_ListOfObjects(t *testing.T) {
+	v := ListOfObjectsParam([]map[string]string{
+		{"index": "1", "value": "foo"},
+		{"index": "3", "value": "bar"},
+	})
+	if !v.IsListOfObjects() {
+		t.Fatal("expected IsListOfObjects() to be true")
+	}
+	if v.IsList() {
+		t.Fatal("expected IsList() to be false for a ListOfObjects value")
+	}
+}
+
+func TestAddParamsMap_ListOfObjects(t *testing.T) {
+	v := url.Values{}
+	addParamsMap(v, "parameters", ParamsMap{
+		"customDimensions": ListOfObjectsParam([]map[string]string{
+			{"index": "1", "value": "foo"},
+			{"index": "3", "value": "bar"},
+		}),
+	})
+	want := url.Values{
+		"parameters[customDimensions][0][index]": {"1"},
+		"parameters[customDimensions][0][value]": {"foo"},
+		"parameters[customDimensions][1][index]": {"3"},
+		"parameters[customDimensions][1][value]": {"bar"},
+	}
+	if !reflect.DeepEqual(v, want) {
+		t.Fatalf("got %#v, want %#v", v, want)
+	}
+}
+
+func TestDecodeParamValue_ListOfObjects(t *testing.T) {
+	var m ParamsMap
+	raw := []byte(`{"customDimensions": [{"index": "1", "value": "foo"}, {"index": "3", "value": "bar"}]}`)
+	if err := m.UnmarshalJSON(raw); err != nil {
+		t.Fatalf("UnmarshalJSON: %v", err)
+	}
+	v := m["customDimensions"]
+	if !v.IsListOfObjects() {
+		t.Fatal("expected IsListOfObjects() to be true")
+	}
+	want := []map[string]string{
+		{"index": "1", "value": "foo"},
+		{"index": "3", "value": "bar"},
+	}
+	if !reflect.DeepEqual(v.ListOfObjects, want) {
+		t.Fatalf("got %#v, want %#v", v.ListOfObjects, want)
+	}
+}
+
+func TestWrapSingleKeyParam(t *testing.T) {
+	v := WrapSingleKeyParam("domain", []string{"*.example.com", "checkout.example.com"})
+	if !v.IsListOfObjects() {
+		t.Fatal("expected IsListOfObjects() to be true")
+	}
+	want := []map[string]string{
+		{"domain": "*.example.com"},
+		{"domain": "checkout.example.com"},
+	}
+	if !reflect.DeepEqual(v.ListOfObjects, want) {
+		t.Fatalf("got %#v, want %#v", v.ListOfObjects, want)
+	}
+}
