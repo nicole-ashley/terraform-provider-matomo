@@ -42,6 +42,19 @@ resource "matomo_tagmanager_trigger_customevent" "example" {
 - `event_name` (String) The name of the event that is pushed to the Data-Layer. For example you can push an event by adding this to your website: _mtm.push({"event": "my-custom-event"});
 - `name` (String)
 
+### Optional
+
+- `condition` (Block List) Conditions that must all match for this trigger to fire. (see [below for nested schema](#nestedblock--condition))
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--condition"></a>
+### Nested Schema for `condition`
+
+Required:
+
+- `comparison` (String)
+- `value` (String)
+- `variable` (String) A reference to a Matomo built-in variable (e.g. "PagePath" - see the matomo_tagmanager_builtin_variable data source) or a user-defined variable macro (e.g. "{{My Variable}}").

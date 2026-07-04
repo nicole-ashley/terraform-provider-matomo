@@ -44,9 +44,19 @@ resource "matomo_tagmanager_trigger_timer" "example" {
 
 ### Optional
 
+- `condition` (Block List) Conditions that must all match for this trigger to fire. (see [below for nested schema](#nestedblock--condition))
 - `event_name` (String) You can optionally change the name of this event. This can be useful if you have for example multiple timers on the page and want to perform different logic based on the name of the timer.
 - `trigger_limit` (Number) Enter "0" to not limit the trigger.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--condition"></a>
+### Nested Schema for `condition`
+
+Required:
+
+- `comparison` (String)
+- `value` (String)
+- `variable` (String) A reference to a Matomo built-in variable (e.g. "PagePath" - see the matomo_tagmanager_builtin_variable data source) or a user-defined variable macro (e.g. "{{My Variable}}").

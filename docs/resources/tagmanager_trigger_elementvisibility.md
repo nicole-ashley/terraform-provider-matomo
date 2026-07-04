@@ -48,6 +48,7 @@ resource "matomo_tagmanager_trigger_elementvisibility" "example" {
 
 ### Optional
 
+- `condition` (Block List) Conditions that must all match for this trigger to fire. (see [below for nested schema](#nestedblock--condition))
 - `css_selector` (String) A CSS selector allows you to select an element by id, className, element names, etc. If multiple elements match this selector, the first matching element will be used to get the value from. Examples for valid selectors are ".classname", "#id" or "li a".
 - `element_id` (String) The id attribute specifies a unique id for an HTML element. Insert here the value of an ID attribute of any element within your website.
 - `min_percent_visible` (Number)
@@ -56,3 +57,12 @@ resource "matomo_tagmanager_trigger_elementvisibility" "example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--condition"></a>
+### Nested Schema for `condition`
+
+Required:
+
+- `comparison` (String)
+- `value` (String)
+- `variable` (String) A reference to a Matomo built-in variable (e.g. "PagePath" - see the matomo_tagmanager_builtin_variable data source) or a user-defined variable macro (e.g. "{{My Variable}}").

@@ -92,12 +92,12 @@ resource "matomo_tagmanager_trigger" "test" {
   name         = "Acceptance Conditions Trigger"
   condition {
     comparison = "equals"
-    actual     = "PagePath"
+    variable   = "PagePath"
     value      = "/checkout"
   }
   condition {
     comparison = "contains"
-    actual     = "PageHostname"
+    variable   = "PageHostname"
     value      = "example.com"
   }
 }
@@ -105,10 +105,10 @@ resource "matomo_tagmanager_trigger" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.#", "2"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.0.comparison", "equals"),
-					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.0.actual", "PagePath"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.0.variable", "PagePath"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.0.value", "/checkout"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.1.comparison", "contains"),
-					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.1.actual", "PageHostname"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.1.variable", "PageHostname"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "condition.1.value", "example.com"),
 				),
 			},

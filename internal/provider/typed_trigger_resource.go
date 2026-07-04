@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
@@ -16,9 +17,10 @@ import (
 // tools/gen/templates/schema.go.tmpl). Triggers have no status or
 // fire/block trigger id fields, unlike tags.
 type typedTriggerCommon struct {
-	ID          types.String `tfsdk:"id"`
-	ContainerID types.String `tfsdk:"container_id"`
-	Name        types.String `tfsdk:"name"`
+	ID          types.String            `tfsdk:"id"`
+	ContainerID types.String            `tfsdk:"container_id"`
+	Name        types.String            `tfsdk:"name"`
+	Condition   []triggerConditionModel `tfsdk:"condition"`
 }
 
 var (
@@ -48,8 +50,26 @@ func (r *typedTriggerResource) Metadata(_ context.Context, _ resource.MetadataRe
 	resp.TypeName = r.newModel().Meta().ResourceName
 }
 
+// Schema injects the shared "condition" block into every generated trigger
+// type's own schema, rather than each generated_trigger_*.go file declaring
+// it independently - this is what makes conditions apply automatically to
+// every current and future generated trigger type with zero regeneration.
 func (r *typedTriggerResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = r.newModel().Meta().Schema
+	s := r.newModel().Meta().Schema
+	if s.Blocks == nil {
+		s.Blocks = map[string]schema.Block{}
+	}
+	s.Blocks["condition"] = schema.ListNestedBlock{
+		Description: "Conditions that must all match for this trigger to fire.",
+		NestedObject: schema.NestedBlockObject{
+			Attributes: map[string]schema.Attribute{
+				"comparison": schema.StringAttribute{Required: true},
+				"variable":   schema.StringAttribute{Required: true, Description: "A reference to a Matomo built-in variable (e.g. \"PagePath\" - see the matomo_tagmanager_builtin_variable data source) or a user-defined variable macro (e.g. \"{{My Variable}}\")."},
+				"value":      schema.StringAttribute{Required: true},
+			},
+		},
+	}
+	resp.Schema = s
 }
 
 func (r *typedTriggerResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -89,6 +109,7 @@ func (r *typedTriggerResource) Create(ctx context.Context, req resource.CreateRe
 		Type:       model.Meta().TypeID,
 		Name:       common.Name.ValueString(),
 		Parameters: model.ToParams(),
+		Conditions: conditionsToParams(common.Condition),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating Matomo Tag Manager trigger", err.Error())
@@ -111,6 +132,7 @@ func (r *typedTriggerResource) Create(ctx context.Context, req resource.CreateRe
 	common.ID = types.StringValue(buildEntityID(siteID, idContainer, idTrigger))
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(trig.Name)
+	common.Condition = conditionsFromAPI(trig.Conditions)
 
 	model.FromParams(trig.Parameters)
 	restoreListFields(model, savedListFields)
@@ -153,6 +175,7 @@ func (r *typedTriggerResource) Read(ctx context.Context, req resource.ReadReques
 
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(trig.Name)
+	common.Condition = conditionsFromAPI(trig.Conditions)
 
 	model.FromParams(trig.Parameters)
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
@@ -182,6 +205,7 @@ func (r *typedTriggerResource) Update(ctx context.Context, req resource.UpdateRe
 		Type:       model.Meta().TypeID,
 		Name:       common.Name.ValueString(),
 		Parameters: model.ToParams(),
+		Conditions: conditionsToParams(common.Condition),
 	}); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager trigger", err.Error())
 		return

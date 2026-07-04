@@ -43,9 +43,9 @@ resource "matomo_tagmanager_trigger" "custom" {
 
 Required:
 
-- `actual` (String) A Matomo "actual value" identifier (e.g. "url_path") or a variable macro reference (e.g. "{{My Variable}}").
 - `comparison` (String)
 - `value` (String)
+- `variable` (String) A reference to a Matomo built-in variable (e.g. "PagePath" - see the matomo_tagmanager_builtin_variable data source) or a user-defined variable macro (e.g. "{{My Variable}}").
 
 
 <a id="nestedblock--parameter"></a>
