@@ -169,6 +169,20 @@ func (r *tagManagerVariableResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	plan.ID = types.StringValue(buildEntityID(siteID, idContainer, idVariable))
+
+	// default_value is Optional+Computed (Matomo can default it
+	// server-side even when never sent) - reading it back here, the same
+	// way Read does, is required so an unconfigured default_value never
+	// stays Unknown in the state Create writes: confirmed against a real
+	// acceptance-test run ("Provider returned invalid result object
+	// after apply ... default_value: all values must be known").
+	v, err := r.client.GetContainerVariable(ctx, siteID, idContainer, versionID, idVariable)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading back created Matomo Tag Manager variable", err.Error())
+		return
+	}
+	plan.DefaultValue = types.StringValue(v.DefaultValue)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -269,6 +283,15 @@ func (r *tagManagerVariableResource) Update(ctx context.Context, req resource.Up
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager variable", err.Error())
 		return
 	}
+
+	// See Create's identical read-back for why this is required whenever
+	// default_value is left unconfigured.
+	v, err := r.client.GetContainerVariable(ctx, siteID, idContainer, versionID, idVariable)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading back updated Matomo Tag Manager variable", err.Error())
+		return
+	}
+	plan.DefaultValue = types.StringValue(v.DefaultValue)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
