@@ -53,9 +53,17 @@ resource "matomo_tagmanager_tag_googleconsentmodev2" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
-- `consent_types` (List of String)
+- `consent_type` (Block List) (see [below for nested schema](#nestedblock--consent_type))
 - `status` (String)
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--consent_type"></a>
+### Nested Schema for `consent_type`
+
+Required:
+
+- `state` (String)
+- `type` (String)

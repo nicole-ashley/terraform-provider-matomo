@@ -44,7 +44,7 @@ resource "matomo_tagmanager_variable_etrackerconfiguration" "example" {
 
 ### Optional
 
-- `custom_dimensions` (List of String) Optionally set one or multiple custom dimensions.
+- `custom_dimension` (Block List) Optionally set one or multiple custom dimensions. (see [below for nested schema](#nestedblock--custom_dimension))
 - `default_value` (String)
 - `et_areas` (String) Set variable if you want to overwrite the default value
 - `et_basket` (String) Set variable if you want to overwrite the default value
@@ -60,3 +60,11 @@ resource "matomo_tagmanager_variable_etrackerconfiguration" "example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--custom_dimension"></a>
+### Nested Schema for `custom_dimension`
+
+Required:
+
+- `index` (String)
+- `value` (String)

@@ -57,8 +57,8 @@ resource "matomo_tagmanager_variable_matomoconfiguration" "example" {
 - `cross_domain_linking_timeout` (Number) Set the cross domain linking timeout (in seconds). By default, the two visits across domains will be linked together when the link is clicked and the page is loaded within a 180 seconds timeout window.
 - `custom_cookie_time_out` (Number) Timeout of pk_id in full days. By default, the Matomo tracking cookie expires in 13 months (365 + 28 days) = 393 days.
 - `custom_cookie_time_out_enable` (Boolean) Allows you to set custom timeouts for various cookies.
-- `custom_data` (List of String) Optionally set custom data in your tracking request.
-- `custom_dimensions` (List of String) Optionally set one or multiple custom dimensions.
+- `custom_datum` (Block List) Optionally set custom data in your tracking request. (see [below for nested schema](#nestedblock--custom_datum))
+- `custom_dimension` (Block List) Optionally set one or multiple custom dimensions. (see [below for nested schema](#nestedblock--custom_dimension))
 - `custom_request_processing` (String) Can be set to a variable of type "Custom Request Processing Function" to augment or override default request sending behaviour.
 - `default_value` (String)
 - `disable_always_use_send_beacon` (Boolean) Choose to stop using sendBeacon and use a regular AJAX request instead. This might make clicking on external links a bit slower for users, but it won't be stopped by ad blockers.
@@ -118,3 +118,20 @@ resource "matomo_tagmanager_variable_matomoconfiguration" "example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--custom_datum"></a>
+### Nested Schema for `custom_datum`
+
+Required:
+
+- `name` (String)
+- `value` (String)
+
+
+<a id="nestedblock--custom_dimension"></a>
+### Nested Schema for `custom_dimension`
+
+Required:
+
+- `index` (String)
+- `value` (String)

@@ -53,9 +53,17 @@ resource "matomo_tagmanager_tag_googleanalytics4event" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
-- `event_parameters` (List of String)
+- `event_parameter` (Block List) (see [below for nested schema](#nestedblock--event_parameter))
 - `status` (String)
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--event_parameter"></a>
+### Nested Schema for `event_parameter`
+
+Required:
+
+- `parameter` (String)
+- `value` (String)
