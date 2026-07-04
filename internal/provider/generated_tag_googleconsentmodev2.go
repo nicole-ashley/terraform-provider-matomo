@@ -13,10 +13,15 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
+type tagGoogleconsentmodev2ConsentTypeModel struct {
+	Type  types.String `tfsdk:"type"`
+	State types.String `tfsdk:"state"`
+}
+
 type tagGoogleconsentmodev2Model struct {
 	typedTagCommon
-	ConsentAction []types.String `tfsdk:"consent_action"`
-	ConsentTypes  []types.String `tfsdk:"consent_types"`
+	ConsentAction []types.String                           `tfsdk:"consent_action"`
+	ConsentTypes  []tagGoogleconsentmodev2ConsentTypeModel `tfsdk:"consent_type"`
 }
 
 func tagGoogleconsentmodev2Schema() schema.Schema {
@@ -69,11 +74,20 @@ func tagGoogleconsentmodev2Schema() schema.Schema {
 				Required:    true,
 				Description: "Select 'default' to set default values, and 'update' to handle users consent.",
 			},
-			"consent_types": schema.ListAttribute{
-				ElementType: types.StringType,
-				Required:    false,
-				Optional:    true,
+		},
+		Blocks: map[string]schema.Block{
+			"consent_type": schema.ListNestedBlock{
 				Description: "",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Required: true,
+						},
+						"state": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -95,12 +109,24 @@ func (m *tagGoogleconsentmodev2Model) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func (m *tagGoogleconsentmodev2Model) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["consentAction"] = matomo.ListParam(stringSliceFromModel(m.ConsentAction))
 	if m.ConsentTypes != nil {
-		p["consentTypes"] = matomo.ListParam(stringSliceFromModel(m.ConsentTypes))
+		rows := make([]map[string]string, len(m.ConsentTypes))
+		for i, row := range m.ConsentTypes {
+			rows[i] = map[string]string{
+				"consent_type":  row.Type.ValueString(),
+				"consent_state": row.State.ValueString(),
+			}
+		}
+		p["consentTypes"] = matomo.ListOfObjectsParam(rows)
 	}
 	return p
 }
@@ -116,7 +142,13 @@ func (m *tagGoogleconsentmodev2Model) ToParams() matomo.ParamsMap {
 func (m *tagGoogleconsentmodev2Model) FromParams(p matomo.ParamsMap) {
 	m.ConsentAction = paramListValue(p["consentAction"].List)
 	if v, ok := p["consentTypes"]; ok {
-		m.ConsentTypes = paramListValue(v.List)
+		m.ConsentTypes = make([]tagGoogleconsentmodev2ConsentTypeModel, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			m.ConsentTypes[i] = tagGoogleconsentmodev2ConsentTypeModel{
+				Type:  types.StringValue(row["consent_type"]),
+				State: types.StringValue(row["consent_state"]),
+			}
+		}
 	} else {
 		m.ConsentTypes = nil
 	}

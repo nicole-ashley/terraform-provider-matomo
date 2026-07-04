@@ -15,77 +15,86 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
+type variableMatomoconfigurationCustomDimensionModel struct {
+	Index types.String `tfsdk:"index"`
+	Value types.String `tfsdk:"value"`
+}
+type variableMatomoconfigurationCustomDatumModel struct {
+	Name  types.String `tfsdk:"name"`
+	Value types.String `tfsdk:"value"`
+}
+
 type variableMatomoconfigurationModel struct {
 	typedVariableCommon
-	MatomoUrl                             types.String   `tfsdk:"matomo_url"`
-	IdSite                                types.String   `tfsdk:"id_site"`
-	EnableLinkTracking                    types.Bool     `tfsdk:"enable_link_tracking"`
-	EnableFileTracking                    types.Bool     `tfsdk:"enable_file_tracking"`
-	EnableCrossDomainLinking              types.Bool     `tfsdk:"enable_cross_domain_linking"`
-	CrossDomainLinkingTimeout             types.Int64    `tfsdk:"cross_domain_linking_timeout"`
-	EnableDoNotTrack                      types.Bool     `tfsdk:"enable_do_not_track"`
-	DisablePerformanceTracking            types.Bool     `tfsdk:"disable_performance_tracking"`
-	EnableJSErrorTracking                 types.Bool     `tfsdk:"enable_js_error_tracking"`
-	EnableHeartBeatTimer                  types.Bool     `tfsdk:"enable_heart_beat_timer"`
-	HeartBeatTime                         types.Int64    `tfsdk:"heart_beat_time"`
-	TrackAllContentImpressions            types.Bool     `tfsdk:"track_all_content_impressions"`
-	TrackVisibleContentImpressions        types.Bool     `tfsdk:"track_visible_content_impressions"`
-	TrackBots                             types.Bool     `tfsdk:"track_bots"`
-	DisableCookies                        types.Bool     `tfsdk:"disable_cookies"`
-	RequireConsent                        types.Bool     `tfsdk:"require_consent"`
-	RequireCookieConsent                  types.Bool     `tfsdk:"require_cookie_consent"`
-	CustomCookieTimeOutEnable             types.Bool     `tfsdk:"custom_cookie_time_out_enable"`
-	CustomCookieTimeOut                   types.Int64    `tfsdk:"custom_cookie_time_out"`
-	ReferralCookieTimeOut                 types.Int64    `tfsdk:"referral_cookie_time_out"`
-	SessionCookieTimeOut                  types.Int64    `tfsdk:"session_cookie_time_out"`
-	SetSecureCookie                       types.Bool     `tfsdk:"set_secure_cookie"`
-	CookieDomain                          types.String   `tfsdk:"cookie_domain"`
-	CookieNamePrefix                      types.String   `tfsdk:"cookie_name_prefix"`
-	CookiePath                            types.String   `tfsdk:"cookie_path"`
-	CookieSameSite                        types.String   `tfsdk:"cookie_same_site"`
-	DisableBrowserFeatureDetection        types.Bool     `tfsdk:"disable_browser_feature_detection"`
-	DisableCampaignParameters             types.Bool     `tfsdk:"disable_campaign_parameters"`
-	Domains                               []types.String `tfsdk:"domains"`
-	AlwaysUseSendBeacon                   types.Bool     `tfsdk:"always_use_send_beacon"`
-	DisableAlwaysUseSendBeacon            types.Bool     `tfsdk:"disable_always_use_send_beacon"`
-	UserId                                types.String   `tfsdk:"user_id"`
-	CustomDimensions                      []types.String `tfsdk:"custom_dimensions"`
-	RegisterAsDefaultTracker              types.Bool     `tfsdk:"register_as_default_tracker"`
-	BundleTracker                         types.Bool     `tfsdk:"bundle_tracker"`
-	JsEndpoint                            types.String   `tfsdk:"js_endpoint"`
-	JsEndpointCustom                      types.String   `tfsdk:"js_endpoint_custom"`
-	TrackingEndpoint                      types.String   `tfsdk:"tracking_endpoint"`
-	TrackingEndpointCustom                types.String   `tfsdk:"tracking_endpoint_custom"`
-	AppendToTrackingUrl                   types.String   `tfsdk:"append_to_tracking_url"`
-	ForceRequestMethod                    types.Bool     `tfsdk:"force_request_method"`
-	RequestMethod                         types.String   `tfsdk:"request_method"`
-	RequestContentType                    types.String   `tfsdk:"request_content_type"`
-	CustomRequestProcessing               types.String   `tfsdk:"custom_request_processing"`
-	CustomData                            []types.String `tfsdk:"custom_data"`
-	SetDownloadExtensions                 types.String   `tfsdk:"set_download_extensions"`
-	AddDownloadExtensions                 types.String   `tfsdk:"add_download_extensions"`
-	RemoveDownloadExtensions              types.String   `tfsdk:"remove_download_extensions"`
-	SetIgnoreClasses                      types.String   `tfsdk:"set_ignore_classes"`
-	SetReferrerUrl                        types.String   `tfsdk:"set_referrer_url"`
-	SetApiUrl                             types.String   `tfsdk:"set_api_url"`
-	SetPageViewId                         types.String   `tfsdk:"set_page_view_id"`
-	SetExcludedReferrers                  types.String   `tfsdk:"set_excluded_referrers"`
-	SetDownloadClasses                    types.String   `tfsdk:"set_download_classes"`
-	SetLinkClasses                        types.String   `tfsdk:"set_link_classes"`
-	SetCampaignNameKey                    types.String   `tfsdk:"set_campaign_name_key"`
-	SetCampaignKeywordKey                 types.String   `tfsdk:"set_campaign_keyword_key"`
-	SetConsentGiven                       types.Bool     `tfsdk:"set_consent_given"`
-	RememberConsentGiven                  types.Bool     `tfsdk:"remember_consent_given"`
-	RememberConsentGivenForHours          types.String   `tfsdk:"remember_consent_given_for_hours"`
-	ForgetConsentGiven                    types.Bool     `tfsdk:"forget_consent_given"`
-	DiscardHashTag                        types.Bool     `tfsdk:"discard_hash_tag"`
-	SetExcludedQueryParams                types.String   `tfsdk:"set_excluded_query_params"`
-	SetConversionAttributionFirstReferrer types.Bool     `tfsdk:"set_conversion_attribution_first_referrer"`
-	SetDoNotTrack                         types.Bool     `tfsdk:"set_do_not_track"`
-	SetLinkTrackingTimer                  types.String   `tfsdk:"set_link_tracking_timer"`
-	KillFrame                             types.Bool     `tfsdk:"kill_frame"`
-	SetCountPreRendered                   types.Bool     `tfsdk:"set_count_pre_rendered"`
-	SetRequestQueueInterval               types.String   `tfsdk:"set_request_queue_interval"`
+	MatomoUrl                             types.String                                      `tfsdk:"matomo_url"`
+	IdSite                                types.String                                      `tfsdk:"id_site"`
+	EnableLinkTracking                    types.Bool                                        `tfsdk:"enable_link_tracking"`
+	EnableFileTracking                    types.Bool                                        `tfsdk:"enable_file_tracking"`
+	EnableCrossDomainLinking              types.Bool                                        `tfsdk:"enable_cross_domain_linking"`
+	CrossDomainLinkingTimeout             types.Int64                                       `tfsdk:"cross_domain_linking_timeout"`
+	EnableDoNotTrack                      types.Bool                                        `tfsdk:"enable_do_not_track"`
+	DisablePerformanceTracking            types.Bool                                        `tfsdk:"disable_performance_tracking"`
+	EnableJSErrorTracking                 types.Bool                                        `tfsdk:"enable_js_error_tracking"`
+	EnableHeartBeatTimer                  types.Bool                                        `tfsdk:"enable_heart_beat_timer"`
+	HeartBeatTime                         types.Int64                                       `tfsdk:"heart_beat_time"`
+	TrackAllContentImpressions            types.Bool                                        `tfsdk:"track_all_content_impressions"`
+	TrackVisibleContentImpressions        types.Bool                                        `tfsdk:"track_visible_content_impressions"`
+	TrackBots                             types.Bool                                        `tfsdk:"track_bots"`
+	DisableCookies                        types.Bool                                        `tfsdk:"disable_cookies"`
+	RequireConsent                        types.Bool                                        `tfsdk:"require_consent"`
+	RequireCookieConsent                  types.Bool                                        `tfsdk:"require_cookie_consent"`
+	CustomCookieTimeOutEnable             types.Bool                                        `tfsdk:"custom_cookie_time_out_enable"`
+	CustomCookieTimeOut                   types.Int64                                       `tfsdk:"custom_cookie_time_out"`
+	ReferralCookieTimeOut                 types.Int64                                       `tfsdk:"referral_cookie_time_out"`
+	SessionCookieTimeOut                  types.Int64                                       `tfsdk:"session_cookie_time_out"`
+	SetSecureCookie                       types.Bool                                        `tfsdk:"set_secure_cookie"`
+	CookieDomain                          types.String                                      `tfsdk:"cookie_domain"`
+	CookieNamePrefix                      types.String                                      `tfsdk:"cookie_name_prefix"`
+	CookiePath                            types.String                                      `tfsdk:"cookie_path"`
+	CookieSameSite                        types.String                                      `tfsdk:"cookie_same_site"`
+	DisableBrowserFeatureDetection        types.Bool                                        `tfsdk:"disable_browser_feature_detection"`
+	DisableCampaignParameters             types.Bool                                        `tfsdk:"disable_campaign_parameters"`
+	Domains                               []types.String                                    `tfsdk:"domains"`
+	AlwaysUseSendBeacon                   types.Bool                                        `tfsdk:"always_use_send_beacon"`
+	DisableAlwaysUseSendBeacon            types.Bool                                        `tfsdk:"disable_always_use_send_beacon"`
+	UserId                                types.String                                      `tfsdk:"user_id"`
+	CustomDimensions                      []variableMatomoconfigurationCustomDimensionModel `tfsdk:"custom_dimension"`
+	RegisterAsDefaultTracker              types.Bool                                        `tfsdk:"register_as_default_tracker"`
+	BundleTracker                         types.Bool                                        `tfsdk:"bundle_tracker"`
+	JsEndpoint                            types.String                                      `tfsdk:"js_endpoint"`
+	JsEndpointCustom                      types.String                                      `tfsdk:"js_endpoint_custom"`
+	TrackingEndpoint                      types.String                                      `tfsdk:"tracking_endpoint"`
+	TrackingEndpointCustom                types.String                                      `tfsdk:"tracking_endpoint_custom"`
+	AppendToTrackingUrl                   types.String                                      `tfsdk:"append_to_tracking_url"`
+	ForceRequestMethod                    types.Bool                                        `tfsdk:"force_request_method"`
+	RequestMethod                         types.String                                      `tfsdk:"request_method"`
+	RequestContentType                    types.String                                      `tfsdk:"request_content_type"`
+	CustomRequestProcessing               types.String                                      `tfsdk:"custom_request_processing"`
+	CustomData                            []variableMatomoconfigurationCustomDatumModel     `tfsdk:"custom_datum"`
+	SetDownloadExtensions                 types.String                                      `tfsdk:"set_download_extensions"`
+	AddDownloadExtensions                 types.String                                      `tfsdk:"add_download_extensions"`
+	RemoveDownloadExtensions              types.String                                      `tfsdk:"remove_download_extensions"`
+	SetIgnoreClasses                      types.String                                      `tfsdk:"set_ignore_classes"`
+	SetReferrerUrl                        types.String                                      `tfsdk:"set_referrer_url"`
+	SetApiUrl                             types.String                                      `tfsdk:"set_api_url"`
+	SetPageViewId                         types.String                                      `tfsdk:"set_page_view_id"`
+	SetExcludedReferrers                  types.String                                      `tfsdk:"set_excluded_referrers"`
+	SetDownloadClasses                    types.String                                      `tfsdk:"set_download_classes"`
+	SetLinkClasses                        types.String                                      `tfsdk:"set_link_classes"`
+	SetCampaignNameKey                    types.String                                      `tfsdk:"set_campaign_name_key"`
+	SetCampaignKeywordKey                 types.String                                      `tfsdk:"set_campaign_keyword_key"`
+	SetConsentGiven                       types.Bool                                        `tfsdk:"set_consent_given"`
+	RememberConsentGiven                  types.Bool                                        `tfsdk:"remember_consent_given"`
+	RememberConsentGivenForHours          types.String                                      `tfsdk:"remember_consent_given_for_hours"`
+	ForgetConsentGiven                    types.Bool                                        `tfsdk:"forget_consent_given"`
+	DiscardHashTag                        types.Bool                                        `tfsdk:"discard_hash_tag"`
+	SetExcludedQueryParams                types.String                                      `tfsdk:"set_excluded_query_params"`
+	SetConversionAttributionFirstReferrer types.Bool                                        `tfsdk:"set_conversion_attribution_first_referrer"`
+	SetDoNotTrack                         types.Bool                                        `tfsdk:"set_do_not_track"`
+	SetLinkTrackingTimer                  types.String                                      `tfsdk:"set_link_tracking_timer"`
+	KillFrame                             types.Bool                                        `tfsdk:"kill_frame"`
+	SetCountPreRendered                   types.Bool                                        `tfsdk:"set_count_pre_rendered"`
+	SetRequestQueueInterval               types.String                                      `tfsdk:"set_request_queue_interval"`
 }
 
 func variableMatomoconfigurationSchema() schema.Schema {
@@ -705,12 +714,6 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Sets a User ID to this user (such as an email address or a username).",
 			},
-			"custom_dimensions": schema.ListAttribute{
-				ElementType: types.StringType,
-				Required:    false,
-				Optional:    true,
-				Description: "Optionally set one or multiple custom dimensions.",
-			},
 			"register_as_default_tracker": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
@@ -939,12 +942,6 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Can be set to a variable of type \"Custom Request Processing Function\" to augment or override default request sending behaviour.",
-			},
-			"custom_data": schema.ListAttribute{
-				ElementType: types.StringType,
-				Required:    false,
-				Optional:    true,
-				Description: "Optionally set custom data in your tracking request.",
 			},
 			"set_download_extensions": schema.StringAttribute{
 				Required: false,
@@ -1427,6 +1424,34 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Description:   "Defines after how many ms a queued requests will be executed after the request was queued initially. The higher the value the more tracking requests can be sent together at once. interval has to be at least 1000 (1000ms = 1s) and defaults to 2.5 seconds.",
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"custom_dimension": schema.ListNestedBlock{
+				Description: "Optionally set one or multiple custom dimensions.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"index": schema.StringAttribute{
+							Required: true,
+						},
+						"value": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
+			},
+			"custom_datum": schema.ListNestedBlock{
+				Description: "Optionally set custom data in your tracking request.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Required: true,
+						},
+						"value": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -1446,7 +1471,12 @@ func (m *variableMatomoconfigurationModel) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["matomoUrl"] = matomo.ScalarParam(m.MatomoUrl.ValueString())
@@ -1530,7 +1560,7 @@ func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 		p["disableCampaignParameters"] = matomo.ScalarParam(paramBoolString(m.DisableCampaignParameters.ValueBool()))
 	}
 	if m.Domains != nil {
-		p["domains"] = matomo.ListParam(stringSliceFromModel(m.Domains))
+		p["domains"] = matomo.WrapSingleKeyParam("domain", stringSliceFromModel(m.Domains))
 	}
 	if !m.AlwaysUseSendBeacon.IsNull() && !m.AlwaysUseSendBeacon.IsUnknown() {
 		p["alwaysUseSendBeacon"] = matomo.ScalarParam(paramBoolString(m.AlwaysUseSendBeacon.ValueBool()))
@@ -1542,7 +1572,14 @@ func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 		p["userId"] = matomo.ScalarParam(m.UserId.ValueString())
 	}
 	if m.CustomDimensions != nil {
-		p["customDimensions"] = matomo.ListParam(stringSliceFromModel(m.CustomDimensions))
+		rows := make([]map[string]string, len(m.CustomDimensions))
+		for i, row := range m.CustomDimensions {
+			rows[i] = map[string]string{
+				"index": row.Index.ValueString(),
+				"value": row.Value.ValueString(),
+			}
+		}
+		p["customDimensions"] = matomo.ListOfObjectsParam(rows)
 	}
 	if !m.RegisterAsDefaultTracker.IsNull() && !m.RegisterAsDefaultTracker.IsUnknown() {
 		p["registerAsDefaultTracker"] = matomo.ScalarParam(paramBoolString(m.RegisterAsDefaultTracker.ValueBool()))
@@ -1578,7 +1615,14 @@ func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 		p["customRequestProcessing"] = matomo.ScalarParam(m.CustomRequestProcessing.ValueString())
 	}
 	if m.CustomData != nil {
-		p["customData"] = matomo.ListParam(stringSliceFromModel(m.CustomData))
+		rows := make([]map[string]string, len(m.CustomData))
+		for i, row := range m.CustomData {
+			rows[i] = map[string]string{
+				"name":  row.Name.ValueString(),
+				"value": row.Value.ValueString(),
+			}
+		}
+		p["customData"] = matomo.ListOfObjectsParam(rows)
 	}
 	if !m.SetDownloadExtensions.IsNull() && !m.SetDownloadExtensions.IsUnknown() {
 		p["setDownloadExtensions"] = matomo.ScalarParam(m.SetDownloadExtensions.ValueString())
@@ -1797,7 +1841,11 @@ func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.DisableCampaignParameters = types.BoolNull()
 	}
 	if v, ok := p["domains"]; ok {
-		m.Domains = paramListValue(v.List)
+		vals := make([]string, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			vals[i] = row["domain"]
+		}
+		m.Domains = paramListValue(vals)
 	} else {
 		m.Domains = nil
 	}
@@ -1817,7 +1865,13 @@ func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.UserId = types.StringNull()
 	}
 	if v, ok := p["customDimensions"]; ok {
-		m.CustomDimensions = paramListValue(v.List)
+		m.CustomDimensions = make([]variableMatomoconfigurationCustomDimensionModel, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			m.CustomDimensions[i] = variableMatomoconfigurationCustomDimensionModel{
+				Index: types.StringValue(row["index"]),
+				Value: types.StringValue(row["value"]),
+			}
+		}
 	} else {
 		m.CustomDimensions = nil
 	}
@@ -1877,7 +1931,13 @@ func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.CustomRequestProcessing = types.StringNull()
 	}
 	if v, ok := p["customData"]; ok {
-		m.CustomData = paramListValue(v.List)
+		m.CustomData = make([]variableMatomoconfigurationCustomDatumModel, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			m.CustomData[i] = variableMatomoconfigurationCustomDatumModel{
+				Name:  types.StringValue(row["name"]),
+				Value: types.StringValue(row["value"]),
+			}
+		}
 	} else {
 		m.CustomData = nil
 	}

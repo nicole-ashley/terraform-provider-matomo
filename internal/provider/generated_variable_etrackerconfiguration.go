@@ -12,20 +12,25 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
+type variableEtrackerconfigurationCustomDimensionModel struct {
+	Index types.String `tfsdk:"index"`
+	Value types.String `tfsdk:"value"`
+}
+
 type variableEtrackerconfigurationModel struct {
 	typedVariableCommon
-	EtrackerID           types.String   `tfsdk:"etracker_id"`
-	EtrackerBlockCookies types.Bool     `tfsdk:"etracker_block_cookies"`
-	EtrackerDNT          types.Bool     `tfsdk:"etracker_dnt"`
-	Et_pagename          types.String   `tfsdk:"et_pagename"`
-	Et_areas             types.String   `tfsdk:"et_areas"`
-	Et_target            types.String   `tfsdk:"et_target"`
-	Et_tval              types.String   `tfsdk:"et_tval"`
-	Et_tonr              types.String   `tfsdk:"et_tonr"`
-	Et_tsale             types.String   `tfsdk:"et_tsale"`
-	Et_basket            types.String   `tfsdk:"et_basket"`
-	Et_cust              types.String   `tfsdk:"et_cust"`
-	CustomDimensions     []types.String `tfsdk:"custom_dimensions"`
+	EtrackerID           types.String                                        `tfsdk:"etracker_id"`
+	EtrackerBlockCookies types.Bool                                          `tfsdk:"etracker_block_cookies"`
+	EtrackerDNT          types.Bool                                          `tfsdk:"etracker_dnt"`
+	Et_pagename          types.String                                        `tfsdk:"et_pagename"`
+	Et_areas             types.String                                        `tfsdk:"et_areas"`
+	Et_target            types.String                                        `tfsdk:"et_target"`
+	Et_tval              types.String                                        `tfsdk:"et_tval"`
+	Et_tonr              types.String                                        `tfsdk:"et_tonr"`
+	Et_tsale             types.String                                        `tfsdk:"et_tsale"`
+	Et_basket            types.String                                        `tfsdk:"et_basket"`
+	Et_cust              types.String                                        `tfsdk:"et_cust"`
+	CustomDimensions     []variableEtrackerconfigurationCustomDimensionModel `tfsdk:"custom_dimension"`
 }
 
 func variableEtrackerconfigurationSchema() schema.Schema {
@@ -252,11 +257,20 @@ func variableEtrackerconfigurationSchema() schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Set variable if you want to overwrite the default value",
 			},
-			"custom_dimensions": schema.ListAttribute{
-				ElementType: types.StringType,
-				Required:    false,
-				Optional:    true,
+		},
+		Blocks: map[string]schema.Block{
+			"custom_dimension": schema.ListNestedBlock{
 				Description: "Optionally set one or multiple custom dimensions.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"index": schema.StringAttribute{
+							Required: true,
+						},
+						"value": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -278,7 +292,12 @@ func (m *variableEtrackerconfigurationModel) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func (m *variableEtrackerconfigurationModel) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["etrackerID"] = matomo.ScalarParam(m.EtrackerID.ValueString())
@@ -313,7 +332,14 @@ func (m *variableEtrackerconfigurationModel) ToParams() matomo.ParamsMap {
 		p["et_cust"] = matomo.ScalarParam(m.Et_cust.ValueString())
 	}
 	if m.CustomDimensions != nil {
-		p["customDimensions"] = matomo.ListParam(stringSliceFromModel(m.CustomDimensions))
+		rows := make([]map[string]string, len(m.CustomDimensions))
+		for i, row := range m.CustomDimensions {
+			rows[i] = map[string]string{
+				"index": row.Index.ValueString(),
+				"value": row.Value.ValueString(),
+			}
+		}
+		p["customDimensions"] = matomo.ListOfObjectsParam(rows)
 	}
 	return p
 }
@@ -379,7 +405,13 @@ func (m *variableEtrackerconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.Et_cust = types.StringNull()
 	}
 	if v, ok := p["customDimensions"]; ok {
-		m.CustomDimensions = paramListValue(v.List)
+		m.CustomDimensions = make([]variableEtrackerconfigurationCustomDimensionModel, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			m.CustomDimensions[i] = variableEtrackerconfigurationCustomDimensionModel{
+				Index: types.StringValue(row["index"]),
+				Value: types.StringValue(row["value"]),
+			}
+		}
 	} else {
 		m.CustomDimensions = nil
 	}

@@ -65,7 +65,12 @@ func (m *variableMetacontentModel) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func (m *variableMetacontentModel) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["metaName"] = matomo.ScalarParam(m.MetaName.ValueString())
