@@ -44,9 +44,19 @@ resource "matomo_tagmanager_trigger_scrollreach" "example" {
 
 ### Optional
 
+- `condition` (Block List) Conditions that must all match for this trigger to fire. (see [below for nested schema](#nestedblock--condition))
 - `percentage` (Number) You can specify any number between 1 and 100. If you specify 50, then it means the element needs to be at least 50% visible depending on the scroll match type.
 - `pixels` (Number) The amount in pixels that needs to be visible of this element depending on the selected scroll match type.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--condition"></a>
+### Nested Schema for `condition`
+
+Required:
+
+- `comparison` (String)
+- `value` (String)
+- `variable` (String) A reference to a Matomo built-in variable (e.g. "PagePath" - see the matomo_tagmanager_builtin_variable data source) or a user-defined variable macro (e.g. "{{My Variable}}").
