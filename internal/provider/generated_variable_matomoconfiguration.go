@@ -1530,7 +1530,7 @@ func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 		p["disableCampaignParameters"] = matomo.ScalarParam(paramBoolString(m.DisableCampaignParameters.ValueBool()))
 	}
 	if m.Domains != nil {
-		p["domains"] = matomo.ListParam(stringSliceFromModel(m.Domains))
+		p["domains"] = matomo.WrapSingleKeyParam("domain", stringSliceFromModel(m.Domains))
 	}
 	if !m.AlwaysUseSendBeacon.IsNull() && !m.AlwaysUseSendBeacon.IsUnknown() {
 		p["alwaysUseSendBeacon"] = matomo.ScalarParam(paramBoolString(m.AlwaysUseSendBeacon.ValueBool()))
@@ -1797,7 +1797,11 @@ func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.DisableCampaignParameters = types.BoolNull()
 	}
 	if v, ok := p["domains"]; ok {
-		m.Domains = paramListValue(v.List)
+		domains := make([]string, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			domains[i] = row["domain"]
+		}
+		m.Domains = paramListValue(domains)
 	} else {
 		m.Domains = nil
 	}
