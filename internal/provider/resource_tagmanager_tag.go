@@ -383,6 +383,9 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 
 	params := make([]tagParameterModel, 0, len(tag.Parameters))
 	for name, value := range tag.Parameters {
+		if value.IsListOfObjects() {
+			continue // represented by the parameter_list block instead
+		}
 		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(paramValueDisplayString(value))})
 	}
 	// tag.Parameters is a map, so Go's iteration order above is randomized
