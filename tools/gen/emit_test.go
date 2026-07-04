@@ -313,3 +313,63 @@ func TestRenderSchema_listOfObjectsAndSingleKeyList(t *testing.T) {
 		t.Errorf("customDimensions should not appear as a flat Attributes entry (it moved to Blocks); full source:\n%s", got)
 	}
 }
+
+// TestRenderSchema_listOfObjectsAsAttribute exercises the AsAttribute
+// override (mirrors the real consentTypes/consent_type field) end-to-end:
+// a ListOfObjects parameter with AsAttribute=true must render as a
+// Computed schema.ListNestedAttribute inside Attributes, NOT as a
+// schema.ListNestedBlock inside Blocks - the whole reason this shape
+// exists is that Matomo defines a non-empty server-side default for this
+// field, which a Block can never represent (see ParamSpec.AsAttribute's
+// doc comment in spec.go).
+func TestRenderSchema_listOfObjectsAsAttribute(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "AsAttributeExample",
+		Slug:         "asattributeexample",
+		ResourceName: "matomo_tagmanager_tag_asattributeexample",
+		Description:  "exercises the AsAttribute ListOfObjects override",
+		Params: []ParamSpec{
+			{
+				MatomoName: "consentTypes", TFName: "consent_types", GoFieldName: "ConsentTypes",
+				Description: "Consent types", GoType: "List", Required: false,
+				IsListOfObjects: true,
+				AsAttribute:     true,
+				BlockName:       "consent_type",
+				RowKeys: []RowKeySpec{
+					{MatomoKey: "consent_type", TFName: "type", GoFieldName: "Type"},
+					{MatomoKey: "consent_state", TFName: "state", GoFieldName: "State"},
+				},
+			},
+		},
+	}
+
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+
+	fset := token.NewFileSet()
+	if _, err := parser.ParseFile(fset, "tag_asattributeexample.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated source does not parse as valid Go: %v\n---\n%s", err, src)
+	}
+
+	got := string(src)
+	for _, want := range []string{
+		`"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"`,
+		`"consent_type": schema.ListNestedAttribute{`,
+		"PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}",
+		"NestedObject: schema.NestedAttributeObject{",
+		`p["consentTypes"] = matomo.ListOfObjectsParam(rows)`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated source missing %q; full source:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "Blocks: map[string]schema.Block{") {
+		t.Errorf("AsAttribute param should never produce a Blocks map; full source:\n%s", got)
+	}
+	if strings.Contains(got, `"consent_type": schema.ListNestedBlock{`) {
+		t.Errorf("consent_type should be an Attribute, not a Block; full source:\n%s", got)
+	}
+}

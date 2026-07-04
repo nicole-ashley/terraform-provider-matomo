@@ -16,6 +16,9 @@ import (
 {{- if .NeedsFloat64PlanModifierImport}}
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 {{- end}}
+{{- if .NeedsListPlanModifierImport}}
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+{{- end}}
 {{- if .NeedsValidatorImports}}
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -105,7 +108,37 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 			},
 {{- end}}
 {{- range .Params}}
-{{- if not .IsListOfObjects}}
+{{- if .IsListOfObjects}}
+{{- if .AsAttribute}}
+			{{printf "%q" .BlockName}}: schema.ListNestedAttribute{
+				// Computed + UseStateForUnknown: unlike every other
+				// ListOfObjects field (which defaults to empty/absent),
+				// Matomo defines a non-empty server-side default for
+				// this one - a schema.ListNestedBlock can never
+				// represent that (a Block's cardinality is dictated
+				// entirely by the user's config; there is no Computed
+				// concept for blocks), which hard-fails "Provider
+				// produced inconsistent result after apply" the moment
+				// Matomo fills in a default the user didn't configure -
+				// confirmed against a real acceptance-test run. See
+				// ParamSpec.AsAttribute's doc comment (tools/gen/spec.go)
+				// for the full story.
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				Description: {{printf "%q" .Description}},
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+{{- range .RowKeys}}
+						{{printf "%q" .TFName}}: schema.StringAttribute{
+							Required: true,
+						},
+{{- end}}
+					},
+				},
+			},
+{{- end}}
+{{- else}}
 			{{printf "%q" .TFName}}: schema.{{.GoType}}Attribute{
 {{- if eq .GoType "List"}}
 				ElementType: types.StringType,
@@ -149,7 +182,7 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 {{- if .HasListOfObjectsBlocks}}
 		Blocks: map[string]schema.Block{
 {{- range .Params}}
-{{- if .IsListOfObjects}}
+{{- if and .IsListOfObjects (not .AsAttribute)}}
 			{{printf "%q" .BlockName}}: schema.ListNestedBlock{
 				Description: {{printf "%q" .Description}},
 				NestedObject: schema.NestedBlockObject{

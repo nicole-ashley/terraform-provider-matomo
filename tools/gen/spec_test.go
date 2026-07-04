@@ -251,6 +251,14 @@ func TestBuildTypeSpec_consentTypesKeyOverride(t *testing.T) {
 	if p.RowKeys[1] != (RowKeySpec{MatomoKey: "consent_state", TFName: "state", GoFieldName: "State"}) {
 		t.Errorf("consentTypes.RowKeys[1] = %+v, want {consent_state state State}", p.RowKeys[1])
 	}
+	// consentTypes is the one field with a listOfObjectsAsAttributeOverrides
+	// entry - Matomo defaults it server-side to 7 non-empty rows, which a
+	// schema.ListNestedBlock can never represent (confirmed against a real
+	// acceptance-test failure - see spec.go's doc comment on the override
+	// table). Must render as a Computed ListNestedAttribute instead.
+	if !p.AsAttribute {
+		t.Error("consentTypes.AsAttribute = false, want true (listOfObjectsAsAttributeOverrides entry)")
+	}
 }
 
 // TestBuildTypeSpec_nonMultiTupleUIControlAttributesShape is a regression

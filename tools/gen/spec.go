@@ -44,6 +44,30 @@ type ParamSpec struct {
 	// (matomo.WrapSingleKeyParam instead of matomo.ListParam). Empty for
 	// every other List parameter, including IsListOfObjects ones.
 	SingleKeyName string
+	// AsAttribute is true when an IsListOfObjects parameter must be
+	// emitted as a Computed schema.ListNestedAttribute instead of a
+	// schema.ListNestedBlock (see listOfObjectsAsAttributeOverrides for
+	// why - only set via that override table, never auto-detected).
+	// Meaningless when IsListOfObjects is false.
+	AsAttribute bool
+}
+
+// listOfObjectsAsAttributeOverrides marks parameters whose ListOfObjects
+// shape must be emitted as a Computed schema.ListNestedAttribute instead
+// of a schema.ListNestedBlock, keyed by "kind/typeID/matomoParamName".
+// This is required whenever Matomo defines a non-empty server-side
+// default for the field - a Terraform Block's cardinality is dictated
+// entirely by what's in the user's config (there is no Computed concept
+// for blocks), so a provider can never legally return more block
+// instances than were configured; this hard-fails
+// "Provider produced inconsistent result after apply" the moment Matomo
+// fills in a default the user didn't ask for. Confirmed via a live
+// acceptance-test failure + Matomo's own PHP source
+// (GoogleConsentModeV2Tag.php's consentTypes defaults to all 7 real
+// consent keys, state "granted", whenever unset) - every other
+// ListOfObjects field defaults to empty/absent and stays a Block.
+var listOfObjectsAsAttributeOverrides = map[string]bool{
+	"tag/GoogleConsentModeV2/consentTypes": true,
 }
 
 // RowKeySpec is one named sub-field of a ListOfObjects parameter's rows,
@@ -168,12 +192,14 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 		var blockName string
 		var rowKeys []RowKeySpec
 		var singleKeyName string
+		var asAttribute bool
 		if goType == "List" && p.UIControl == "multituple" {
 			rawKeys := multiTupleRowKeys(p.UIControlAttributes)
 			switch {
 			case len(rawKeys) > 1:
 				isListOfObjects = true
 				blockName = Singularize(CamelToSnake(p.Name))
+				asAttribute = listOfObjectsAsAttributeOverrides[kind+"/"+tmpl.ID+"/"+p.Name]
 				for _, k := range rawKeys {
 					tfKey := rowKeyTFName(kind, tmpl.ID, p.Name, k)
 					rowKeys = append(rowKeys, RowKeySpec{
@@ -201,6 +227,7 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 			BlockName:             blockName,
 			RowKeys:               rowKeys,
 			SingleKeyName:         singleKeyName,
+			AsAttribute:           asAttribute,
 		})
 	}
 
