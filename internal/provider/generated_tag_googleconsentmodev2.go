@@ -5,6 +5,7 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -74,11 +75,24 @@ func tagGoogleconsentmodev2Schema() schema.Schema {
 				Required:    true,
 				Description: "Select 'default' to set default values, and 'update' to handle users consent.",
 			},
-		},
-		Blocks: map[string]schema.Block{
-			"consent_type": schema.ListNestedBlock{
-				Description: "",
-				NestedObject: schema.NestedBlockObject{
+			"consent_type": schema.ListNestedAttribute{
+				// Computed + UseStateForUnknown: unlike every other
+				// ListOfObjects field (which defaults to empty/absent),
+				// Matomo defines a non-empty server-side default for
+				// this one - a schema.ListNestedBlock can never
+				// represent that (a Block's cardinality is dictated
+				// entirely by the user's config; there is no Computed
+				// concept for blocks), which hard-fails "Provider
+				// produced inconsistent result after apply" the moment
+				// Matomo fills in a default the user didn't configure -
+				// confirmed against a real acceptance-test run. See
+				// ParamSpec.AsAttribute's doc comment (tools/gen/spec.go)
+				// for the full story.
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				Description:   "",
+				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
 							Required: true,
