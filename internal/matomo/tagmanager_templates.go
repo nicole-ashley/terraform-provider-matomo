@@ -43,8 +43,33 @@ type TemplateParam struct {
 	// UIControl == "multituple" first) so a UIControl kind this provider
 	// doesn't otherwise care about can never break discovery for every
 	// type at once.
-	UIControl           string                     `json:"uiControl"`
-	UIControlAttributes map[string]json.RawMessage `json:"uiControlAttributes"`
+	UIControl           string                   `json:"uiControl"`
+	UIControlAttributes UIControlAttributeValues `json:"uiControlAttributes"`
+}
+
+// UIControlAttributeValues is a parameter's "uiControlAttributes" object,
+// keyed by attribute name ("field1", "field2", ...) with each value kept
+// as raw JSON (see TemplateParam's doc comment for why). Confirmed
+// against a live discovery run: Matomo's own PHP source can serialize
+// this field as an empty JSON array ([]) instead of an object ({}) for
+// the same reason ParamsMap.UnmarshalJSON (formencoding.go) already
+// handles this - PHP's json_encode of an empty PHP array always produces
+// [], since an empty array can't be distinguished from an empty list. A
+// non-empty uiControlAttributes always serializes as a real object.
+type UIControlAttributeValues map[string]json.RawMessage
+
+func (m *UIControlAttributeValues) UnmarshalJSON(data []byte) error {
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(data, &obj); err == nil {
+		*m = obj
+		return nil
+	}
+	var empty []any
+	if err := json.Unmarshal(data, &empty); err != nil {
+		return err
+	}
+	*m = UIControlAttributeValues{}
+	return nil
 }
 
 // UIControlField is one "fieldN" entry of a UI_CONTROL_MULTI_TUPLE
