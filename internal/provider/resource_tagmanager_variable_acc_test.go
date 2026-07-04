@@ -219,8 +219,14 @@ resource "matomo_tagmanager_variable" "test" {
   parameter_list {
     name = "customDimensions"
     row {
-      item { key = "index", value = matomo_custom_dimension.cat.index }
-      item { key = "value", value = "{{Page Category}}" }
+      item {
+        key   = "index"
+        value = matomo_custom_dimension.cat.index
+      }
+      item {
+        key   = "value"
+        value = "{{Page Category}}"
+      }
     }
   }
 }
