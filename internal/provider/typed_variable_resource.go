@@ -216,10 +216,15 @@ func (r *typedVariableResource) Update(ctx context.Context, req resource.UpdateR
 		defaultValue = &v
 	}
 
+	description := ""
+	if !common.Description.IsUnknown() && !common.Description.IsNull() {
+		description = common.Description.ValueString()
+	}
+
 	if err := r.client.UpdateContainerVariable(ctx, siteID, idContainer, versionID, idVariable, matomo.VariableParams{
 		Type:         model.Meta().TypeID,
 		Name:         common.Name.ValueString(),
-		Description:  common.Description.ValueString(),
+		Description:  description,
 		Parameters:   model.ToParams(),
 		DefaultValue: defaultValue,
 	}); err != nil {

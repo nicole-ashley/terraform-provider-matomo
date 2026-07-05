@@ -210,10 +210,15 @@ func (r *typedTriggerResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
+	description := ""
+	if !common.Description.IsUnknown() && !common.Description.IsNull() {
+		description = common.Description.ValueString()
+	}
+
 	if err := r.client.UpdateContainerTrigger(ctx, siteID, idContainer, versionID, idTrigger, matomo.TriggerParams{
 		Type:        model.Meta().TypeID,
 		Name:        common.Name.ValueString(),
-		Description: common.Description.ValueString(),
+		Description: description,
 		Parameters:  model.ToParams(),
 		Conditions:  conditionsToParams(common.Condition),
 	}); err != nil {

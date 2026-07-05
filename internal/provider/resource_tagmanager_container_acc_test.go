@@ -25,10 +25,10 @@ resource "matomo_site" "test" {
 }
 
 resource "matomo_tagmanager_container" "test" {
-  site_id = matomo_site.test.id
-  context = "web"
-  name    = "Acceptance Test Container"
-  ignore_gtm_data_layer = true
+  site_id                      = matomo_site.test.id
+  context                      = "web"
+  name                         = "Acceptance Test Container"
+  ignore_gtm_data_layer        = true
   actively_sync_gtm_data_layer = true
 }
 `,

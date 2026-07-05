@@ -237,11 +237,20 @@ func (r *typedTagResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
+	description := ""
+	if !common.Description.IsUnknown() && !common.Description.IsNull() {
+		description = common.Description.ValueString()
+	}
+	priority := int64(999)
+	if !common.Priority.IsUnknown() && !common.Priority.IsNull() {
+		priority = common.Priority.ValueInt64()
+	}
+
 	if err := r.client.UpdateContainerTag(ctx, siteID, idContainer, versionID, idTag, matomo.TagParams{
 		Type:            model.Meta().TypeID,
 		Name:            common.Name.ValueString(),
-		Description:     common.Description.ValueString(),
-		Priority:        int(common.Priority.ValueInt64()),
+		Description:     description,
+		Priority:        int(priority),
 		Parameters:      model.ToParams(),
 		FireTriggerIDs:  fireIDs,
 		BlockTriggerIDs: blockIDs,
