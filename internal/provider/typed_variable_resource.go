@@ -227,17 +227,6 @@ func (r *typedVariableResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	// See Create's identical read-back for why this is required whenever
-	// default_value is left unconfigured. Reused here to also pick up the
-	// server's real description in the same round trip.
-	v, err := r.client.GetContainerVariable(ctx, siteID, idContainer, versionID, idVariable)
-	if err != nil {
-		resp.Diagnostics.AddError("Error reading back updated Matomo Tag Manager variable", err.Error())
-		return
-	}
-	common.DefaultValue = variableDefaultValueFromAPI(v.DefaultValue)
-	common.Description = types.StringValue(v.Description)
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }
 
