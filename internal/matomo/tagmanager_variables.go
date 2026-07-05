@@ -8,10 +8,11 @@ import (
 
 // Variable is a Matomo Tag Manager variable within a container version.
 type Variable struct {
-	IDVariable int       `json:"idvariable"`
-	Name       string    `json:"name"`
-	Type       string    `json:"type"`
-	Parameters ParamsMap `json:"parameters"`
+	IDVariable  int       `json:"idvariable"`
+	Name        string    `json:"name"`
+	Type        string    `json:"type"`
+	Description string    `json:"description"`
+	Parameters  ParamsMap `json:"parameters"`
 	// Confirmed against Matomo's own VariableTest.php fixture: the response
 	// key is default_value (snake_case), unlike the defaultValue (camelCase)
 	// request parameter used to set it.
@@ -23,6 +24,7 @@ type Variable struct {
 type VariableParams struct {
 	Type         string
 	Name         string
+	Description  string
 	Parameters   ParamsMap
 	DefaultValue *string
 }
@@ -34,6 +36,7 @@ func variableParamsToValues(idSite int, idContainer, idContainerVersion string, 
 		"idContainerVersion": {idContainerVersion},
 		"type":               {p.Type},
 		"name":               {p.Name},
+		"description":        {p.Description},
 	}
 	addParamsMap(v, "parameters", p.Parameters)
 

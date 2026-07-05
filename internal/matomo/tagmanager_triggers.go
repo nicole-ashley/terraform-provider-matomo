@@ -15,20 +15,22 @@ type Condition struct {
 
 // Trigger is a Matomo Tag Manager trigger within a container version.
 type Trigger struct {
-	IDTrigger  int         `json:"idtrigger"`
-	Name       string      `json:"name"`
-	Type       string      `json:"type"`
-	Parameters ParamsMap   `json:"parameters"`
-	Conditions []Condition `json:"conditions"`
+	IDTrigger   int         `json:"idtrigger"`
+	Name        string      `json:"name"`
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Parameters  ParamsMap   `json:"parameters"`
+	Conditions  []Condition `json:"conditions"`
 }
 
 // TriggerParams holds the fields accepted by
 // addContainerTrigger/updateContainerTrigger.
 type TriggerParams struct {
-	Type       string
-	Name       string
-	Parameters ParamsMap
-	Conditions []Condition
+	Type        string
+	Name        string
+	Description string
+	Parameters  ParamsMap
+	Conditions  []Condition
 }
 
 func triggerParamsToValues(idSite int, idContainer, idContainerVersion string, p TriggerParams) url.Values {
@@ -38,6 +40,7 @@ func triggerParamsToValues(idSite int, idContainer, idContainerVersion string, p
 		"idContainerVersion": {idContainerVersion},
 		"type":               {p.Type},
 		"name":               {p.Name},
+		"description":        {p.Description},
 	}
 	addParamsMap(v, "parameters", p.Parameters)
 	addConditionsParam(v, "conditions", p.Conditions)
