@@ -193,9 +193,9 @@ func (r *tagManagerContainerResource) Read(ctx context.Context, req resource.Rea
 	state.Context = types.StringValue(ct.Context)
 	state.Name = types.StringValue(ct.Name)
 	state.Description = types.StringValue(ct.Description)
-	state.IgnoreGtmDataLayer = types.BoolValue(ct.IgnoreGtmDataLayer)
-	state.IsTagFireLimitAllowedInPreviewMode = types.BoolValue(ct.IsTagFireLimitAllowedInPreviewMode)
-	state.ActivelySyncGtmDataLayer = types.BoolValue(ct.ActivelySyncGtmDataLayer)
+	state.IgnoreGtmDataLayer = types.BoolValue(bool(ct.IgnoreGtmDataLayer))
+	state.IsTagFireLimitAllowedInPreviewMode = types.BoolValue(bool(ct.IsTagFireLimitAllowedInPreviewMode))
+	state.ActivelySyncGtmDataLayer = types.BoolValue(bool(ct.ActivelySyncGtmDataLayer))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 

@@ -37,7 +37,49 @@ func TestAddContainer_sendsFlags(t *testing.T) {
 	}
 }
 
+// TestGetContainer_decodesFlags confirms decoding the real wire shape: a
+// live Matomo instance's TagManager.getContainer returns these three
+// flags as JSON numbers (0/1), not JSON booleans - confirmed via a real
+// acceptance-test failure ("json: cannot unmarshal number into Go struct
+// field Container.ignoreGtmDataLayer of type bool") before Container's
+// fields were changed from bool to matomoBool.
 func TestGetContainer_decodesFlags(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"idcontainer":                        "abc123",
+			"idsite":                             1,
+			"context":                            "web",
+			"name":                               "My Container",
+			"description":                        "a description",
+			"ignoreGtmDataLayer":                 1,
+			"isTagFireLimitAllowedInPreviewMode": 0,
+			"activelySyncGtmDataLayer":           1,
+			"draft":                              map[string]any{"idcontainerversion": 1},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(srv.URL, "test-token", srv.Client())
+	ct, err := client.GetContainer(context.Background(), 1, "abc123")
+	if err != nil {
+		t.Fatalf("GetContainer() error = %v", err)
+	}
+	if !ct.IgnoreGtmDataLayer {
+		t.Error("IgnoreGtmDataLayer = false, want true")
+	}
+	if ct.IsTagFireLimitAllowedInPreviewMode {
+		t.Error("IsTagFireLimitAllowedInPreviewMode = true, want false")
+	}
+	if !ct.ActivelySyncGtmDataLayer {
+		t.Error("ActivelySyncGtmDataLayer = false, want true")
+	}
+}
+
+// TestGetContainer_decodesFlagsAsBooleanLiterals confirms matomoBool also
+// tolerates a literal JSON boolean, in case a future Matomo version (or a
+// different endpoint) ever returns one instead of a number.
+func TestGetContainer_decodesFlagsAsBooleanLiterals(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{

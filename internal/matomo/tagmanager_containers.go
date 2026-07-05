@@ -2,9 +2,35 @@ package matomo
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strconv"
 )
+
+// matomoBool decodes a boolean-shaped Matomo Tag Manager field that -
+// unlike most boolean values elsewhere in this API - comes back as a JSON
+// number (0 or 1) rather than a JSON boolean: confirmed against a live
+// instance's real TagManager.getContainer response for
+// ignoreGtmDataLayer/isTagFireLimitAllowedInPreviewMode/
+// activelySyncGtmDataLayer (acceptance-test failure: "json: cannot
+// unmarshal number into Go struct field Container.ignoreGtmDataLayer of
+// type bool"). Also tolerates a literal JSON boolean, in case that ever
+// varies by Matomo version.
+type matomoBool bool
+
+func (b *matomoBool) UnmarshalJSON(data []byte) error {
+	var n int
+	if err := json.Unmarshal(data, &n); err == nil {
+		*b = matomoBool(n != 0)
+		return nil
+	}
+	var v bool
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	*b = matomoBool(v)
+	return nil
+}
 
 // Container is a Matomo Tag Manager container.
 type Container struct {
@@ -15,10 +41,11 @@ type Container struct {
 	Description string `json:"description"`
 	// All three confirmed against Matomo's own Dao/ContainersDao.php and
 	// API.php: TINYINT(1) columns, addContainer/updateContainer parameters
-	// defaulting to false at the API layer.
-	IgnoreGtmDataLayer                 bool `json:"ignoreGtmDataLayer"`
-	IsTagFireLimitAllowedInPreviewMode bool `json:"isTagFireLimitAllowedInPreviewMode"`
-	ActivelySyncGtmDataLayer           bool `json:"activelySyncGtmDataLayer"`
+	// defaulting to false at the API layer. Decoded as matomoBool, not a
+	// plain bool - see its doc comment for why.
+	IgnoreGtmDataLayer                 matomoBool `json:"ignoreGtmDataLayer"`
+	IsTagFireLimitAllowedInPreviewMode matomoBool `json:"isTagFireLimitAllowedInPreviewMode"`
+	ActivelySyncGtmDataLayer           matomoBool `json:"activelySyncGtmDataLayer"`
 	// Draft is the container's mutable draft version, always present on a
 	// real container (confirmed against Matomo's own TagManager source:
 	// TagManager.getContainer's response nests it as draft.idcontainerversion
