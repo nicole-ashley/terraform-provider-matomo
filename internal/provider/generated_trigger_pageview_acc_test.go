@@ -21,6 +21,7 @@ func TestAccTriggerPageview_createAndReadBack(t *testing.T) {
 				Config: testAccTriggerPageviewConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
+					resource.TestCheckResourceAttr(resourceName, "description", "acceptance test description"),
 				),
 			},
 			{
@@ -50,6 +51,7 @@ resource "matomo_tagmanager_container" "test" {
 resource "matomo_tagmanager_trigger_pageview" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-pageview"
+  description  = "acceptance test description"
 }
 `
 }

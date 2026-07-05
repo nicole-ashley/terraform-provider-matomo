@@ -21,6 +21,7 @@ func TestAccVariableConstant_createAndReadBack(t *testing.T) {
 				Config: testAccVariableConstantConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
+					resource.TestCheckResourceAttr(resourceName, "description", "acceptance test description"),
 				),
 			},
 			{
@@ -50,6 +51,7 @@ resource "matomo_tagmanager_container" "test" {
 resource "matomo_tagmanager_variable_constant" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-constant"
+  description  = "acceptance test description"
   constant_value = "test-value"
 }
 `

@@ -34,6 +34,7 @@ resource "matomo_tagmanager_variable" "test" {
   container_id  = matomo_tagmanager_container.test.id
   type          = "Constant"
   name          = "Acceptance Test Variable"
+  description   = "acceptance test variable description"
   default_value = "acceptance-default"
   parameter {
     name  = "constantValue"
@@ -44,6 +45,7 @@ resource "matomo_tagmanager_variable" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("matomo_tagmanager_variable.test", "name", "Acceptance Test Variable"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_variable.test", "default_value", "acceptance-default"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_variable.test", "description", "acceptance test variable description"),
 				),
 			},
 			{
