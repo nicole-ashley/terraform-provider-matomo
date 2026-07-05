@@ -45,8 +45,10 @@ resource "matomo_tagmanager_tag" "custom_html" {
 ### Optional
 
 - `block_trigger_ids` (List of String) Trigger ids (matomo_tagmanager_trigger.x.id) that block this tag from firing. Note: writing an explicit empty list (`[]`) rather than omitting this attribute will produce a one-time diff to null on the first refresh after apply; this is harmless and converges after one plan/apply cycle.
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `parameter` (Block List) Type-specific configuration as name/value pairs. (see [below for nested schema](#nestedblock--parameter))
 - `parameter_list` (Block List) A single named parameter whose value is a list of rows, each with arbitrary key/value items - for parameter types the generic parameter{} block cannot represent (e.g. Matomo's UI_CONTROL_MULTI_TUPLE fields, which need each row's fields sent as name[i][key]=value, not a flat list). Prefer a typed resource over this when one exists for your type - a typed resource's real nested block (e.g. custom_dimension{index,value}) is validated and self-documenting; this generic form is not. (see [below for nested schema](#nestedblock--parameter_list))
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String) "active" or "paused". Changing this edits the draft version only — like every other field on this resource, it has no effect on a live container until a new version is created and published.
 
 ### Read-Only

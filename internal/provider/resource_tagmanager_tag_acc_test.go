@@ -40,6 +40,8 @@ resource "matomo_tagmanager_tag" "test" {
   container_id     = matomo_tagmanager_container.test.id
   type             = "CustomHtml"
   name             = "Acceptance Test Tag"
+  description      = "acceptance test tag description"
+  priority         = 5
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   parameter {
     name  = "customHtml"
@@ -56,6 +58,8 @@ resource "matomo_tagmanager_tag" "test" {
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "status", "active"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "parameter.0.name", "customHtml"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "fire_trigger_ids.#", "1"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "description", "acceptance test tag description"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_tag.test", "priority", "5"),
 				),
 			},
 			{

@@ -61,6 +61,7 @@ resource "matomo_tagmanager_tag_matomo" "example" {
 - `category_name` (String) Category page being viewed. On an item's page, this is the item's category.
 - `custom_dimension` (Block List) Optionally, set a value for one or more custom dimensions. (see [below for nested schema](#nestedblock--custom_dimension))
 - `custom_url` (String) Optionally, specify a custom URL which should be tracked instead of the current location.
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `document_title` (String) Optionally, specify a custom document title which should be tracked instead of the default document title.
 - `event_action` (String) The event's action, for example Play, Pause, Duration, Add Playlist, Downloaded, Clicked…
 - `event_category` (String) The event's category, for example Videos, Music, Games…
@@ -70,6 +71,7 @@ resource "matomo_tagmanager_tag_matomo" "example" {
 - `id_goal` (String) The ID of the goal you want to track manually.
 - `is_ecommerce_view` (Boolean)
 - `price` (String) Item's display price, not used in standard Matomo reports, but output in API product reports.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `product_name` (String) Item's Name being viewed. On a category page this should be empty.
 - `product_sku` (String) Item's SKU code being viewed. On a category page this should be empty.
 - `status` (String)

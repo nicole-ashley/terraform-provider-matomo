@@ -53,6 +53,7 @@ resource "matomo_tagmanager_trigger" "checkout" {
 ### Optional
 
 - `condition` (Block List) Conditions that must all match for this trigger to fire. (see [below for nested schema](#nestedblock--condition))
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `parameter` (Block List) Type-specific configuration as name/value pairs. (see [below for nested schema](#nestedblock--parameter))
 - `parameter_list` (Block List) A single named parameter whose value is a list of rows, each with arbitrary key/value items - for parameter types the generic parameter{} block cannot represent (e.g. Matomo's UI_CONTROL_MULTI_TUPLE fields, which need each row's fields sent as name[i][key]=value, not a flat list). Prefer a typed resource over this when one exists for your type - a typed resource's real nested block (e.g. custom_dimension{index,value}) is validated and self-documenting; this generic form is not. (see [below for nested schema](#nestedblock--parameter_list))
 

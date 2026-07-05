@@ -113,7 +113,8 @@ func newTemplateData(spec TypeSpec) templateData {
 			}
 		}
 	}
-	var needsBoolPM, needsInt64PM, needsFloat64PM bool
+	needsInt64PM := spec.Kind == "tag" // priority is always an Int64 common attribute for tags
+	var needsBoolPM, needsFloat64PM bool
 	var hasListOfObjectsBlocks, needsListPM, needsAttrImport bool
 	for _, p := range spec.Params {
 		if !p.Required {

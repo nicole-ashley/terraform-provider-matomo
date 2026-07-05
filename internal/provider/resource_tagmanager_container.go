@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -32,11 +33,14 @@ type tagManagerContainerResource struct {
 }
 
 type tagManagerContainerResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	SiteID      types.String `tfsdk:"site_id"`
-	Context     types.String `tfsdk:"context"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
+	ID                                 types.String `tfsdk:"id"`
+	SiteID                             types.String `tfsdk:"site_id"`
+	Context                            types.String `tfsdk:"context"`
+	Name                               types.String `tfsdk:"name"`
+	Description                        types.String `tfsdk:"description"`
+	IgnoreGtmDataLayer                 types.Bool   `tfsdk:"ignore_gtm_data_layer"`
+	IsTagFireLimitAllowedInPreviewMode types.Bool   `tfsdk:"is_tag_fire_limit_allowed_in_preview_mode"`
+	ActivelySyncGtmDataLayer           types.Bool   `tfsdk:"actively_sync_gtm_data_layer"`
 }
 
 func (r *tagManagerContainerResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -79,6 +83,30 @@ func (r *tagManagerContainerResource) Schema(_ context.Context, _ resource.Schem
 				Computed:    true,
 				Description: "The container's description.",
 			},
+			"ignore_gtm_data_layer": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "If true, this container ignores an existing GTM-style dataLayer on the page instead of reusing it.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"is_tag_fire_limit_allowed_in_preview_mode": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "If true, a tag's configured fire limit is also enforced while in preview/debug mode.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"actively_sync_gtm_data_layer": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "If true, this container actively keeps an existing GTM-style dataLayer in sync rather than only reading it once.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
 }
@@ -111,8 +139,20 @@ func (r *tagManagerContainerResource) Create(ctx context.Context, req resource.C
 	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
 		description = plan.Description.ValueString()
 	}
+	ignoreGtmDataLayer := false
+	if !plan.IgnoreGtmDataLayer.IsUnknown() && !plan.IgnoreGtmDataLayer.IsNull() {
+		ignoreGtmDataLayer = plan.IgnoreGtmDataLayer.ValueBool()
+	}
+	isTagFireLimitAllowedInPreviewMode := false
+	if !plan.IsTagFireLimitAllowedInPreviewMode.IsUnknown() && !plan.IsTagFireLimitAllowedInPreviewMode.IsNull() {
+		isTagFireLimitAllowedInPreviewMode = plan.IsTagFireLimitAllowedInPreviewMode.ValueBool()
+	}
+	activelySyncGtmDataLayer := false
+	if !plan.ActivelySyncGtmDataLayer.IsUnknown() && !plan.ActivelySyncGtmDataLayer.IsNull() {
+		activelySyncGtmDataLayer = plan.ActivelySyncGtmDataLayer.ValueBool()
+	}
 
-	idContainer, err := r.client.AddContainer(ctx, siteID, plan.Context.ValueString(), plan.Name.ValueString(), description)
+	idContainer, err := r.client.AddContainer(ctx, siteID, plan.Context.ValueString(), plan.Name.ValueString(), description, ignoreGtmDataLayer, isTagFireLimitAllowedInPreviewMode, activelySyncGtmDataLayer)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating Matomo Tag Manager container", err.Error())
 		return
@@ -120,6 +160,9 @@ func (r *tagManagerContainerResource) Create(ctx context.Context, req resource.C
 
 	plan.ID = types.StringValue(buildContainerID(siteID, idContainer))
 	plan.Description = types.StringValue(description)
+	plan.IgnoreGtmDataLayer = types.BoolValue(ignoreGtmDataLayer)
+	plan.IsTagFireLimitAllowedInPreviewMode = types.BoolValue(isTagFireLimitAllowedInPreviewMode)
+	plan.ActivelySyncGtmDataLayer = types.BoolValue(activelySyncGtmDataLayer)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -150,6 +193,9 @@ func (r *tagManagerContainerResource) Read(ctx context.Context, req resource.Rea
 	state.Context = types.StringValue(ct.Context)
 	state.Name = types.StringValue(ct.Name)
 	state.Description = types.StringValue(ct.Description)
+	state.IgnoreGtmDataLayer = types.BoolValue(bool(ct.IgnoreGtmDataLayer))
+	state.IsTagFireLimitAllowedInPreviewMode = types.BoolValue(bool(ct.IsTagFireLimitAllowedInPreviewMode))
+	state.ActivelySyncGtmDataLayer = types.BoolValue(bool(ct.ActivelySyncGtmDataLayer))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -170,13 +216,28 @@ func (r *tagManagerContainerResource) Update(ctx context.Context, req resource.U
 	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
 		description = plan.Description.ValueString()
 	}
+	ignoreGtmDataLayer := false
+	if !plan.IgnoreGtmDataLayer.IsUnknown() && !plan.IgnoreGtmDataLayer.IsNull() {
+		ignoreGtmDataLayer = plan.IgnoreGtmDataLayer.ValueBool()
+	}
+	isTagFireLimitAllowedInPreviewMode := false
+	if !plan.IsTagFireLimitAllowedInPreviewMode.IsUnknown() && !plan.IsTagFireLimitAllowedInPreviewMode.IsNull() {
+		isTagFireLimitAllowedInPreviewMode = plan.IsTagFireLimitAllowedInPreviewMode.ValueBool()
+	}
+	activelySyncGtmDataLayer := false
+	if !plan.ActivelySyncGtmDataLayer.IsUnknown() && !plan.ActivelySyncGtmDataLayer.IsNull() {
+		activelySyncGtmDataLayer = plan.ActivelySyncGtmDataLayer.ValueBool()
+	}
 
-	if err := r.client.UpdateContainer(ctx, siteID, idContainer, plan.Name.ValueString(), description); err != nil {
+	if err := r.client.UpdateContainer(ctx, siteID, idContainer, plan.Name.ValueString(), description, ignoreGtmDataLayer, isTagFireLimitAllowedInPreviewMode, activelySyncGtmDataLayer); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager container", err.Error())
 		return
 	}
 
 	plan.Description = types.StringValue(description)
+	plan.IgnoreGtmDataLayer = types.BoolValue(ignoreGtmDataLayer)
+	plan.IsTagFireLimitAllowedInPreviewMode = types.BoolValue(isTagFireLimitAllowedInPreviewMode)
+	plan.ActivelySyncGtmDataLayer = types.BoolValue(activelySyncGtmDataLayer)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 

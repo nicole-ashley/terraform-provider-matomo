@@ -53,7 +53,9 @@ resource "matomo_tagmanager_tag_googleanalytics4event" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `event_parameter` (Block List) (see [below for nested schema](#nestedblock--event_parameter))
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

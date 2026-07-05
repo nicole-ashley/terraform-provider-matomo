@@ -54,6 +54,8 @@ resource "matomo_tagmanager_tag_googleconsentmodev2" "example" {
 
 - `block_trigger_ids` (List of String)
 - `consent_type` (Attributes List) (see [below for nested schema](#nestedatt--consent_type))
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

@@ -43,6 +43,7 @@ resource "matomo_tagmanager_trigger_windowleave" "example" {
 ### Optional
 
 - `condition` (Block List) Conditions that must all match for this trigger to fire. (see [below for nested schema](#nestedblock--condition))
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `trigger_limit` (Number) Enter "0" to not limit how often the trigger should be triggered
 
 ### Read-Only

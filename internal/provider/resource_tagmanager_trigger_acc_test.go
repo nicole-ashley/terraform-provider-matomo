@@ -34,9 +34,13 @@ resource "matomo_tagmanager_trigger" "test" {
   container_id = matomo_tagmanager_container.test.id
   type         = "PageView"
   name         = "Acceptance Test Trigger"
+  description  = "acceptance test trigger description"
 }
 `,
-				Check: resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "name", "Acceptance Test Trigger"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "name", "Acceptance Test Trigger"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_trigger.test", "description", "acceptance test trigger description"),
+				),
 			},
 			{
 				Config: `

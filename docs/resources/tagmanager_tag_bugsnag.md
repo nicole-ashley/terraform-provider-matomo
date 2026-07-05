@@ -54,6 +54,8 @@ resource "matomo_tagmanager_tag_bugsnag" "example" {
 
 - `block_trigger_ids` (List of String)
 - `collect_user_ip` (Boolean) This should be disable if you don't want to track personal information about your users.
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

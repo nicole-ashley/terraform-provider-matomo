@@ -53,6 +53,8 @@ resource "matomo_tagmanager_tag_raygun" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `raygun_enable_pulse` (Boolean) Automatically identify front end performance issues causing slow page load speeds. See what your users see in the browser and discover why users had poor quality experiences.
 - `status` (String)
 

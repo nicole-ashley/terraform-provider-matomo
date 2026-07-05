@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -43,6 +44,8 @@ type tagManagerTagResourceModel struct {
 	Type            types.String         `tfsdk:"type"`
 	Name            types.String         `tfsdk:"name"`
 	Status          types.String         `tfsdk:"status"`
+	Description     types.String         `tfsdk:"description"`
+	Priority        types.Int64          `tfsdk:"priority"`
 	FireTriggerIDs  []types.String       `tfsdk:"fire_trigger_ids"`
 	BlockTriggerIDs []types.String       `tfsdk:"block_trigger_ids"`
 	Parameter       []tagParameterModel  `tfsdk:"parameter"`
@@ -91,6 +94,22 @@ func (r *tagManagerTagResource) Schema(_ context.Context, _ resource.SchemaReque
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"description": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Optional free-text description, shown in Matomo's Tag Manager UI.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"priority": schema.Int64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 			"fire_trigger_ids": schema.ListAttribute{
@@ -309,6 +328,15 @@ func (r *tagManagerTagResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
+	description := ""
+	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
+		description = plan.Description.ValueString()
+	}
+	priority := int64(999)
+	if !plan.Priority.IsUnknown() && !plan.Priority.IsNull() {
+		priority = plan.Priority.ValueInt64()
+	}
+
 	params := parametersToMap(plan.Parameter)
 	for k, v := range parameterListsToMap(plan.ParameterList) {
 		params[k] = v
@@ -317,6 +345,8 @@ func (r *tagManagerTagResource) Create(ctx context.Context, req resource.CreateR
 	idTag, err := r.client.AddContainerTag(ctx, siteID, idContainer, versionID, matomo.TagParams{
 		Type:            plan.Type.ValueString(),
 		Name:            plan.Name.ValueString(),
+		Description:     description,
+		Priority:        int(priority),
 		Parameters:      params,
 		FireTriggerIDs:  fireIDs,
 		BlockTriggerIDs: blockIDs,
@@ -339,6 +369,8 @@ func (r *tagManagerTagResource) Create(ctx context.Context, req resource.CreateR
 
 	plan.ID = types.StringValue(buildEntityID(siteID, idContainer, idTag))
 	plan.Status = types.StringValue(status)
+	plan.Description = types.StringValue(description)
+	plan.Priority = types.Int64Value(priority)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -378,6 +410,8 @@ func (r *tagManagerTagResource) Read(ctx context.Context, req resource.ReadReque
 	state.Type = types.StringValue(tag.Type)
 	state.Name = types.StringValue(tag.Name)
 	state.Status = types.StringValue(tag.Status)
+	state.Description = types.StringValue(tag.Description)
+	state.Priority = types.Int64Value(int64(tag.Priority))
 	state.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.FireTriggerIDs)))
 	state.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
 
@@ -433,6 +467,15 @@ func (r *tagManagerTagResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
+	description := ""
+	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
+		description = plan.Description.ValueString()
+	}
+	priority := int64(999)
+	if !plan.Priority.IsUnknown() && !plan.Priority.IsNull() {
+		priority = plan.Priority.ValueInt64()
+	}
+
 	params := parametersToMap(plan.Parameter)
 	for k, v := range parameterListsToMap(plan.ParameterList) {
 		params[k] = v
@@ -441,6 +484,8 @@ func (r *tagManagerTagResource) Update(ctx context.Context, req resource.UpdateR
 	if err := r.client.UpdateContainerTag(ctx, siteID, idContainer, versionID, idTag, matomo.TagParams{
 		Type:            plan.Type.ValueString(),
 		Name:            plan.Name.ValueString(),
+		Description:     description,
+		Priority:        int(priority),
 		Parameters:      params,
 		FireTriggerIDs:  fireIDs,
 		BlockTriggerIDs: blockIDs,
@@ -464,6 +509,8 @@ func (r *tagManagerTagResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	plan.Status = types.StringValue(status)
+	plan.Description = types.StringValue(description)
+	plan.Priority = types.Int64Value(priority)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 

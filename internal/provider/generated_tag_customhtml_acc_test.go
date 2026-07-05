@@ -21,6 +21,8 @@ func TestAccTagCustomhtml_createAndReadBack(t *testing.T) {
 				Config: testAccTagCustomhtmlConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
+					resource.TestCheckResourceAttr(resourceName, "description", "acceptance test description"),
+					resource.TestCheckResourceAttr(resourceName, "priority", "3"),
 				),
 			},
 			{
@@ -56,6 +58,8 @@ resource "matomo_tagmanager_trigger" "test" {
 resource "matomo_tagmanager_tag_customhtml" "test" {
   container_id = matomo_tagmanager_container.test.id
   name         = "generated-test-customhtml"
+  description  = "acceptance test description"
+  priority     = 3
   fire_trigger_ids = [matomo_tagmanager_trigger.test.id]
   custom_html = "test-value"
 }

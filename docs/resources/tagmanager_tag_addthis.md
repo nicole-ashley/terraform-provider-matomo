@@ -54,6 +54,8 @@ resource "matomo_tagmanager_tag_addthis" "example" {
 
 - `add_this_parent_selector` (String) Optionally enter a CSS selector to the element where the Inline Tools should be added.
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

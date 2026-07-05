@@ -8,11 +8,13 @@ import (
 
 // Tag is a Matomo Tag Manager tag within a container version.
 type Tag struct {
-	IDTag      int       `json:"idtag"`
-	Name       string    `json:"name"`
-	Type       string    `json:"type"`
-	Status     string    `json:"status"`
-	Parameters ParamsMap `json:"parameters"`
+	IDTag       int       `json:"idtag"`
+	Name        string    `json:"name"`
+	Type        string    `json:"type"`
+	Status      string    `json:"status"`
+	Description string    `json:"description"`
+	Priority    int       `json:"priority"`
+	Parameters  ParamsMap `json:"parameters"`
 	// Confirmed against Matomo's own TagTest.php fixture: the response keys
 	// are fire_trigger_ids/block_trigger_ids (snake_case), unlike the
 	// fireTriggerIds/blockTriggerIds (camelCase) request parameters used to
@@ -27,6 +29,8 @@ type Tag struct {
 type TagParams struct {
 	Type            string
 	Name            string
+	Description     string
+	Priority        int
 	Parameters      ParamsMap
 	FireTriggerIDs  []string
 	BlockTriggerIDs []string
@@ -39,6 +43,8 @@ func tagParamsToValues(idSite int, idContainer, idContainerVersion string, p Tag
 		"idContainerVersion": {idContainerVersion},
 		"type":               {p.Type},
 		"name":               {p.Name},
+		"description":        {p.Description},
+		"priority":           {strconv.Itoa(p.Priority)},
 	}
 	addParamsMap(v, "parameters", p.Parameters)
 	addArrayParam(v, "fireTriggerIds", p.FireTriggerIDs)

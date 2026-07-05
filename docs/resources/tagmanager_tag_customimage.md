@@ -54,6 +54,8 @@ resource "matomo_tagmanager_tag_customimage" "example" {
 
 - `block_trigger_ids` (List of String)
 - `cache_buster_enabled` (Boolean) Makes sure the image will be fetched again every time it is added to the page by adding a URL parameter to the image URL with a random value, for example "?mtmcb=12345"..
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

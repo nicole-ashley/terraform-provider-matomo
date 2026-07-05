@@ -75,6 +75,12 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 			"name": schema.StringAttribute{
 				Required: true,
 			},
+			"description": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description: "Optional free-text description, shown in Matomo's Tag Manager UI.",
+			},
 {{- if eq .Kind "tag"}}
 			"status": schema.StringAttribute{
 				Optional: true,
@@ -105,6 +111,12 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 				// covers.
 				Optional:    true,
 				ElementType: types.StringType,
+			},
+			"priority": schema.Int64Attribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description: "Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.",
 			},
 {{- end}}
 {{- if eq .Kind "variable"}}

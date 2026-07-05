@@ -49,6 +49,7 @@ resource "matomo_tagmanager_variable_domelement" "example" {
 - `attribute_name` (String)
 - `css_selector` (String) A CSS selector allows you to select an element by id, className, element names, etc. If multiple elements match this selector, the first matching element will be used to get the value from. Examples for valid selectors are ".classname", "#id" or "li a".
 - `default_value` (String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `element_id` (String) The id attribute specifies a unique id for an HTML element. Insert here the value of an ID attribute of any element within your website.
 
 ### Read-Only

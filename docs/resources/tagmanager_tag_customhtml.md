@@ -53,7 +53,9 @@ resource "matomo_tagmanager_tag_customhtml" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `html_position` (String) Define the position of where the HTML should be inserted into your website.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

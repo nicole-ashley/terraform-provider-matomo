@@ -54,6 +54,7 @@ resource "matomo_tagmanager_tag_etracker" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `etracker_add_to_cart_number` (String) Number of products added to the cart
 - `etracker_add_to_cart_product` (String) dataLayer object of the product - according to etracker reference
 - `etracker_config` (String) Assign a etracker configuration in order to track data into a specific site.
@@ -81,6 +82,7 @@ resource "matomo_tagmanager_tag_etracker" "example" {
 - `etracker_wrapper_tonr` (String)
 - `etracker_wrapper_tsale` (String)
 - `etracker_wrapper_tval` (String)
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

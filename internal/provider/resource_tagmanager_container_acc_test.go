@@ -25,14 +25,19 @@ resource "matomo_site" "test" {
 }
 
 resource "matomo_tagmanager_container" "test" {
-  site_id = matomo_site.test.id
-  context = "web"
-  name    = "Acceptance Test Container"
+  site_id                      = matomo_site.test.id
+  context                      = "web"
+  name                         = "Acceptance Test Container"
+  ignore_gtm_data_layer        = true
+  actively_sync_gtm_data_layer = true
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("matomo_tagmanager_container.test", "name", "Acceptance Test Container"),
 					resource.TestCheckResourceAttr("matomo_tagmanager_container.test", "context", "web"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_container.test", "ignore_gtm_data_layer", "true"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_container.test", "actively_sync_gtm_data_layer", "true"),
+					resource.TestCheckResourceAttr("matomo_tagmanager_container.test", "is_tag_fire_limit_allowed_in_preview_mode", "false"),
 				),
 			},
 			{

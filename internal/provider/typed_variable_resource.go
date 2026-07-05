@@ -18,6 +18,7 @@ type typedVariableCommon struct {
 	ID           types.String `tfsdk:"id"`
 	ContainerID  types.String `tfsdk:"container_id"`
 	Name         types.String `tfsdk:"name"`
+	Description  types.String `tfsdk:"description"`
 	DefaultValue types.String `tfsdk:"default_value"`
 }
 
@@ -104,9 +105,15 @@ func (r *typedVariableResource) Create(ctx context.Context, req resource.CreateR
 		defaultValue = &v
 	}
 
+	description := ""
+	if !common.Description.IsUnknown() && !common.Description.IsNull() {
+		description = common.Description.ValueString()
+	}
+
 	idVariable, err := r.client.AddContainerVariable(ctx, siteID, idContainer, versionID, matomo.VariableParams{
 		Type:         model.Meta().TypeID,
 		Name:         common.Name.ValueString(),
+		Description:  description,
 		Parameters:   model.ToParams(),
 		DefaultValue: defaultValue,
 	})
@@ -132,6 +139,7 @@ func (r *typedVariableResource) Create(ctx context.Context, req resource.CreateR
 	common.ID = types.StringValue(buildEntityID(siteID, idContainer, idVariable))
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(v.Name)
+	common.Description = types.StringValue(v.Description)
 	common.DefaultValue = variableDefaultValueFromAPI(v.DefaultValue)
 
 	model.FromParams(v.Parameters)
@@ -175,6 +183,7 @@ func (r *typedVariableResource) Read(ctx context.Context, req resource.ReadReque
 
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(v.Name)
+	common.Description = types.StringValue(v.Description)
 	common.DefaultValue = variableDefaultValueFromAPI(v.DefaultValue)
 
 	model.FromParams(v.Parameters)
@@ -207,9 +216,15 @@ func (r *typedVariableResource) Update(ctx context.Context, req resource.UpdateR
 		defaultValue = &v
 	}
 
+	description := ""
+	if !common.Description.IsUnknown() && !common.Description.IsNull() {
+		description = common.Description.ValueString()
+	}
+
 	if err := r.client.UpdateContainerVariable(ctx, siteID, idContainer, versionID, idVariable, matomo.VariableParams{
 		Type:         model.Meta().TypeID,
 		Name:         common.Name.ValueString(),
+		Description:  description,
 		Parameters:   model.ToParams(),
 		DefaultValue: defaultValue,
 	}); err != nil {
