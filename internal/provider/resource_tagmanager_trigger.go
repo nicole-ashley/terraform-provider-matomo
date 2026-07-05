@@ -39,6 +39,7 @@ type tagManagerTriggerResourceModel struct {
 	ContainerID   types.String            `tfsdk:"container_id"`
 	Type          types.String            `tfsdk:"type"`
 	Name          types.String            `tfsdk:"name"`
+	Description   types.String            `tfsdk:"description"`
 	Parameter     []tagParameterModel     `tfsdk:"parameter"`
 	ParameterList []parameterListModel    `tfsdk:"parameter_list"`
 	Condition     []triggerConditionModel `tfsdk:"condition"`
@@ -76,6 +77,14 @@ func (r *tagManagerTriggerResource) Schema(_ context.Context, _ resource.SchemaR
 			"name": schema.StringAttribute{
 				Required:    true,
 				Description: "The trigger's display name.",
+			},
+			"description": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Optional free-text description, shown in Matomo's Tag Manager UI.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -181,16 +190,22 @@ func (r *tagManagerTriggerResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	description := ""
+	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
+		description = plan.Description.ValueString()
+	}
+
 	params := parametersToMap(plan.Parameter)
 	for k, v := range parameterListsToMap(plan.ParameterList) {
 		params[k] = v
 	}
 
 	idTrigger, err := r.client.AddContainerTrigger(ctx, siteID, idContainer, versionID, matomo.TriggerParams{
-		Type:       plan.Type.ValueString(),
-		Name:       plan.Name.ValueString(),
-		Parameters: params,
-		Conditions: conditionsToParams(plan.Condition),
+		Type:        plan.Type.ValueString(),
+		Name:        plan.Name.ValueString(),
+		Description: description,
+		Parameters:  params,
+		Conditions:  conditionsToParams(plan.Condition),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating Matomo Tag Manager trigger", err.Error())
@@ -198,6 +213,7 @@ func (r *tagManagerTriggerResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	plan.ID = types.StringValue(buildEntityID(siteID, idContainer, idTrigger))
+	plan.Description = types.StringValue(description)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -237,6 +253,7 @@ func (r *tagManagerTriggerResource) Read(ctx context.Context, req resource.ReadR
 	state.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	state.Type = types.StringValue(trig.Type)
 	state.Name = types.StringValue(trig.Name)
+	state.Description = types.StringValue(trig.Description)
 	state.Condition = conditionsFromAPI(trig.Conditions)
 
 	params := make([]tagParameterModel, 0, len(trig.Parameters))
@@ -281,21 +298,28 @@ func (r *tagManagerTriggerResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
+	description := ""
+	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
+		description = plan.Description.ValueString()
+	}
+
 	params := parametersToMap(plan.Parameter)
 	for k, v := range parameterListsToMap(plan.ParameterList) {
 		params[k] = v
 	}
 
 	if err := r.client.UpdateContainerTrigger(ctx, siteID, idContainer, versionID, idTrigger, matomo.TriggerParams{
-		Type:       plan.Type.ValueString(),
-		Name:       plan.Name.ValueString(),
-		Parameters: params,
-		Conditions: conditionsToParams(plan.Condition),
+		Type:        plan.Type.ValueString(),
+		Name:        plan.Name.ValueString(),
+		Description: description,
+		Parameters:  params,
+		Conditions:  conditionsToParams(plan.Condition),
 	}); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager trigger", err.Error())
 		return
 	}
 
+	plan.Description = types.StringValue(description)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
