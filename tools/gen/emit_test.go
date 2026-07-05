@@ -112,6 +112,71 @@ func TestRenderSchema_conditionallyRequired(t *testing.T) {
 	}
 }
 
+func TestRenderSchema_commonDescriptionAndPriority(t *testing.T) {
+	tagSpec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "CustomHtml",
+		Slug:         "customhtml",
+		ResourceName: "matomo_tagmanager_tag_customhtml",
+		Description:  "Inject custom HTML",
+		Params: []ParamSpec{
+			{MatomoName: "customHtml", TFName: "custom_html", GoFieldName: "CustomHtml", GoType: "String", Required: true},
+		},
+	}
+	src, err := RenderSchema(tagSpec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got := string(src)
+	for _, want := range []string{
+		`"description": schema.StringAttribute{`,
+		`"priority": schema.Int64Attribute{`,
+		`int64planmodifier.UseStateForUnknown()`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("tag schema missing %q; full source:\n%s", want, got)
+		}
+	}
+
+	triggerSpec := TypeSpec{
+		Kind:         "trigger",
+		TypeID:       "PageView",
+		Slug:         "pageview",
+		ResourceName: "matomo_tagmanager_trigger_pageview",
+		Description:  "Triggered on page view",
+	}
+	src, err = RenderSchema(triggerSpec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got = string(src)
+	if !strings.Contains(got, `"description": schema.StringAttribute{`) {
+		t.Errorf("trigger schema missing description attribute; full source:\n%s", got)
+	}
+	if strings.Contains(got, `"priority"`) {
+		t.Errorf("trigger schema must not have a priority attribute; full source:\n%s", got)
+	}
+
+	variableSpec := TypeSpec{
+		Kind:         "variable",
+		TypeID:       "Constant",
+		Slug:         "constant",
+		ResourceName: "matomo_tagmanager_variable_constant",
+		Description:  "A constant value",
+	}
+	src, err = RenderSchema(variableSpec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got = string(src)
+	if !strings.Contains(got, `"description": schema.StringAttribute{`) {
+		t.Errorf("variable schema missing description attribute; full source:\n%s", got)
+	}
+	if strings.Contains(got, `"priority"`) {
+		t.Errorf("variable schema must not have a priority attribute; full source:\n%s", got)
+	}
+}
+
 // TestRenderSchema_optionalFieldsAreComputed exercises every Go type's
 // Optional-field code path (String/Bool/Int64/Float64/List) to prove each
 // renders valid, compiling Go: String/Bool/Int64/Float64 get a Computed +
