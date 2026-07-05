@@ -45,6 +45,7 @@ resource "matomo_tagmanager_trigger_timer" "example" {
 ### Optional
 
 - `condition` (Block List) Conditions that must all match for this trigger to fire. (see [below for nested schema](#nestedblock--condition))
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `event_name` (String) You can optionally change the name of this event. This can be useful if you have for example multiple timers on the page and want to perform different logic based on the name of the timer.
 - `trigger_limit` (Number) Enter "0" to not limit the trigger.
 

@@ -45,6 +45,7 @@ resource "matomo_tagmanager_variable_clickdataattribute" "example" {
 ### Optional
 
 - `default_value` (String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 
 ### Read-Only
 

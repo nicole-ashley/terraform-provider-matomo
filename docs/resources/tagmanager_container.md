@@ -32,7 +32,10 @@ resource "matomo_tagmanager_container" "main" {
 
 ### Optional
 
+- `actively_sync_gtm_data_layer` (Boolean) If true, this container actively keeps an existing GTM-style dataLayer in sync rather than only reading it once.
 - `description` (String) The container's description.
+- `ignore_gtm_data_layer` (Boolean) If true, this container ignores an existing GTM-style dataLayer on the page instead of reusing it.
+- `is_tag_fire_limit_allowed_in_preview_mode` (Boolean) If true, a tag's configured fire limit is also enforced while in preview/debug mode.
 
 ### Read-Only
 

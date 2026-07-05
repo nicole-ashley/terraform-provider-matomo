@@ -55,9 +55,11 @@ resource "matomo_tagmanager_tag_googleadsconversion" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `google_ads_conversion_currency` (String)
 - `google_ads_conversion_transaction_id` (String)
 - `google_ads_conversion_value` (String)
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

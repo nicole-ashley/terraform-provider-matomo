@@ -53,8 +53,10 @@ resource "matomo_tagmanager_tag_honeybadger" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `honeybadger_environment` (String) The environment where the container is included (production, dev, etc.). Leave empty to default to the environment of this container.
 - `honeybadger_revision` (String) (optional) the version of your project
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

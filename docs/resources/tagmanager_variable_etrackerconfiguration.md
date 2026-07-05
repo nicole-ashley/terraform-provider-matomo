@@ -46,6 +46,7 @@ resource "matomo_tagmanager_variable_etrackerconfiguration" "example" {
 
 - `custom_dimension` (Block List) Optionally set one or multiple custom dimensions. (see [below for nested schema](#nestedblock--custom_dimension))
 - `default_value` (String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `et_areas` (String) Set variable if you want to overwrite the default value
 - `et_basket` (String) Set variable if you want to overwrite the default value
 - `et_cust` (String) Set variable if you want to overwrite the default value

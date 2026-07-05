@@ -61,6 +61,7 @@ resource "matomo_tagmanager_variable_matomoconfiguration" "example" {
 - `custom_dimension` (Block List) Optionally set one or multiple custom dimensions. (see [below for nested schema](#nestedblock--custom_dimension))
 - `custom_request_processing` (String) Can be set to a variable of type "Custom Request Processing Function" to augment or override default request sending behaviour.
 - `default_value` (String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
 - `disable_always_use_send_beacon` (Boolean) Choose to stop using sendBeacon and use a regular AJAX request instead. This might make clicking on external links a bit slower for users, but it won't be stopped by ad blockers.
 - `disable_browser_feature_detection` (Boolean) By default, Matomo accesses some information from the visitor’s browser like the browser resolution. Some privacy regulations may allow access of such information from the visitor’s device only after having a consent. If this applies to you, you can disable this feature.
 - `disable_campaign_parameters` (Boolean) When this option is checked, Matomo will not track campaign parameters and they will be removed from the tracked URLs.

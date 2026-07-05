@@ -53,6 +53,8 @@ resource "matomo_tagmanager_tag_shareaholic" "example" {
 ### Optional
 
 - `block_trigger_ids` (List of String)
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `shareaholic_app_id` (String) If you want to add an In-Page App enter the App ID here. It is about eight digits long. The App ID is not required for the Total Share Counter.
 - `shareaholic_in_page_app` (String) Here you can optionally add an In-Page App to your website.
 - `shareaholic_parent_selector` (String) Enter a CSS selector to the element where the In-Page App should be added.

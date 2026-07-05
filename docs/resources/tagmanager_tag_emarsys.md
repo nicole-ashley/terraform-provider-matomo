@@ -57,6 +57,8 @@ resource "matomo_tagmanager_tag_emarsys" "example" {
 - `command_go` (Boolean) Execute commands in the queue, that is, send them to the recommender service for processing.
 - `command_tag` (String) Add an arbitrary tag to the current event. The tag is collected and can be accessed later from other Emarsys products.
 - `command_view` (String) Report a product view.
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only

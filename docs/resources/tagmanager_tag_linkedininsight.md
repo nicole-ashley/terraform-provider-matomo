@@ -54,6 +54,8 @@ resource "matomo_tagmanager_tag_linkedininsight" "example" {
 
 - `block_trigger_ids` (List of String)
 - `conversion_id` (String) An optional conversion ID if you would like a specific conversion recorded when this tag executes.
+- `description` (String) Optional free-text description, shown in Matomo's Tag Manager UI.
+- `priority` (Number) Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.
 - `status` (String)
 
 ### Read-Only
