@@ -31,6 +31,12 @@ func triggerAlldownloadsclickSchema() schema.Schema {
 			"name": schema.StringAttribute{
 				Required: true,
 			},
+			"description": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Optional free-text description, shown in Matomo's Tag Manager UI.",
+			},
 			"download_extensions": schema.StringAttribute{
 				Required:    true,
 				Description: "Comma separated list of file extensions which will be considered as a download.",

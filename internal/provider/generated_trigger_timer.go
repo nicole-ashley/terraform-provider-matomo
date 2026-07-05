@@ -34,6 +34,12 @@ func triggerTimerSchema() schema.Schema {
 			"name": schema.StringAttribute{
 				Required: true,
 			},
+			"description": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Optional free-text description, shown in Matomo's Tag Manager UI.",
+			},
 			"trigger_interval": schema.Int64Attribute{
 				Required:    true,
 				Description: "",

@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -36,6 +37,12 @@ func tagGoogleconsentmodev2Schema() schema.Schema {
 			"name": schema.StringAttribute{
 				Required: true,
 			},
+			"description": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Optional free-text description, shown in Matomo's Tag Manager UI.",
+			},
 			"status": schema.StringAttribute{
 				Optional:      true,
 				Computed:      true,
@@ -65,6 +72,12 @@ func tagGoogleconsentmodev2Schema() schema.Schema {
 				// covers.
 				Optional:    true,
 				ElementType: types.StringType,
+			},
+			"priority": schema.Int64Attribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+				Description:   "Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.",
 			},
 			"consent_action": schema.ListAttribute{
 				ElementType: types.StringType,

@@ -31,6 +31,12 @@ func triggerCustomeventSchema() schema.Schema {
 			"name": schema.StringAttribute{
 				Required: true,
 			},
+			"description": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Optional free-text description, shown in Matomo's Tag Manager UI.",
+			},
 			"event_name": schema.StringAttribute{
 				Required:    true,
 				Description: "The name of the event that is pushed to the Data-Layer. For example you can push an event by adding this to your website: _mtm.push({\"event\": \"my-custom-event\"});",

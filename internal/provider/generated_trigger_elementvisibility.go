@@ -40,6 +40,12 @@ func triggerElementvisibilitySchema() schema.Schema {
 			"name": schema.StringAttribute{
 				Required: true,
 			},
+			"description": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description:   "Optional free-text description, shown in Matomo's Tag Manager UI.",
+			},
 			"selection_method": schema.StringAttribute{
 				Required:    true,
 				Description: "Select the way you want to identify an element you want to select.",
