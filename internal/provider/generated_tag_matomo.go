@@ -14,25 +14,30 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
+type tagMatomoCustomDimensionModel struct {
+	Index types.String `tfsdk:"index"`
+	Value types.String `tfsdk:"value"`
+}
+
 type tagMatomoModel struct {
 	typedTagCommon
-	MatomoConfig              types.String   `tfsdk:"matomo_config"`
-	TrackingType              types.String   `tfsdk:"tracking_type"`
-	IdGoal                    types.String   `tfsdk:"id_goal"`
-	GoalCustomRevenue         types.String   `tfsdk:"goal_custom_revenue"`
-	DocumentTitle             types.String   `tfsdk:"document_title"`
-	CustomUrl                 types.String   `tfsdk:"custom_url"`
-	IsEcommerceView           types.Bool     `tfsdk:"is_ecommerce_view"`
-	ProductSKU                types.String   `tfsdk:"product_sku"`
-	ProductName               types.String   `tfsdk:"product_name"`
-	CategoryName              types.String   `tfsdk:"category_name"`
-	Price                     types.String   `tfsdk:"price"`
-	EventCategory             types.String   `tfsdk:"event_category"`
-	EventAction               types.String   `tfsdk:"event_action"`
-	EventName                 types.String   `tfsdk:"event_name"`
-	EventValue                types.String   `tfsdk:"event_value"`
-	CustomDimensions          []types.String `tfsdk:"custom_dimensions"`
-	AreCustomDimensionsSticky types.Bool     `tfsdk:"are_custom_dimensions_sticky"`
+	MatomoConfig              types.String                    `tfsdk:"matomo_config"`
+	TrackingType              types.String                    `tfsdk:"tracking_type"`
+	IdGoal                    types.String                    `tfsdk:"id_goal"`
+	GoalCustomRevenue         types.String                    `tfsdk:"goal_custom_revenue"`
+	DocumentTitle             types.String                    `tfsdk:"document_title"`
+	CustomUrl                 types.String                    `tfsdk:"custom_url"`
+	IsEcommerceView           types.Bool                      `tfsdk:"is_ecommerce_view"`
+	ProductSKU                types.String                    `tfsdk:"product_sku"`
+	ProductName               types.String                    `tfsdk:"product_name"`
+	CategoryName              types.String                    `tfsdk:"category_name"`
+	Price                     types.String                    `tfsdk:"price"`
+	EventCategory             types.String                    `tfsdk:"event_category"`
+	EventAction               types.String                    `tfsdk:"event_action"`
+	EventName                 types.String                    `tfsdk:"event_name"`
+	EventValue                types.String                    `tfsdk:"event_value"`
+	CustomDimensions          []tagMatomoCustomDimensionModel `tfsdk:"custom_dimension"`
+	AreCustomDimensionsSticky types.Bool                      `tfsdk:"are_custom_dimensions_sticky"`
 }
 
 func tagMatomoSchema() schema.Schema {
@@ -357,12 +362,6 @@ func tagMatomoSchema() schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Specify a value or choose a variable.",
 			},
-			"custom_dimensions": schema.ListAttribute{
-				ElementType: types.StringType,
-				Required:    false,
-				Optional:    true,
-				Description: "Optionally, set a value for one or more custom dimensions.",
-			},
 			"are_custom_dimensions_sticky": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
@@ -384,6 +383,21 @@ func tagMatomoSchema() schema.Schema {
 				Description:   "",
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"custom_dimension": schema.ListNestedBlock{
+				Description: "Optionally, set a value for one or more custom dimensions.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"index": schema.StringAttribute{
+							Required: true,
+						},
+						"value": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -403,7 +417,12 @@ func (m *tagMatomoModel) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func (m *tagMatomoModel) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["matomoConfig"] = matomo.ScalarParam(m.MatomoConfig.ValueString())
@@ -448,7 +467,14 @@ func (m *tagMatomoModel) ToParams() matomo.ParamsMap {
 		p["eventValue"] = matomo.ScalarParam(m.EventValue.ValueString())
 	}
 	if m.CustomDimensions != nil {
-		p["customDimensions"] = matomo.ListParam(stringSliceFromModel(m.CustomDimensions))
+		rows := make([]map[string]string, len(m.CustomDimensions))
+		for i, row := range m.CustomDimensions {
+			rows[i] = map[string]string{
+				"index": row.Index.ValueString(),
+				"value": row.Value.ValueString(),
+			}
+		}
+		p["customDimensions"] = matomo.ListOfObjectsParam(rows)
 	}
 	if !m.AreCustomDimensionsSticky.IsNull() && !m.AreCustomDimensionsSticky.IsUnknown() {
 		p["areCustomDimensionsSticky"] = matomo.ScalarParam(paramBoolString(m.AreCustomDimensionsSticky.ValueBool()))
@@ -533,7 +559,13 @@ func (m *tagMatomoModel) FromParams(p matomo.ParamsMap) {
 		m.EventValue = types.StringNull()
 	}
 	if v, ok := p["customDimensions"]; ok {
-		m.CustomDimensions = paramListValue(v.List)
+		m.CustomDimensions = make([]tagMatomoCustomDimensionModel, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			m.CustomDimensions[i] = tagMatomoCustomDimensionModel{
+				Index: types.StringValue(row["index"]),
+				Value: types.StringValue(row["value"]),
+			}
+		}
 	} else {
 		m.CustomDimensions = nil
 	}

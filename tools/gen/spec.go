@@ -2,6 +2,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -23,6 +24,80 @@ type ParamSpec struct {
 	// in tools/gen/required.go) - unlike Required, which is unconditional.
 	// Always false when Condition is nil.
 	ConditionallyRequired bool
+	// IsListOfObjects is true when this GoType=="List" parameter is
+	// really a multi-key UI_CONTROL_MULTI_TUPLE parameter (2+ row keys,
+	// e.g. customDimensions' {index, value}) - it gets a real nested
+	// block instead of a flat schema.ListAttribute. BlockName and
+	// RowKeys are only populated when this is true.
+	IsListOfObjects bool
+	// BlockName is the Terraform block name for a ListOfObjects param's
+	// rows - the singular form of TFName (e.g. "custom_dimension" for
+	// "custom_dimensions"), per this project's naming convention.
+	BlockName string
+	// RowKeys is the ordered list of this ListOfObjects param's row
+	// keys, as confirmed by Matomo's own uiControlAttributes.
+	RowKeys []RowKeySpec
+	// SingleKeyName is the one row key of a single-key
+	// UI_CONTROL_MULTI_TUPLE parameter (e.g. "domain" for domains) - the
+	// Go field/schema stay a flat List (matomoTypeToGoType still maps
+	// this to "List"), only the wire encoding differs
+	// (matomo.WrapSingleKeyParam instead of matomo.ListParam). Empty for
+	// every other List parameter, including IsListOfObjects ones.
+	SingleKeyName string
+	// AsAttribute is true when an IsListOfObjects parameter must be
+	// emitted as a Computed schema.ListNestedAttribute instead of a
+	// schema.ListNestedBlock (see listOfObjectsAsAttributeOverrides for
+	// why - only set via that override table, never auto-detected).
+	// Meaningless when IsListOfObjects is false.
+	AsAttribute bool
+}
+
+// listOfObjectsAsAttributeOverrides marks parameters whose ListOfObjects
+// shape must be emitted as a Computed schema.ListNestedAttribute instead
+// of a schema.ListNestedBlock, keyed by "kind/typeID/matomoParamName".
+// This is required whenever Matomo defines a non-empty server-side
+// default for the field - a Terraform Block's cardinality is dictated
+// entirely by what's in the user's config (there is no Computed concept
+// for blocks), so a provider can never legally return more block
+// instances than were configured; this hard-fails
+// "Provider produced inconsistent result after apply" the moment Matomo
+// fills in a default the user didn't ask for. Confirmed via a live
+// acceptance-test failure + Matomo's own PHP source
+// (GoogleConsentModeV2Tag.php's consentTypes defaults to all 7 real
+// consent keys, state "granted", whenever unset) - every other
+// ListOfObjects field defaults to empty/absent and stays a Block.
+var listOfObjectsAsAttributeOverrides = map[string]bool{
+	"tag/GoogleConsentModeV2/consentTypes": true,
+}
+
+// RowKeySpec is one named sub-field of a ListOfObjects parameter's rows,
+// e.g. customDimensions' "index" or "value".
+type RowKeySpec struct {
+	MatomoKey   string // raw Matomo row key, e.g. "index"
+	TFName      string // Terraform-facing attribute name (rowKeyTFName applies any override)
+	GoFieldName string // Go field name for the generated row struct, e.g. "Index"
+}
+
+// multiTupleRowKeys returns a UI_CONTROL_MULTI_TUPLE parameter's row keys
+// in their real, defined order (Matomo's uiControlAttributes is a map
+// keyed "field1", "field2", ... - map iteration order is not the row's
+// real field order, so this scans sequentially instead and stops at the
+// first missing fieldN, which also naturally excludes any non-field
+// keys a future Matomo version might add alongside field1/field2).
+func multiTupleRowKeys(attrs matomo.UIControlAttributeValues) []string {
+	var keys []string
+	for i := 1; ; i++ {
+		raw, ok := attrs[fmt.Sprintf("field%d", i)]
+		if !ok {
+			break
+		}
+		var field matomo.UIControlField
+		if err := json.Unmarshal(raw, &field); err != nil || field.Key == "" {
+			break
+		}
+		keys = append(keys, field.Key)
+	}
+	return keys
 }
 
 // TypeSpec is one generated Tag Manager type (tag, trigger, or variable),
@@ -113,6 +188,31 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 		}
 		sort.Strings(availableValues)
 
+		var isListOfObjects bool
+		var blockName string
+		var rowKeys []RowKeySpec
+		var singleKeyName string
+		var asAttribute bool
+		if goType == "List" && p.UIControl == "multituple" {
+			rawKeys := multiTupleRowKeys(p.UIControlAttributes)
+			switch {
+			case len(rawKeys) > 1:
+				isListOfObjects = true
+				blockName = Singularize(CamelToSnake(p.Name))
+				asAttribute = listOfObjectsAsAttributeOverrides[kind+"/"+tmpl.ID+"/"+p.Name]
+				for _, k := range rawKeys {
+					tfKey := rowKeyTFName(kind, tmpl.ID, p.Name, k)
+					rowKeys = append(rowKeys, RowKeySpec{
+						MatomoKey:   k,
+						TFName:      tfKey,
+						GoFieldName: SnakeToPascal(tfKey),
+					})
+				}
+			case len(rawKeys) == 1:
+				singleKeyName = rawKeys[0]
+			}
+		}
+
 		spec.Params = append(spec.Params, ParamSpec{
 			MatomoName:            p.Name,
 			TFName:                CamelToSnake(p.Name),
@@ -123,6 +223,11 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 			AvailableValues:       availableValues,
 			Condition:             cond,
 			ConditionallyRequired: conditionallyRequired,
+			IsListOfObjects:       isListOfObjects,
+			BlockName:             blockName,
+			RowKeys:               rowKeys,
+			SingleKeyName:         singleKeyName,
+			AsAttribute:           asAttribute,
 		})
 	}
 

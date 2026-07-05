@@ -76,3 +76,38 @@ func TestGetAvailableTagTypes_flattensCategories(t *testing.T) {
 		t.Errorf("templates[1].ID = %q, want MatomoAnalytics", templates[1].ID)
 	}
 }
+
+// TestUIControlAttributeValues_emptyArray is a regression test for a real
+// decode failure hit against live CI: Matomo serializes an empty PHP
+// array as JSON [] rather than {} for uiControlAttributes, same
+// underlying PHP behavior ParamsMap.UnmarshalJSON (formencoding.go)
+// already works around for the "parameters" field - "cannot unmarshal
+// array into ... map[string]json.RawMessage" broke discovery for every
+// type at once until UIControlAttributeValues grew its own
+// array-tolerant UnmarshalJSON.
+func TestUIControlAttributeValues_emptyArray(t *testing.T) {
+	var got UIControlAttributeValues
+	if err := json.Unmarshal([]byte(`[]`), &got); err != nil {
+		t.Fatalf("Unmarshal([]) error = %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("Unmarshal([]) = %#v, want empty map", got)
+	}
+}
+
+func TestUIControlAttributeValues_object(t *testing.T) {
+	var got UIControlAttributeValues
+	if err := json.Unmarshal([]byte(`{"field1": {"key": "index"}, "field2": {"key": "value"}}`), &got); err != nil {
+		t.Fatalf("Unmarshal(object) error = %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len(got) = %d, want 2", len(got))
+	}
+	var field1 UIControlField
+	if err := json.Unmarshal(got["field1"], &field1); err != nil {
+		t.Fatalf("Unmarshal(got[\"field1\"]) error = %v", err)
+	}
+	if field1.Key != "index" {
+		t.Errorf("field1.Key = %q, want index", field1.Key)
+	}
+}

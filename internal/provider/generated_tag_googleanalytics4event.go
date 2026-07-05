@@ -13,10 +13,15 @@ import (
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
+type tagGoogleanalytics4eventEventParameterModel struct {
+	Parameter types.String `tfsdk:"parameter"`
+	Value     types.String `tfsdk:"value"`
+}
+
 type tagGoogleanalytics4eventModel struct {
 	typedTagCommon
-	EventName       types.String   `tfsdk:"event_name"`
-	EventParameters []types.String `tfsdk:"event_parameters"`
+	EventName       types.String                                  `tfsdk:"event_name"`
+	EventParameters []tagGoogleanalytics4eventEventParameterModel `tfsdk:"event_parameter"`
 }
 
 func tagGoogleanalytics4eventSchema() schema.Schema {
@@ -68,11 +73,20 @@ func tagGoogleanalytics4eventSchema() schema.Schema {
 				Required:    true,
 				Description: "",
 			},
-			"event_parameters": schema.ListAttribute{
-				ElementType: types.StringType,
-				Required:    false,
-				Optional:    true,
+		},
+		Blocks: map[string]schema.Block{
+			"event_parameter": schema.ListNestedBlock{
 				Description: "",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"parameter": schema.StringAttribute{
+							Required: true,
+						},
+						"value": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -94,12 +108,24 @@ func (m *tagGoogleanalytics4eventModel) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func (m *tagGoogleanalytics4eventModel) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["eventName"] = matomo.ScalarParam(m.EventName.ValueString())
 	if m.EventParameters != nil {
-		p["eventParameters"] = matomo.ListParam(stringSliceFromModel(m.EventParameters))
+		rows := make([]map[string]string, len(m.EventParameters))
+		for i, row := range m.EventParameters {
+			rows[i] = map[string]string{
+				"parameter": row.Parameter.ValueString(),
+				"value":     row.Value.ValueString(),
+			}
+		}
+		p["eventParameters"] = matomo.ListOfObjectsParam(rows)
 	}
 	return p
 }
@@ -115,7 +141,13 @@ func (m *tagGoogleanalytics4eventModel) ToParams() matomo.ParamsMap {
 func (m *tagGoogleanalytics4eventModel) FromParams(p matomo.ParamsMap) {
 	m.EventName = types.StringValue(p["eventName"].Scalar)
 	if v, ok := p["eventParameters"]; ok {
-		m.EventParameters = paramListValue(v.List)
+		m.EventParameters = make([]tagGoogleanalytics4eventEventParameterModel, len(v.ListOfObjects))
+		for i, row := range v.ListOfObjects {
+			m.EventParameters[i] = tagGoogleanalytics4eventEventParameterModel{
+				Parameter: types.StringValue(row["parameter"]),
+				Value:     types.StringValue(row["value"]),
+			}
+		}
 	} else {
 		m.EventParameters = nil
 	}

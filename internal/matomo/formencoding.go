@@ -8,19 +8,22 @@ import (
 )
 
 // ParamValue is one entry in a Tag/Trigger/Variable's flat "parameters"
-// map: either a plain scalar, or a list. Matomo's own dispatcher builds
-// PHP arrays for array-typed parameters from the raw query string's
-// native name[]=x convention, not from a JSON-encoded string value -
-// confirmed against a live instance (a JSON-encoded array string was
-// rejected outright with "<Field>: ... has to be an array"). A
-// TYPE_ARRAY Tag Manager field therefore has to be sent (and is
-// received back) as a genuine array under its own parameters[name] key,
-// not as a delimiter-joined string - List is non-nil (even if
-// zero-length) exactly when a value represents that shape; Scalar is
-// used otherwise.
+// map: a plain scalar, a list, or a list of objects. Matomo's own
+// dispatcher builds PHP arrays for array-typed parameters from the raw
+// query string's native name[]=x / name[i][key]=x convention, not from a
+// JSON-encoded string value - confirmed against a live instance (a
+// JSON-encoded array string was rejected outright with "<Field>: ... has to
+// be an array"). List is non-nil (even if zero-length) exactly when a value
+// represents a flat list of scalars; ListOfObjects is non-nil exactly when
+// it represents a list of rows, each with its own named string fields
+// (Matomo's UI_CONTROL_MULTI_TUPLE parameters - e.g. MatomoConfiguration's
+// customDimensions is a list of {index, value} rows, confirmed against
+// Matomo's own MatomoConfigurationVariable.php source, not merely a flat
+// list of strings the way ListParam alone could represent).
 type ParamValue struct {
-	Scalar string
-	List   []string
+	Scalar        string
+	List          []string
+	ListOfObjects []map[string]string
 }
 
 // ScalarParam builds a plain scalar ParamValue.
@@ -31,6 +34,28 @@ func ListParam(items []string) ParamValue { return ParamValue{List: items} }
 
 // IsList reports whether v represents a list-typed value.
 func (v ParamValue) IsList() bool { return v.List != nil }
+
+// ListOfObjectsParam builds a list-of-objects-typed ParamValue.
+func ListOfObjectsParam(rows []map[string]string) ParamValue { return ParamValue{ListOfObjects: rows} }
+
+// IsListOfObjects reports whether v represents a list-of-objects-typed value.
+func (v ParamValue) IsListOfObjects() bool { return v.ListOfObjects != nil }
+
+// WrapSingleKeyParam builds a ListOfObjects-typed ParamValue from a flat
+// list of strings, wrapping each one as a single-key row - for parameters
+// like MatomoConfiguration's domains, which Matomo's PHP source declares as
+// UI_CONTROL_MULTI_TUPLE (so it needs the same [i][key]=value wire shape as
+// any other list-of-objects parameter) but whose rows only ever have one
+// key, so there's no pairing information a nested Terraform block would add
+// over a flat list(string) - this keeps the Terraform-facing schema flat
+// while still sending Matomo the shape it expects.
+func WrapSingleKeyParam(key string, items []string) ParamValue {
+	rows := make([]map[string]string, len(items))
+	for i, item := range items {
+		rows[i] = map[string]string{key: item}
+	}
+	return ListOfObjectsParam(rows)
+}
 
 // ParamsMap is the "parameters" field shared by Tag/Trigger/Variable,
 // keyed by Matomo's own parameter name.
@@ -78,6 +103,10 @@ func decodeParamValue(raw json.RawMessage) ParamValue {
 	if err := json.Unmarshal(raw, &s); err == nil {
 		return ScalarParam(s)
 	}
+	var objArr []map[string]string
+	if err := json.Unmarshal(raw, &objArr); err == nil && len(objArr) > 0 {
+		return ListOfObjectsParam(objArr)
+	}
 	var arr []string
 	if err := json.Unmarshal(raw, &arr); err == nil {
 		return ListParam(arr)
@@ -119,6 +148,14 @@ func addArrayParam(v url.Values, name string, items []string) {
 // joined string.
 func addParamsMap(v url.Values, name string, m ParamsMap) {
 	for key, val := range m {
+		if val.IsListOfObjects() {
+			for i, row := range val.ListOfObjects {
+				for rowKey, rowValue := range row {
+					v.Set(fmt.Sprintf("%s[%s][%d][%s]", name, key, i, rowKey), rowValue)
+				}
+			}
+			continue
+		}
 		if val.IsList() {
 			for _, item := range val.List {
 				v.Add(fmt.Sprintf("%s[%s][]", name, key), item)

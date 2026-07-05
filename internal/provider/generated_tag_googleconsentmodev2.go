@@ -4,7 +4,9 @@ package provider
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -16,7 +18,7 @@ import (
 type tagGoogleconsentmodev2Model struct {
 	typedTagCommon
 	ConsentAction []types.String `tfsdk:"consent_action"`
-	ConsentTypes  []types.String `tfsdk:"consent_types"`
+	ConsentTypes  types.List     `tfsdk:"consent_type"`
 }
 
 func tagGoogleconsentmodev2Schema() schema.Schema {
@@ -69,11 +71,33 @@ func tagGoogleconsentmodev2Schema() schema.Schema {
 				Required:    true,
 				Description: "Select 'default' to set default values, and 'update' to handle users consent.",
 			},
-			"consent_types": schema.ListAttribute{
-				ElementType: types.StringType,
-				Required:    false,
-				Optional:    true,
-				Description: "",
+			"consent_type": schema.ListNestedAttribute{
+				// Computed + UseStateForUnknown: unlike every other
+				// ListOfObjects field (which defaults to empty/absent),
+				// Matomo defines a non-empty server-side default for
+				// this one - a schema.ListNestedBlock can never
+				// represent that (a Block's cardinality is dictated
+				// entirely by the user's config; there is no Computed
+				// concept for blocks), which hard-fails "Provider
+				// produced inconsistent result after apply" the moment
+				// Matomo fills in a default the user didn't configure -
+				// confirmed against a real acceptance-test run. See
+				// ParamSpec.AsAttribute's doc comment (tools/gen/spec.go)
+				// for the full story.
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				Description:   "",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Required: true,
+						},
+						"state": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -95,12 +119,26 @@ func (m *tagGoogleconsentmodev2Model) Meta() typedMeta {
 // CustomHtml's own field validator, which never happens for a key that's
 // simply absent from the parameters map). A List-typed parameter is sent
 // via matomo.ListParam, never joined into a single string - see
-// matomo.ParamValue's doc comment for why.
+// matomo.ParamValue's doc comment for why. A ListOfObjects (real nested
+// block) parameter is sent via matomo.ListOfObjectsParam, row by row; a
+// single-key MULTI_TUPLE parameter (SingleKeyName set, e.g. domains) stays
+// a flat list in the schema/model but is wire-encoded via
+// matomo.WrapSingleKeyParam instead of matomo.ListParam - see
+// matomo.ParamValue's doc comment for why Matomo needs this shape.
 func (m *tagGoogleconsentmodev2Model) ToParams() matomo.ParamsMap {
 	p := matomo.ParamsMap{}
 	p["consentAction"] = matomo.ListParam(stringSliceFromModel(m.ConsentAction))
-	if m.ConsentTypes != nil {
-		p["consentTypes"] = matomo.ListParam(stringSliceFromModel(m.ConsentTypes))
+	if !m.ConsentTypes.IsNull() && !m.ConsentTypes.IsUnknown() {
+		elements := m.ConsentTypes.Elements()
+		rows := make([]map[string]string, len(elements))
+		for i, elem := range elements {
+			attrs := elem.(types.Object).Attributes()
+			rows[i] = map[string]string{
+				"consent_type":  attrs["type"].(types.String).ValueString(),
+				"consent_state": attrs["state"].(types.String).ValueString(),
+			}
+		}
+		p["consentTypes"] = matomo.ListOfObjectsParam(rows)
 	}
 	return p
 }
@@ -115,10 +153,23 @@ func (m *tagGoogleconsentmodev2Model) ToParams() matomo.ParamsMap {
 // (confirmed against a real acceptance-test run).
 func (m *tagGoogleconsentmodev2Model) FromParams(p matomo.ParamsMap) {
 	m.ConsentAction = paramListValue(p["consentAction"].List)
-	if v, ok := p["consentTypes"]; ok {
-		m.ConsentTypes = paramListValue(v.List)
-	} else {
-		m.ConsentTypes = nil
+	{
+		attrTypes := map[string]attr.Type{
+			"type":  types.StringType,
+			"state": types.StringType,
+		}
+		if v, ok := p["consentTypes"]; ok {
+			elements := make([]attr.Value, len(v.ListOfObjects))
+			for i, row := range v.ListOfObjects {
+				elements[i] = types.ObjectValueMust(attrTypes, map[string]attr.Value{
+					"type":  types.StringValue(row["consent_type"]),
+					"state": types.StringValue(row["consent_state"]),
+				})
+			}
+			m.ConsentTypes = types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, elements)
+		} else {
+			m.ConsentTypes = types.ListNull(types.ObjectType{AttrTypes: attrTypes})
+		}
 	}
 }
 

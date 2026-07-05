@@ -2,6 +2,7 @@ package matomo
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 )
 
@@ -19,6 +20,64 @@ type TemplateParam struct {
 	Condition       string            `json:"condition"`
 	DefaultValue    any               `json:"defaultValue"`
 	AvailableValues map[string]string `json:"availableValues"`
+	// UIControl and UIControlAttributes are only populated for a handful
+	// of presentation hints - the one this provider cares about is
+	// "multituple" (Piwik\Settings\FieldConfig::UI_CONTROL_MULTI_TUPLE),
+	// Matomo's real wire shape for a "list of rows, each a named set of
+	// string sub-fields" parameter (e.g. customDimensions' {index, value}
+	// pairs). Confirmed generically exposed by the live discovery API,
+	// not just for one hard-coded field - UIControlAttributes' "field1",
+	// "field2", etc. keys give each row's real sub-field name via their
+	// own nested "key" property, letting tools/gen auto-detect this shape
+	// and its exact row keys instead of needing a hand-curated override
+	// table (see tools/gen/spec.go's multiTupleRowKeys).
+	//
+	// UIControlAttributes' value shape is NOT uniform across every
+	// UIControl kind - confirmed against a live discovery run across
+	// every type: UI_CONTROL_SINGLE_SELECT (a different, unrelated
+	// presentation hint - see the design spec's section 4) has at least
+	// one attribute whose value is a plain JSON string, not an object
+	// with a "key" field, which fails a map[string]UIControlField decode
+	// outright. Kept as raw JSON here and only decoded into
+	// UIControlField where actually needed (multiTupleRowKeys, gated on
+	// UIControl == "multituple" first) so a UIControl kind this provider
+	// doesn't otherwise care about can never break discovery for every
+	// type at once.
+	UIControl           string                   `json:"uiControl"`
+	UIControlAttributes UIControlAttributeValues `json:"uiControlAttributes"`
+}
+
+// UIControlAttributeValues is a parameter's "uiControlAttributes" object,
+// keyed by attribute name ("field1", "field2", ...) with each value kept
+// as raw JSON (see TemplateParam's doc comment for why). Confirmed
+// against a live discovery run: Matomo's own PHP source can serialize
+// this field as an empty JSON array ([]) instead of an object ({}) for
+// the same reason ParamsMap.UnmarshalJSON (formencoding.go) already
+// handles this - PHP's json_encode of an empty PHP array always produces
+// [], since an empty array can't be distinguished from an empty list. A
+// non-empty uiControlAttributes always serializes as a real object.
+type UIControlAttributeValues map[string]json.RawMessage
+
+func (m *UIControlAttributeValues) UnmarshalJSON(data []byte) error {
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(data, &obj); err == nil {
+		*m = obj
+		return nil
+	}
+	var empty []any
+	if err := json.Unmarshal(data, &empty); err != nil {
+		return err
+	}
+	*m = UIControlAttributeValues{}
+	return nil
+}
+
+// UIControlField is one "fieldN" entry of a UI_CONTROL_MULTI_TUPLE
+// parameter's uiControlAttributes - only Key (the row's real sub-field
+// name, e.g. "index") matters to this provider; every other key
+// Matomo returns here is presentation-only and not captured.
+type UIControlField struct {
+	Key string `json:"key"`
 }
 
 // Template describes one Tag Manager tag/trigger/variable type, as

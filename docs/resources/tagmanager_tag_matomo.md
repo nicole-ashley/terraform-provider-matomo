@@ -59,7 +59,7 @@ resource "matomo_tagmanager_tag_matomo" "example" {
 - `are_custom_dimensions_sticky` (Boolean)
 - `block_trigger_ids` (List of String)
 - `category_name` (String) Category page being viewed. On an item's page, this is the item's category.
-- `custom_dimensions` (List of String) Optionally, set a value for one or more custom dimensions.
+- `custom_dimension` (Block List) Optionally, set a value for one or more custom dimensions. (see [below for nested schema](#nestedblock--custom_dimension))
 - `custom_url` (String) Optionally, specify a custom URL which should be tracked instead of the current location.
 - `document_title` (String) Optionally, specify a custom document title which should be tracked instead of the default document title.
 - `event_action` (String) The event's action, for example Play, Pause, Duration, Add Playlist, Downloaded, Clicked…
@@ -77,3 +77,11 @@ resource "matomo_tagmanager_tag_matomo" "example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--custom_dimension"></a>
+### Nested Schema for `custom_dimension`
+
+Required:
+
+- `index` (String)
+- `value` (String)

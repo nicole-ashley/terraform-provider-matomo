@@ -38,6 +38,7 @@ resource "matomo_tagmanager_variable" "environment" {
 
 - `default_value` (String) Value used when the variable cannot be resolved.
 - `parameter` (Block List) Type-specific configuration as name/value pairs. (see [below for nested schema](#nestedblock--parameter))
+- `parameter_list` (Block List) A single named parameter whose value is a list of rows, each with arbitrary key/value items - for parameter types the generic parameter{} block cannot represent (e.g. Matomo's UI_CONTROL_MULTI_TUPLE fields, which need each row's fields sent as name[i][key]=value, not a flat list). Prefer a typed resource over this when one exists for your type - a typed resource's real nested block (e.g. custom_dimension{index,value}) is validated and self-documenting; this generic form is not. (see [below for nested schema](#nestedblock--parameter_list))
 
 ### Read-Only
 
@@ -49,4 +50,31 @@ resource "matomo_tagmanager_variable" "environment" {
 Required:
 
 - `name` (String)
+- `value` (String)
+
+
+<a id="nestedblock--parameter_list"></a>
+### Nested Schema for `parameter_list`
+
+Required:
+
+- `name` (String)
+
+Optional:
+
+- `row` (Block List) (see [below for nested schema](#nestedblock--parameter_list--row))
+
+<a id="nestedblock--parameter_list--row"></a>
+### Nested Schema for `parameter_list.row`
+
+Optional:
+
+- `item` (Block List) (see [below for nested schema](#nestedblock--parameter_list--row--item))
+
+<a id="nestedblock--parameter_list--row--item"></a>
+### Nested Schema for `parameter_list.row.item`
+
+Required:
+
+- `key` (String)
 - `value` (String)

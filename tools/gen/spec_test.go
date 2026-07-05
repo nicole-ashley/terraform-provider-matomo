@@ -2,10 +2,24 @@
 package main
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
+
+// rawUIField builds the json.RawMessage form of a matomo.UIControlField
+// {"key": key}, matching the real shape multiTupleRowKeys decodes -
+// UIControlAttributes is map[string]json.RawMessage precisely because
+// not every UIControl kind's attribute values share this shape (see
+// TemplateParam's doc comment).
+func rawUIField(key string) json.RawMessage {
+	b, err := json.Marshal(matomo.UIControlField{Key: key})
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
 
 func TestBuildTypeSpec(t *testing.T) {
 	tmpl := matomo.Template{
@@ -126,6 +140,158 @@ func TestBuildTypeSpec_conditionallyRequired(t *testing.T) {
 	eq, ok := product.Condition.(matomo.EqNode)
 	if !ok || eq.Field != "tracking_type" || eq.Value != "addtocart" {
 		t.Errorf("etrackerAddToCartProduct.Condition = %#v, want matomo.EqNode{Field: tracking_type, Value: addtocart} (field name rewritten to TF snake_case)", product.Condition)
+	}
+}
+
+// TestBuildTypeSpec_multiTupleDetection mirrors the real customDimensions
+// parameter confirmed via live CI (uiControl="multituple",
+// uiControlAttributes.field1.key="index", field2.key="value") - two row
+// keys means a real ListOfObjects nested block, not a flat list.
+func TestBuildTypeSpec_multiTupleDetection(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "MatomoConfiguration",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "customDimensions", Type: "array",
+				UIControl: "multituple",
+				UIControlAttributes: map[string]json.RawMessage{
+					"field1": rawUIField("index"),
+					"field2": rawUIField("value"),
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("variable", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if !p.IsListOfObjects {
+		t.Fatal("customDimensions.IsListOfObjects = false, want true")
+	}
+	if p.SingleKeyName != "" {
+		t.Errorf("customDimensions.SingleKeyName = %q, want empty", p.SingleKeyName)
+	}
+	if p.BlockName != "custom_dimension" {
+		t.Errorf("customDimensions.BlockName = %q, want custom_dimension", p.BlockName)
+	}
+	if len(p.RowKeys) != 2 {
+		t.Fatalf("len(customDimensions.RowKeys) = %d, want 2", len(p.RowKeys))
+	}
+	if p.RowKeys[0] != (RowKeySpec{MatomoKey: "index", TFName: "index", GoFieldName: "Index"}) {
+		t.Errorf("customDimensions.RowKeys[0] = %+v, want {index index Index}", p.RowKeys[0])
+	}
+	if p.RowKeys[1] != (RowKeySpec{MatomoKey: "value", TFName: "value", GoFieldName: "Value"}) {
+		t.Errorf("customDimensions.RowKeys[1] = %+v, want {value value Value}", p.RowKeys[1])
+	}
+}
+
+// TestBuildTypeSpec_singleKeyMultiTuple mirrors the real domains
+// parameter: also UI_CONTROL_MULTI_TUPLE, but with only one row key - it
+// stays a flat List (no nested block), only its wire encoding differs.
+func TestBuildTypeSpec_singleKeyMultiTuple(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "MatomoConfiguration",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "domains", Type: "array",
+				UIControl: "multituple",
+				UIControlAttributes: map[string]json.RawMessage{
+					"field1": rawUIField("domain"),
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("variable", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if p.IsListOfObjects {
+		t.Error("domains.IsListOfObjects = true, want false")
+	}
+	if p.GoType != "List" {
+		t.Errorf("domains.GoType = %q, want List", p.GoType)
+	}
+	if p.SingleKeyName != "domain" {
+		t.Errorf("domains.SingleKeyName = %q, want domain", p.SingleKeyName)
+	}
+}
+
+// TestBuildTypeSpec_consentTypesKeyOverride mirrors the real consentTypes
+// parameter, confirming rowKeyNameOverrides renames its raw
+// consent_type/consent_state wire keys to the shorter type/state
+// Terraform-facing names per this project's naming decision, without
+// changing the wire key used in RowKeySpec.MatomoKey.
+func TestBuildTypeSpec_consentTypesKeyOverride(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "GoogleConsentModeV2",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "consentTypes", Type: "array",
+				UIControl: "multituple",
+				UIControlAttributes: map[string]json.RawMessage{
+					"field1": rawUIField("consent_type"),
+					"field2": rawUIField("consent_state"),
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("tag", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if p.RowKeys[0] != (RowKeySpec{MatomoKey: "consent_type", TFName: "type", GoFieldName: "Type"}) {
+		t.Errorf("consentTypes.RowKeys[0] = %+v, want {consent_type type Type}", p.RowKeys[0])
+	}
+	if p.RowKeys[1] != (RowKeySpec{MatomoKey: "consent_state", TFName: "state", GoFieldName: "State"}) {
+		t.Errorf("consentTypes.RowKeys[1] = %+v, want {consent_state state State}", p.RowKeys[1])
+	}
+	// consentTypes is the one field with a listOfObjectsAsAttributeOverrides
+	// entry - Matomo defaults it server-side to 7 non-empty rows, which a
+	// schema.ListNestedBlock can never represent (confirmed against a real
+	// acceptance-test failure - see spec.go's doc comment on the override
+	// table). Must render as a Computed ListNestedAttribute instead.
+	if !p.AsAttribute {
+		t.Error("consentTypes.AsAttribute = false, want true (listOfObjectsAsAttributeOverrides entry)")
+	}
+}
+
+// TestBuildTypeSpec_nonMultiTupleUIControlAttributesShape is a regression
+// test for a real failure hit against live CI: some other UIControl kind
+// (confirmed to be UI_CONTROL_SINGLE_SELECT, a different, unrelated
+// presentation hint per the design spec's section 4) has at least one
+// uiControlAttributes value that is a plain JSON string, not an object
+// with a "key" field - decoding every parameter's uiControlAttributes
+// eagerly as map[string]matomo.UIControlField broke discovery for every
+// type at once with "cannot unmarshal string into ... UIControlField".
+// BuildTypeSpec must never touch UIControlAttributes at all unless
+// UIControl == "multituple" first.
+func TestBuildTypeSpec_nonMultiTupleUIControlAttributesShape(t *testing.T) {
+	tmpl := matomo.Template{
+		ID: "GoogleConsentModeV2",
+		Parameters: []matomo.TemplateParam{
+			{
+				Name: "consentAction", Type: "string",
+				UIControl: "singleselect",
+				UIControlAttributes: map[string]json.RawMessage{
+					"formats": json.RawMessage(`"some plain string value"`),
+				},
+			},
+		},
+	}
+
+	spec, err := BuildTypeSpec("tag", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	p := spec.Params[0]
+	if p.IsListOfObjects || p.SingleKeyName != "" {
+		t.Errorf("consentAction (UIControl=singleselect, GoType=String) should never reach multiTupleRowKeys - got IsListOfObjects=%v SingleKeyName=%q", p.IsListOfObjects, p.SingleKeyName)
 	}
 }
 

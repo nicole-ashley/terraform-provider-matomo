@@ -29,12 +29,13 @@ type tagManagerVariableResource struct {
 }
 
 type tagManagerVariableResourceModel struct {
-	ID           types.String        `tfsdk:"id"`
-	ContainerID  types.String        `tfsdk:"container_id"`
-	Type         types.String        `tfsdk:"type"`
-	Name         types.String        `tfsdk:"name"`
-	DefaultValue types.String        `tfsdk:"default_value"`
-	Parameter    []tagParameterModel `tfsdk:"parameter"`
+	ID            types.String         `tfsdk:"id"`
+	ContainerID   types.String         `tfsdk:"container_id"`
+	Type          types.String         `tfsdk:"type"`
+	Name          types.String         `tfsdk:"name"`
+	DefaultValue  types.String         `tfsdk:"default_value"`
+	Parameter     []tagParameterModel  `tfsdk:"parameter"`
+	ParameterList []parameterListModel `tfsdk:"parameter_list"`
 }
 
 func (r *tagManagerVariableResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -86,6 +87,30 @@ func (r *tagManagerVariableResource) Schema(_ context.Context, _ resource.Schema
 					},
 				},
 			},
+			"parameter_list": schema.ListNestedBlock{
+				Description: "A single named parameter whose value is a list of rows, each with arbitrary key/value items - for parameter types the generic parameter{} block cannot represent (e.g. Matomo's UI_CONTROL_MULTI_TUPLE fields, which need each row's fields sent as name[i][key]=value, not a flat list). Prefer a typed resource over this when one exists for your type - a typed resource's real nested block (e.g. custom_dimension{index,value}) is validated and self-documenting; this generic form is not.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Required: true},
+					},
+					Blocks: map[string]schema.Block{
+						"row": schema.ListNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Blocks: map[string]schema.Block{
+									"item": schema.ListNestedBlock{
+										NestedObject: schema.NestedBlockObject{
+											Attributes: map[string]schema.Attribute{
+												"key":   schema.StringAttribute{Required: true},
+												"value": schema.StringAttribute{Required: true},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -127,10 +152,15 @@ func (r *tagManagerVariableResource) Create(ctx context.Context, req resource.Cr
 		defaultValue = &v
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	idVariable, err := r.client.AddContainerVariable(ctx, siteID, idContainer, versionID, matomo.VariableParams{
 		Type:         plan.Type.ValueString(),
 		Name:         plan.Name.ValueString(),
-		Parameters:   parametersToMap(plan.Parameter),
+		Parameters:   params,
 		DefaultValue: defaultValue,
 	})
 	if err != nil {
@@ -139,6 +169,20 @@ func (r *tagManagerVariableResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	plan.ID = types.StringValue(buildEntityID(siteID, idContainer, idVariable))
+
+	// default_value is Optional+Computed (Matomo can default it
+	// server-side even when never sent) - reading it back here, the same
+	// way Read does, is required so an unconfigured default_value never
+	// stays Unknown in the state Create writes: confirmed against a real
+	// acceptance-test run ("Provider returned invalid result object
+	// after apply ... default_value: all values must be known").
+	v, err := r.client.GetContainerVariable(ctx, siteID, idContainer, versionID, idVariable)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading back created Matomo Tag Manager variable", err.Error())
+		return
+	}
+	plan.DefaultValue = types.StringValue(v.DefaultValue)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -182,6 +226,9 @@ func (r *tagManagerVariableResource) Read(ctx context.Context, req resource.Read
 
 	params := make([]tagParameterModel, 0, len(v.Parameters))
 	for name, value := range v.Parameters {
+		if value.IsListOfObjects() {
+			continue // represented by the parameter_list block instead
+		}
 		params = append(params, tagParameterModel{Name: types.StringValue(name), Value: types.StringValue(paramValueDisplayString(value))})
 	}
 	// v.Parameters is a map, so Go's iteration order above is randomized per
@@ -195,6 +242,7 @@ func (r *tagManagerVariableResource) Read(ctx context.Context, req resource.Read
 		return params[i].Name.ValueString() < params[j].Name.ValueString()
 	})
 	state.Parameter = params
+	state.ParameterList = parameterListsFromAPI(v.Parameters)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -224,15 +272,29 @@ func (r *tagManagerVariableResource) Update(ctx context.Context, req resource.Up
 		defaultValue = &v
 	}
 
+	params := parametersToMap(plan.Parameter)
+	for k, v := range parameterListsToMap(plan.ParameterList) {
+		params[k] = v
+	}
+
 	if err := r.client.UpdateContainerVariable(ctx, siteID, idContainer, versionID, idVariable, matomo.VariableParams{
 		Type:         plan.Type.ValueString(),
 		Name:         plan.Name.ValueString(),
-		Parameters:   parametersToMap(plan.Parameter),
+		Parameters:   params,
 		DefaultValue: defaultValue,
 	}); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager variable", err.Error())
 		return
 	}
+
+	// See Create's identical read-back for why this is required whenever
+	// default_value is left unconfigured.
+	v, err := r.client.GetContainerVariable(ctx, siteID, idContainer, versionID, idVariable)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading back updated Matomo Tag Manager variable", err.Error())
+		return
+	}
+	plan.DefaultValue = types.StringValue(v.DefaultValue)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
