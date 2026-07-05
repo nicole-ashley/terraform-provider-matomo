@@ -20,6 +20,8 @@ type typedTagCommon struct {
 	ContainerID     types.String   `tfsdk:"container_id"`
 	Name            types.String   `tfsdk:"name"`
 	Status          types.String   `tfsdk:"status"`
+	Description     types.String   `tfsdk:"description"`
+	Priority        types.Int64    `tfsdk:"priority"`
 	FireTriggerIDs  []types.String `tfsdk:"fire_trigger_ids"`
 	BlockTriggerIDs []types.String `tfsdk:"block_trigger_ids"`
 }
@@ -99,9 +101,20 @@ func (r *typedTagResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
+	description := ""
+	if !common.Description.IsUnknown() && !common.Description.IsNull() {
+		description = common.Description.ValueString()
+	}
+	priority := int64(999)
+	if !common.Priority.IsUnknown() && !common.Priority.IsNull() {
+		priority = common.Priority.ValueInt64()
+	}
+
 	idTag, err := r.client.AddContainerTag(ctx, siteID, idContainer, versionID, matomo.TagParams{
 		Type:            model.Meta().TypeID,
 		Name:            common.Name.ValueString(),
+		Description:     description,
+		Priority:        int(priority),
 		Parameters:      model.ToParams(),
 		FireTriggerIDs:  fireIDs,
 		BlockTriggerIDs: blockIDs,
@@ -141,6 +154,8 @@ func (r *typedTagResource) Create(ctx context.Context, req resource.CreateReques
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(tag.Name)
 	common.Status = types.StringValue(tag.Status)
+	common.Description = types.StringValue(tag.Description)
+	common.Priority = types.Int64Value(int64(tag.Priority))
 	common.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.FireTriggerIDs)))
 	common.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
 
@@ -182,6 +197,8 @@ func (r *typedTagResource) Read(ctx context.Context, req resource.ReadRequest, r
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(tag.Name)
 	common.Status = types.StringValue(tag.Status)
+	common.Description = types.StringValue(tag.Description)
+	common.Priority = types.Int64Value(int64(tag.Priority))
 	common.FireTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.FireTriggerIDs)))
 	common.BlockTriggerIDs = stringModelFromSlice(compositeEntityIDs(siteID, idContainer, intsToStrings(tag.BlockTriggerIDs)))
 
@@ -223,6 +240,8 @@ func (r *typedTagResource) Update(ctx context.Context, req resource.UpdateReques
 	if err := r.client.UpdateContainerTag(ctx, siteID, idContainer, versionID, idTag, matomo.TagParams{
 		Type:            model.Meta().TypeID,
 		Name:            common.Name.ValueString(),
+		Description:     common.Description.ValueString(),
+		Priority:        int(common.Priority.ValueInt64()),
 		Parameters:      model.ToParams(),
 		FireTriggerIDs:  fireIDs,
 		BlockTriggerIDs: blockIDs,

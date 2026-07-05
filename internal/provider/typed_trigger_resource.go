@@ -20,6 +20,7 @@ type typedTriggerCommon struct {
 	ID          types.String            `tfsdk:"id"`
 	ContainerID types.String            `tfsdk:"container_id"`
 	Name        types.String            `tfsdk:"name"`
+	Description types.String            `tfsdk:"description"`
 	Condition   []triggerConditionModel `tfsdk:"condition"`
 }
 
@@ -105,11 +106,17 @@ func (r *typedTriggerResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	description := ""
+	if !common.Description.IsUnknown() && !common.Description.IsNull() {
+		description = common.Description.ValueString()
+	}
+
 	idTrigger, err := r.client.AddContainerTrigger(ctx, siteID, idContainer, versionID, matomo.TriggerParams{
-		Type:       model.Meta().TypeID,
-		Name:       common.Name.ValueString(),
-		Parameters: model.ToParams(),
-		Conditions: conditionsToParams(common.Condition),
+		Type:        model.Meta().TypeID,
+		Name:        common.Name.ValueString(),
+		Description: description,
+		Parameters:  model.ToParams(),
+		Conditions:  conditionsToParams(common.Condition),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating Matomo Tag Manager trigger", err.Error())
@@ -132,6 +139,7 @@ func (r *typedTriggerResource) Create(ctx context.Context, req resource.CreateRe
 	common.ID = types.StringValue(buildEntityID(siteID, idContainer, idTrigger))
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(trig.Name)
+	common.Description = types.StringValue(trig.Description)
 	common.Condition = conditionsFromAPI(trig.Conditions)
 
 	model.FromParams(trig.Parameters)
@@ -175,6 +183,7 @@ func (r *typedTriggerResource) Read(ctx context.Context, req resource.ReadReques
 
 	common.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	common.Name = types.StringValue(trig.Name)
+	common.Description = types.StringValue(trig.Description)
 	common.Condition = conditionsFromAPI(trig.Conditions)
 
 	model.FromParams(trig.Parameters)
@@ -202,10 +211,11 @@ func (r *typedTriggerResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	if err := r.client.UpdateContainerTrigger(ctx, siteID, idContainer, versionID, idTrigger, matomo.TriggerParams{
-		Type:       model.Meta().TypeID,
-		Name:       common.Name.ValueString(),
-		Parameters: model.ToParams(),
-		Conditions: conditionsToParams(common.Condition),
+		Type:        model.Meta().TypeID,
+		Name:        common.Name.ValueString(),
+		Description: common.Description.ValueString(),
+		Parameters:  model.ToParams(),
+		Conditions:  conditionsToParams(common.Condition),
 	}); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager trigger", err.Error())
 		return
