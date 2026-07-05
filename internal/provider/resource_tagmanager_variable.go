@@ -33,6 +33,7 @@ type tagManagerVariableResourceModel struct {
 	ContainerID   types.String         `tfsdk:"container_id"`
 	Type          types.String         `tfsdk:"type"`
 	Name          types.String         `tfsdk:"name"`
+	Description   types.String         `tfsdk:"description"`
 	DefaultValue  types.String         `tfsdk:"default_value"`
 	Parameter     []tagParameterModel  `tfsdk:"parameter"`
 	ParameterList []parameterListModel `tfsdk:"parameter_list"`
@@ -70,6 +71,14 @@ func (r *tagManagerVariableResource) Schema(_ context.Context, _ resource.Schema
 			"name": schema.StringAttribute{
 				Required:    true,
 				Description: "The variable's display name.",
+			},
+			"description": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Optional free-text description, shown in Matomo's Tag Manager UI.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"default_value": schema.StringAttribute{
 				Optional:    true,
@@ -152,6 +161,11 @@ func (r *tagManagerVariableResource) Create(ctx context.Context, req resource.Cr
 		defaultValue = &v
 	}
 
+	description := ""
+	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
+		description = plan.Description.ValueString()
+	}
+
 	params := parametersToMap(plan.Parameter)
 	for k, v := range parameterListsToMap(plan.ParameterList) {
 		params[k] = v
@@ -160,6 +174,7 @@ func (r *tagManagerVariableResource) Create(ctx context.Context, req resource.Cr
 	idVariable, err := r.client.AddContainerVariable(ctx, siteID, idContainer, versionID, matomo.VariableParams{
 		Type:         plan.Type.ValueString(),
 		Name:         plan.Name.ValueString(),
+		Description:  description,
 		Parameters:   params,
 		DefaultValue: defaultValue,
 	})
@@ -182,6 +197,7 @@ func (r *tagManagerVariableResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 	plan.DefaultValue = types.StringValue(v.DefaultValue)
+	plan.Description = types.StringValue(v.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -222,6 +238,7 @@ func (r *tagManagerVariableResource) Read(ctx context.Context, req resource.Read
 	state.ContainerID = types.StringValue(buildContainerID(siteID, idContainer))
 	state.Type = types.StringValue(v.Type)
 	state.Name = types.StringValue(v.Name)
+	state.Description = types.StringValue(v.Description)
 	state.DefaultValue = types.StringValue(v.DefaultValue)
 
 	params := make([]tagParameterModel, 0, len(v.Parameters))
@@ -272,6 +289,11 @@ func (r *tagManagerVariableResource) Update(ctx context.Context, req resource.Up
 		defaultValue = &v
 	}
 
+	description := ""
+	if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
+		description = plan.Description.ValueString()
+	}
+
 	params := parametersToMap(plan.Parameter)
 	for k, v := range parameterListsToMap(plan.ParameterList) {
 		params[k] = v
@@ -280,6 +302,7 @@ func (r *tagManagerVariableResource) Update(ctx context.Context, req resource.Up
 	if err := r.client.UpdateContainerVariable(ctx, siteID, idContainer, versionID, idVariable, matomo.VariableParams{
 		Type:         plan.Type.ValueString(),
 		Name:         plan.Name.ValueString(),
+		Description:  description,
 		Parameters:   params,
 		DefaultValue: defaultValue,
 	}); err != nil {
@@ -295,6 +318,7 @@ func (r *tagManagerVariableResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 	plan.DefaultValue = types.StringValue(v.DefaultValue)
+	plan.Description = types.StringValue(v.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
