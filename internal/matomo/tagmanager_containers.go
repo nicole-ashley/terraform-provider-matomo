@@ -13,6 +13,12 @@ type Container struct {
 	Context     string `json:"context"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	// All three confirmed against Matomo's own Dao/ContainersDao.php and
+	// API.php: TINYINT(1) columns, addContainer/updateContainer parameters
+	// defaulting to false at the API layer.
+	IgnoreGtmDataLayer                 bool `json:"ignoreGtmDataLayer"`
+	IsTagFireLimitAllowedInPreviewMode bool `json:"isTagFireLimitAllowedInPreviewMode"`
+	ActivelySyncGtmDataLayer           bool `json:"activelySyncGtmDataLayer"`
 	// Draft is the container's mutable draft version, always present on a
 	// real container (confirmed against Matomo's own TagManager source:
 	// TagManager.getContainer's response nests it as draft.idcontainerversion
@@ -27,12 +33,15 @@ type Container struct {
 }
 
 // AddContainer creates a new Tag Manager container and returns its ID.
-func (c *Client) AddContainer(ctx context.Context, idSite int, tmContext, name, description string) (string, error) {
+func (c *Client) AddContainer(ctx context.Context, idSite int, tmContext, name, description string, ignoreGtmDataLayer, isTagFireLimitAllowedInPreviewMode, activelySyncGtmDataLayer bool) (string, error) {
 	v := url.Values{
-		"idSite":      {strconv.Itoa(idSite)},
-		"context":     {tmContext},
-		"name":        {name},
-		"description": {description},
+		"idSite":                             {strconv.Itoa(idSite)},
+		"context":                            {tmContext},
+		"name":                               {name},
+		"description":                        {description},
+		"ignoreGtmDataLayer":                 {boolToIntString(ignoreGtmDataLayer)},
+		"isTagFireLimitAllowedInPreviewMode": {boolToIntString(isTagFireLimitAllowedInPreviewMode)},
+		"activelySyncGtmDataLayer":           {boolToIntString(activelySyncGtmDataLayer)},
 	}
 	var out struct {
 		Value string `json:"value"`
@@ -43,13 +52,16 @@ func (c *Client) AddContainer(ctx context.Context, idSite int, tmContext, name, 
 	return out.Value, nil
 }
 
-// UpdateContainer updates a container's name and description.
-func (c *Client) UpdateContainer(ctx context.Context, idSite int, idContainer, name, description string) error {
+// UpdateContainer updates a container's name, description, and flags.
+func (c *Client) UpdateContainer(ctx context.Context, idSite int, idContainer, name, description string, ignoreGtmDataLayer, isTagFireLimitAllowedInPreviewMode, activelySyncGtmDataLayer bool) error {
 	v := url.Values{
-		"idSite":      {strconv.Itoa(idSite)},
-		"idContainer": {idContainer},
-		"name":        {name},
-		"description": {description},
+		"idSite":                             {strconv.Itoa(idSite)},
+		"idContainer":                        {idContainer},
+		"name":                               {name},
+		"description":                        {description},
+		"ignoreGtmDataLayer":                 {boolToIntString(ignoreGtmDataLayer)},
+		"isTagFireLimitAllowedInPreviewMode": {boolToIntString(isTagFireLimitAllowedInPreviewMode)},
+		"activelySyncGtmDataLayer":           {boolToIntString(activelySyncGtmDataLayer)},
 	}
 	return c.call(ctx, "TagManager.updateContainer", v, nil)
 }

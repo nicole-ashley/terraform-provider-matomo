@@ -112,7 +112,7 @@ func (r *tagManagerContainerResource) Create(ctx context.Context, req resource.C
 		description = plan.Description.ValueString()
 	}
 
-	idContainer, err := r.client.AddContainer(ctx, siteID, plan.Context.ValueString(), plan.Name.ValueString(), description)
+	idContainer, err := r.client.AddContainer(ctx, siteID, plan.Context.ValueString(), plan.Name.ValueString(), description, false, false, false)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating Matomo Tag Manager container", err.Error())
 		return
@@ -171,7 +171,7 @@ func (r *tagManagerContainerResource) Update(ctx context.Context, req resource.U
 		description = plan.Description.ValueString()
 	}
 
-	if err := r.client.UpdateContainer(ctx, siteID, idContainer, plan.Name.ValueString(), description); err != nil {
+	if err := r.client.UpdateContainer(ctx, siteID, idContainer, plan.Name.ValueString(), description, false, false, false); err != nil {
 		resp.Diagnostics.AddError("Error updating Matomo Tag Manager container", err.Error())
 		return
 	}
