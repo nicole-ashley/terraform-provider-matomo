@@ -51,6 +51,18 @@ type errorEnvelope struct {
 // call invokes a Matomo API method and decodes the JSON response into out.
 // params must not set "module", "method", "format", or "token_auth" — call
 // sets those itself.
+//
+// Sent as a POST with every parameter (including token_auth) in the
+// request body, never in the URL query string. Matomo lets a user mark
+// their own API token as POST-only ("secure token", added to prevent a
+// token leaking via server/proxy access logs or a browser's URL/referrer
+// history) - a GET request with token_auth in the query string is
+// rejected outright for such a token with "Unable to authenticate with
+// the provided token. It is either invalid, expired or is required to be
+// sent as a POST parameter." (Matomo's own real error message, confirmed
+// against a live instance whose token was configured this way). Matomo's
+// reporting API accepts POST for every method, read or write, so this is
+// safe unconditionally - not just a workaround for the POST-only case.
 func (c *Client) call(ctx context.Context, method string, params url.Values, out interface{}) error {
 	if params == nil {
 		params = url.Values{}
@@ -60,11 +72,12 @@ func (c *Client) call(ctx context.Context, method string, params url.Values, out
 	params.Set("format", "JSON")
 	params.Set("token_auth", c.apiToken)
 
-	reqURL := fmt.Sprintf("%s/index.php?%s", c.baseURL, params.Encode())
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	reqURL := fmt.Sprintf("%s/index.php", c.baseURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, strings.NewReader(params.Encode()))
 	if err != nil {
 		return fmt.Errorf("matomo: building request for %s: %w", method, err)
 	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
