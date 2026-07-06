@@ -50,6 +50,27 @@ type ParamSpec struct {
 	// why - only set via that override table, never auto-detected).
 	// Meaningless when IsListOfObjects is false.
 	AsAttribute bool
+	// TrimTrailingNewline is true when this String parameter should get
+	// trimTrailingNewlinePlanModifier (see trimTrailingNewlineOverrides
+	// for why - only set via that override table, never auto-detected,
+	// since Matomo's discovery API gives no signal that a field is
+	// commonly configured via HCL heredoc). Meaningless for any GoType
+	// other than "String".
+	TrimTrailingNewline bool
+}
+
+// trimTrailingNewlineOverrides marks free-form multi-line code parameters
+// that users commonly configure via an HCL heredoc, which always
+// includes its own trailing newline in the string value (chomp() is the
+// only way to strip it) - without a plan modifier suppressing a
+// trailing-newline-only diff, these fields report a perpetual "diff"
+// every plan even though nothing about the user's configuration changed
+// (reported directly, not discoverable from Matomo's API - there is no
+// signal in a field's discovery response indicating this). Keyed
+// "kind/typeID/matomoParamName".
+var trimTrailingNewlineOverrides = map[string]bool{
+	"variable/CustomJsFunction/jsFunction": true,
+	"tag/CustomHtml/customHtml":            true,
 }
 
 // listOfObjectsAsAttributeOverrides marks parameters whose ListOfObjects
@@ -235,6 +256,7 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 			RowKeys:               rowKeys,
 			SingleKeyName:         singleKeyName,
 			AsAttribute:           asAttribute,
+			TrimTrailingNewline:   trimTrailingNewlineOverrides[kind+"/"+tmpl.ID+"/"+p.Name],
 		})
 	}
 

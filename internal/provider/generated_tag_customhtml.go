@@ -78,8 +78,9 @@ func tagCustomhtmlSchema() schema.Schema {
 				Description:   "Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.",
 			},
 			"custom_html": schema.StringAttribute{
-				Required:    true,
-				Description: "This tag is ideal when you need to add for example custom styles or custom JavaScript or when you are looking for a specific tag which is not yet supported. With this tag you can append any HTML to the bottom of your page, add styles, or execute JavaScript. Note: You can replace content within the HTML with variables by putting a variable name in curly brackets like this {{PageUrl}}.",
+				Required:      true,
+				PlanModifiers: []planmodifier.String{trimTrailingNewlinePlanModifier{}},
+				Description:   "This tag is ideal when you need to add for example custom styles or custom JavaScript or when you are looking for a specific tag which is not yet supported. With this tag you can append any HTML to the bottom of your page, add styles, or execute JavaScript. Note: You can replace content within the HTML with variables by putting a variable name in curly brackets like this {{PageUrl}}.",
 			},
 			"html_position": schema.StringAttribute{
 				Required: false,
