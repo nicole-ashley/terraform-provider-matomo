@@ -21,6 +21,59 @@ func rawUIField(key string) json.RawMessage {
 	return b
 }
 
+// TestBuildTypeSpec_pluginConditionalParamsMerged confirms
+// enableMediaAnalytics/enableFormAnalytics (real MatomoConfiguration
+// parameters that Matomo's PHP source only adds when the premium
+// MediaAnalytics/FormAnalytics plugins are active - see
+// pluginConditionalParams' doc comment) are present in the built spec
+// even when the discovery template used to build it - as would happen
+// against an instance without those plugins active - doesn't mention
+// them at all.
+func TestBuildTypeSpec_pluginConditionalParamsMerged(t *testing.T) {
+	tmpl := matomo.Template{
+		ID:          "MatomoConfiguration",
+		Name:        "Matomo Configuration",
+		Description: "Configures Matomo tracking",
+		Parameters: []matomo.TemplateParam{
+			{Name: "matomoUrl", Type: "string", Description: "The Matomo URL"},
+			{Name: "idSite", Type: "string", Description: "The idSite"},
+		},
+	}
+
+	spec, err := BuildTypeSpec("variable", tmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+
+	byName := make(map[string]ParamSpec, len(spec.Params))
+	for _, p := range spec.Params {
+		byName[p.MatomoName] = p
+	}
+
+	media, ok := byName["enableMediaAnalytics"]
+	if !ok {
+		t.Fatal("spec.Params missing enableMediaAnalytics")
+	}
+	if media.GoType != "Bool" || media.Required {
+		t.Errorf("enableMediaAnalytics = %+v, want GoType=Bool Required=false", media)
+	}
+	if media.Description != "Enables the tracking of media players." {
+		t.Errorf("enableMediaAnalytics.Description = %q, want the real Matomo UI copy", media.Description)
+	}
+
+	form, ok := byName["enableFormAnalytics"]
+	if !ok {
+		t.Fatal("spec.Params missing enableFormAnalytics")
+	}
+	if form.GoType != "Bool" || form.Required {
+		t.Errorf("enableFormAnalytics = %+v, want GoType=Bool Required=false", form)
+	}
+
+	if len(spec.Params) != 4 {
+		t.Errorf("len(spec.Params) = %d, want 4 (2 discovered + 2 plugin-conditional)", len(spec.Params))
+	}
+}
+
 func TestBuildTypeSpec(t *testing.T) {
 	tmpl := matomo.Template{
 		ID:          "CustomHtml",

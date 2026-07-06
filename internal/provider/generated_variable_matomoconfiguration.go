@@ -29,6 +29,8 @@ type variableMatomoconfigurationModel struct {
 	MatomoUrl                             types.String                                      `tfsdk:"matomo_url"`
 	IdSite                                types.String                                      `tfsdk:"id_site"`
 	EnableLinkTracking                    types.Bool                                        `tfsdk:"enable_link_tracking"`
+	EnableFormAnalytics                   types.Bool                                        `tfsdk:"enable_form_analytics"`
+	EnableMediaAnalytics                  types.Bool                                        `tfsdk:"enable_media_analytics"`
 	EnableFileTracking                    types.Bool                                        `tfsdk:"enable_file_tracking"`
 	EnableCrossDomainLinking              types.Bool                                        `tfsdk:"enable_cross_domain_linking"`
 	CrossDomainLinkingTimeout             types.Int64                                       `tfsdk:"cross_domain_linking_timeout"`
@@ -150,6 +152,46 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Computed:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 				Description:   "Enables the automatic download and outlink tracking.",
+			},
+			"enable_form_analytics": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the tracking of forms.",
+			},
+			"enable_media_analytics": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the tracking of media players.",
 			},
 			"enable_file_tracking": schema.BoolAttribute{
 				Required: false,
@@ -1490,6 +1532,12 @@ func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 	if !m.EnableLinkTracking.IsNull() && !m.EnableLinkTracking.IsUnknown() {
 		p["enableLinkTracking"] = matomo.ScalarParam(paramBoolString(m.EnableLinkTracking.ValueBool()))
 	}
+	if !m.EnableFormAnalytics.IsNull() && !m.EnableFormAnalytics.IsUnknown() {
+		p["enableFormAnalytics"] = matomo.ScalarParam(paramBoolString(m.EnableFormAnalytics.ValueBool()))
+	}
+	if !m.EnableMediaAnalytics.IsNull() && !m.EnableMediaAnalytics.IsUnknown() {
+		p["enableMediaAnalytics"] = matomo.ScalarParam(paramBoolString(m.EnableMediaAnalytics.ValueBool()))
+	}
 	if !m.EnableFileTracking.IsNull() && !m.EnableFileTracking.IsUnknown() {
 		p["enableFileTracking"] = matomo.ScalarParam(paramBoolString(m.EnableFileTracking.ValueBool()))
 	}
@@ -1720,6 +1768,16 @@ func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.EnableLinkTracking = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableLinkTracking = types.BoolNull()
+	}
+	if v, ok := p["enableFormAnalytics"]; ok {
+		m.EnableFormAnalytics = types.BoolValue(paramBoolValue(v.Scalar))
+	} else {
+		m.EnableFormAnalytics = types.BoolNull()
+	}
+	if v, ok := p["enableMediaAnalytics"]; ok {
+		m.EnableMediaAnalytics = types.BoolValue(paramBoolValue(v.Scalar))
+	} else {
+		m.EnableMediaAnalytics = types.BoolNull()
 	}
 	if v, ok := p["enableFileTracking"]; ok {
 		m.EnableFileTracking = types.BoolValue(paramBoolValue(v.Scalar))
