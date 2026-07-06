@@ -29,8 +29,6 @@ type variableMatomoconfigurationModel struct {
 	MatomoUrl                             types.String                                      `tfsdk:"matomo_url"`
 	IdSite                                types.String                                      `tfsdk:"id_site"`
 	EnableLinkTracking                    types.Bool                                        `tfsdk:"enable_link_tracking"`
-	EnableFormAnalytics                   types.Bool                                        `tfsdk:"enable_form_analytics"`
-	EnableMediaAnalytics                  types.Bool                                        `tfsdk:"enable_media_analytics"`
 	EnableFileTracking                    types.Bool                                        `tfsdk:"enable_file_tracking"`
 	EnableCrossDomainLinking              types.Bool                                        `tfsdk:"enable_cross_domain_linking"`
 	CrossDomainLinkingTimeout             types.Int64                                       `tfsdk:"cross_domain_linking_timeout"`
@@ -97,6 +95,8 @@ type variableMatomoconfigurationModel struct {
 	KillFrame                             types.Bool                                        `tfsdk:"kill_frame"`
 	SetCountPreRendered                   types.Bool                                        `tfsdk:"set_count_pre_rendered"`
 	SetRequestQueueInterval               types.String                                      `tfsdk:"set_request_queue_interval"`
+	EnableFormAnalytics                   types.Bool                                        `tfsdk:"enable_form_analytics"`
+	EnableMediaAnalytics                  types.Bool                                        `tfsdk:"enable_media_analytics"`
 }
 
 func variableMatomoconfigurationSchema() schema.Schema {
@@ -152,46 +152,6 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				Computed:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 				Description:   "Enables the automatic download and outlink tracking.",
-			},
-			"enable_form_analytics": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
-				// Computed + UseStateForUnknown: Matomo can return a
-				// non-empty default for this field even when it was never
-				// sent (e.g. a boolean parameter defaulting to false
-				// server-side), which a bare Optional attribute can't
-				// reconcile against an unset (null) config without
-				// reporting a spurious diff on every subsequent plan - see
-				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go. Skipped for List: the generated Go
-				// field type is a bare []types.String, which can't
-				// represent "the whole list is unknown" the way
-				// Computed's plan semantics require (see
-				// block_trigger_ids' comment above for the same
-				// limitation and the confirmed failure it caused).
-				Computed:      true,
-				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
-				Description:   "Enables the tracking of forms.",
-			},
-			"enable_media_analytics": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
-				// Computed + UseStateForUnknown: Matomo can return a
-				// non-empty default for this field even when it was never
-				// sent (e.g. a boolean parameter defaulting to false
-				// server-side), which a bare Optional attribute can't
-				// reconcile against an unset (null) config without
-				// reporting a spurious diff on every subsequent plan - see
-				// NeedsBoolPlanModifierImport's doc comment in
-				// tools/gen/emit.go. Skipped for List: the generated Go
-				// field type is a bare []types.String, which can't
-				// represent "the whole list is unknown" the way
-				// Computed's plan semantics require (see
-				// block_trigger_ids' comment above for the same
-				// limitation and the confirmed failure it caused).
-				Computed:      true,
-				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
-				Description:   "Enables the tracking of media players.",
 			},
 			"enable_file_tracking": schema.BoolAttribute{
 				Required: false,
@@ -1471,6 +1431,46 @@ func variableMatomoconfigurationSchema() schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Description:   "Defines after how many ms a queued requests will be executed after the request was queued initially. The higher the value the more tracking requests can be sent together at once. interval has to be at least 1000 (1000ms = 1s) and defaults to 2.5 seconds.",
 			},
+			"enable_form_analytics": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the tracking of forms.",
+			},
+			"enable_media_analytics": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+				// Computed + UseStateForUnknown: Matomo can return a
+				// non-empty default for this field even when it was never
+				// sent (e.g. a boolean parameter defaulting to false
+				// server-side), which a bare Optional attribute can't
+				// reconcile against an unset (null) config without
+				// reporting a spurious diff on every subsequent plan - see
+				// NeedsBoolPlanModifierImport's doc comment in
+				// tools/gen/emit.go. Skipped for List: the generated Go
+				// field type is a bare []types.String, which can't
+				// represent "the whole list is unknown" the way
+				// Computed's plan semantics require (see
+				// block_trigger_ids' comment above for the same
+				// limitation and the confirmed failure it caused).
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				Description:   "Enables the tracking of media players.",
+			},
 		},
 		Blocks: map[string]schema.Block{
 			"custom_dimension": schema.ListNestedBlock{
@@ -1531,12 +1531,6 @@ func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 	p["idSite"] = matomo.ScalarParam(m.IdSite.ValueString())
 	if !m.EnableLinkTracking.IsNull() && !m.EnableLinkTracking.IsUnknown() {
 		p["enableLinkTracking"] = matomo.ScalarParam(paramBoolString(m.EnableLinkTracking.ValueBool()))
-	}
-	if !m.EnableFormAnalytics.IsNull() && !m.EnableFormAnalytics.IsUnknown() {
-		p["enableFormAnalytics"] = matomo.ScalarParam(paramBoolString(m.EnableFormAnalytics.ValueBool()))
-	}
-	if !m.EnableMediaAnalytics.IsNull() && !m.EnableMediaAnalytics.IsUnknown() {
-		p["enableMediaAnalytics"] = matomo.ScalarParam(paramBoolString(m.EnableMediaAnalytics.ValueBool()))
 	}
 	if !m.EnableFileTracking.IsNull() && !m.EnableFileTracking.IsUnknown() {
 		p["enableFileTracking"] = matomo.ScalarParam(paramBoolString(m.EnableFileTracking.ValueBool()))
@@ -1750,6 +1744,12 @@ func (m *variableMatomoconfigurationModel) ToParams() matomo.ParamsMap {
 	if !m.SetRequestQueueInterval.IsNull() && !m.SetRequestQueueInterval.IsUnknown() {
 		p["setRequestQueueInterval"] = matomo.ScalarParam(m.SetRequestQueueInterval.ValueString())
 	}
+	if !m.EnableFormAnalytics.IsNull() && !m.EnableFormAnalytics.IsUnknown() {
+		p["enableFormAnalytics"] = matomo.ScalarParam(paramBoolString(m.EnableFormAnalytics.ValueBool()))
+	}
+	if !m.EnableMediaAnalytics.IsNull() && !m.EnableMediaAnalytics.IsUnknown() {
+		p["enableMediaAnalytics"] = matomo.ScalarParam(paramBoolString(m.EnableMediaAnalytics.ValueBool()))
+	}
 	return p
 }
 
@@ -1768,16 +1768,6 @@ func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.EnableLinkTracking = types.BoolValue(paramBoolValue(v.Scalar))
 	} else {
 		m.EnableLinkTracking = types.BoolNull()
-	}
-	if v, ok := p["enableFormAnalytics"]; ok {
-		m.EnableFormAnalytics = types.BoolValue(paramBoolValue(v.Scalar))
-	} else {
-		m.EnableFormAnalytics = types.BoolNull()
-	}
-	if v, ok := p["enableMediaAnalytics"]; ok {
-		m.EnableMediaAnalytics = types.BoolValue(paramBoolValue(v.Scalar))
-	} else {
-		m.EnableMediaAnalytics = types.BoolNull()
 	}
 	if v, ok := p["enableFileTracking"]; ok {
 		m.EnableFileTracking = types.BoolValue(paramBoolValue(v.Scalar))
@@ -2124,6 +2114,16 @@ func (m *variableMatomoconfigurationModel) FromParams(p matomo.ParamsMap) {
 		m.SetRequestQueueInterval = types.StringValue(v.Scalar)
 	} else {
 		m.SetRequestQueueInterval = types.StringNull()
+	}
+	if v, ok := p["enableFormAnalytics"]; ok {
+		m.EnableFormAnalytics = types.BoolValue(paramBoolValue(v.Scalar))
+	} else {
+		m.EnableFormAnalytics = types.BoolNull()
+	}
+	if v, ok := p["enableMediaAnalytics"]; ok {
+		m.EnableMediaAnalytics = types.BoolValue(paramBoolValue(v.Scalar))
+	} else {
+		m.EnableMediaAnalytics = types.BoolNull()
 	}
 }
 
