@@ -72,9 +72,11 @@ resource "matomo_tagmanager_variable_matomoconfiguration" "example" {
 - `enable_cross_domain_linking` (Boolean) Enable this to accurately measure the same visitor across multiple domain names.
 - `enable_do_not_track` (Boolean) Enable this feature to not track users who opt out of tracking using Mozilla's (proposed) Do Not Track setting
 - `enable_file_tracking` (Boolean) Enable tracking of file:// protocol actions. By default, the file:// protocol is not tracked.
+- `enable_form_analytics` (Boolean) Enables the tracking of forms.
 - `enable_heart_beat_timer` (Boolean) Install a Heart beat timer that will regularly send requests to Matomo in order to better measure the time spent on the page.
 - `enable_js_error_tracking` (Boolean) Enables the tracking of uncaught JavaScript errors as an event.
 - `enable_link_tracking` (Boolean) Enables the automatic download and outlink tracking.
+- `enable_media_analytics` (Boolean) Enables the tracking of media players.
 - `force_request_method` (Boolean) Enables forcing the request method to either GET or POST.
 - `forget_consent_given` (Boolean) Remove a user's consent, both if the consent was one-time only and if the consent was remembered. After calling this method, the user will have to consent again in order to be tracked.
 - `heart_beat_time` (Number) The time interval in seconds in which to send pings. Can not be lower then 5s.

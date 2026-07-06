@@ -161,7 +161,14 @@ func BuildTypeSpec(kind string, tmpl matomo.Template) (TypeSpec, error) {
 		Description:  tmpl.Description,
 	}
 
-	for _, p := range tmpl.Parameters {
+	// Plugin-conditional parameters (see pluginConditionalParams' doc
+	// comment) are merged in alongside whatever Matomo's discovery API
+	// actually returned, so they're never silently dropped depending on
+	// which premium plugins happen to be active on the instance
+	// tools/gen was last run against.
+	params := append(append([]matomo.TemplateParam{}, tmpl.Parameters...), pluginConditionalParams[kind][tmpl.ID]...)
+
+	for _, p := range params {
 		goType, err := matomoTypeToGoType(p.Type)
 		if err != nil {
 			return TypeSpec{}, fmt.Errorf("type %q, parameter %q: %w", tmpl.ID, p.Name, err)
