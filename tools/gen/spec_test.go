@@ -364,3 +364,45 @@ func TestBuildTypeSpec_conditionallyRequiredWithoutCondition(t *testing.T) {
 		t.Fatal("BuildTypeSpec() error = nil, want error for a conditionallyRequiredParams entry with no condition")
 	}
 }
+
+// TestBuildTypeSpec_trimTrailingNewlineOverride confirms the two known
+// free-form code fields (reported to report a perpetual plan diff when
+// configured via HCL heredoc) get TrimTrailingNewline set, and that an
+// unrelated String parameter on the same types does not.
+func TestBuildTypeSpec_trimTrailingNewlineOverride(t *testing.T) {
+	jsTmpl := matomo.Template{
+		ID: "CustomJsFunction",
+		Parameters: []matomo.TemplateParam{
+			{Name: "jsFunction", Type: "string"},
+		},
+	}
+	spec, err := BuildTypeSpec("variable", jsTmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	if !spec.Params[0].TrimTrailingNewline {
+		t.Error("CustomJsFunction.jsFunction.TrimTrailingNewline = false, want true")
+	}
+
+	htmlTmpl := matomo.Template{
+		ID: "CustomHtml",
+		Parameters: []matomo.TemplateParam{
+			{Name: "customHtml", Type: "string"},
+			{Name: "htmlPosition", Type: "string", Condition: "customHtml"},
+		},
+	}
+	spec, err = BuildTypeSpec("tag", htmlTmpl)
+	if err != nil {
+		t.Fatalf("BuildTypeSpec() error = %v", err)
+	}
+	byName := make(map[string]ParamSpec, len(spec.Params))
+	for _, p := range spec.Params {
+		byName[p.MatomoName] = p
+	}
+	if !byName["customHtml"].TrimTrailingNewline {
+		t.Error("CustomHtml.customHtml.TrimTrailingNewline = false, want true")
+	}
+	if byName["htmlPosition"].TrimTrailingNewline {
+		t.Error("CustomHtml.htmlPosition.TrimTrailingNewline = true, want false (not in the override table)")
+	}
+}

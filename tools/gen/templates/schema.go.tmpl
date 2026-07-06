@@ -180,8 +180,11 @@ func {{.GoSchemaFuncName}}() schema.Schema {
 				// block_trigger_ids' comment above for the same
 				// limitation and the confirmed failure it caused).
 				Computed: true,
-				PlanModifiers: []planmodifier.{{.GoType}}{ {{.GoType | lower}}planmodifier.UseStateForUnknown() },
+				PlanModifiers: []planmodifier.{{.GoType}}{ {{.GoType | lower}}planmodifier.UseStateForUnknown(){{if and .TrimTrailingNewline (eq .GoType "String")}}, trimTrailingNewlinePlanModifier{}{{end}} },
 {{- end}}
+{{- end}}
+{{- if and .Required .TrimTrailingNewline (eq .GoType "String")}}
+				PlanModifiers: []planmodifier.String{trimTrailingNewlinePlanModifier{}},
 {{- end}}
 				Description: {{printf "%q" .Description}},
 {{- if and (eq .GoType "String") (or .AvailableValues .ConditionallyRequired)}}

@@ -455,3 +455,47 @@ func TestRenderSchema_listOfObjectsAsAttribute(t *testing.T) {
 		t.Errorf("AsAttribute param should not emit a row struct type; full source:\n%s", got)
 	}
 }
+
+// TestRenderSchema_trimTrailingNewline confirms a Required String param
+// with TrimTrailingNewline set gets trimTrailingNewlinePlanModifier in
+// its PlanModifiers, and that an ordinary Required String param (no
+// override) gets none at all.
+func TestRenderSchema_trimTrailingNewline(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "variable",
+		TypeID:       "CustomJsFunction",
+		Slug:         "customjsfunction",
+		ResourceName: "matomo_tagmanager_variable_customjsfunction",
+		Description:  "Executes a custom JavaScript function",
+		Params: []ParamSpec{
+			{MatomoName: "jsFunction", TFName: "js_function", GoFieldName: "JsFunction", GoType: "String", Required: true, TrimTrailingNewline: true},
+		},
+	}
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got := string(src)
+	if !strings.Contains(got, `PlanModifiers: []planmodifier.String{trimTrailingNewlinePlanModifier{}},`) {
+		t.Errorf("js_function missing trimTrailingNewlinePlanModifier; full source:\n%s", got)
+	}
+
+	specNoOverride := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "CustomHtml",
+		Slug:         "customhtml",
+		ResourceName: "matomo_tagmanager_tag_customhtml",
+		Description:  "test",
+		Params: []ParamSpec{
+			{MatomoName: "htmlPosition", TFName: "html_position", GoFieldName: "HtmlPosition", GoType: "String", Required: true},
+		},
+	}
+	src, err = RenderSchema(specNoOverride)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got = string(src)
+	if strings.Contains(got, "trimTrailingNewlinePlanModifier") {
+		t.Errorf("html_position (no override) should not get trimTrailingNewlinePlanModifier; full source:\n%s", got)
+	}
+}

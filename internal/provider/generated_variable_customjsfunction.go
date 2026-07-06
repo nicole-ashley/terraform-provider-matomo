@@ -43,8 +43,9 @@ func variableCustomjsfunctionSchema() schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"js_function": schema.StringAttribute{
-				Required:    true,
-				Description: "The value should start with \"function() { \" and end with \"return yourValue; }\". You have to define a function and return a value. We highly recommend to test the pasted JavaScript function to avoid JavaScript errors on your website.",
+				Required:      true,
+				PlanModifiers: []planmodifier.String{trimTrailingNewlinePlanModifier{}},
+				Description:   "The value should start with \"function() { \" and end with \"return yourValue; }\". You have to define a function and return a value. We highly recommend to test the pasted JavaScript function to avoid JavaScript errors on your website.",
 			},
 		},
 	}
