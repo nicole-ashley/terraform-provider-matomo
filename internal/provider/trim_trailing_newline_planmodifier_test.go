@@ -61,6 +61,13 @@ func TestTrimTrailingNewlinePlanModifier_realChangeStillDiffs(t *testing.T) {
 	}
 }
 
+// On create there is no prior state to retain, so this modifier can do
+// nothing: Terraform requires a non-Computed attribute's planned value to
+// equal either the config value or the prior state value, and a chomped
+// value is neither (planning one fails with "Provider produced invalid
+// plan", confirmed against a real acceptance-test run). Keeping a heredoc
+// value consistent through a create is chompedStringType's job instead -
+// see TestChompedString_semanticEqualsIgnoresOneTrailingNewline.
 func TestTrimTrailingNewlinePlanModifier_noPriorStateIsNoop(t *testing.T) {
 	m := trimTrailingNewlinePlanModifier{}
 

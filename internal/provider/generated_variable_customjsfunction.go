@@ -6,14 +6,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/nicole-ashley/terraform-provider-matomo/internal/matomo"
 )
 
 type variableCustomjsfunctionModel struct {
 	typedVariableCommon
-	JsFunction types.String `tfsdk:"js_function"`
+	JsFunction chompedString `tfsdk:"js_function"`
 }
 
 func variableCustomjsfunctionSchema() schema.Schema {
@@ -43,6 +42,17 @@ func variableCustomjsfunctionSchema() schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"js_function": schema.StringAttribute{
+				// CustomType: this field is free-form multi-line code,
+				// commonly configured via an HCL heredoc - which always
+				// folds its closing newline into the string value, while
+				// Matomo doesn't retain it. chompedStringType declares
+				// the two forms semantically equal, which is what keeps
+				// create, update and refresh consistent; a plan modifier
+				// can't do it, because Terraform requires a non-Computed
+				// attribute's planned value to equal the config or the
+				// prior state, and a chomped value is neither on create.
+				// See chompedStringType's doc comment for the full story.
+				CustomType:    chompedStringType{},
 				Required:      true,
 				PlanModifiers: []planmodifier.String{trimTrailingNewlinePlanModifier{}},
 				Description:   "The value should start with \"function() { \" and end with \"return yourValue; }\". You have to define a function and return a value. We highly recommend to test the pasted JavaScript function to avoid JavaScript errors on your website.",
@@ -88,7 +98,7 @@ func (m *variableCustomjsfunctionModel) ToParams() matomo.ParamsMap {
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
 func (m *variableCustomjsfunctionModel) FromParams(p matomo.ParamsMap) {
-	m.JsFunction = types.StringValue(p["jsFunction"].Scalar)
+	m.JsFunction = newChompedString(p["jsFunction"].Scalar)
 }
 
 func (m *variableCustomjsfunctionModel) Common() *typedVariableCommon {

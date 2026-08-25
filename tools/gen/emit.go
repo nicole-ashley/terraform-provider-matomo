@@ -49,7 +49,12 @@ type templateData struct {
 	// type-specific parameters (e.g. PageView, DomReady - the whole
 	// model is just the embedded common struct) never reference it at
 	// all, producing an "imported and not used" error - caught the hard
-	// way against real discovered types with no parameters.
+	// way against real discovered types with no parameters. A
+	// UsesChompedString parameter doesn't count either: its model field,
+	// schema CustomType and FromParams constructor are all the
+	// package-local chompedString/chompedStringType, so a type whose only
+	// parameters are chomped strings (e.g. CustomJsFunction, whose sole
+	// parameter is jsFunction) references "types" nowhere.
 	NeedsTypesImport bool
 	// NeedsBoolPlanModifierImport/NeedsInt64PlanModifierImport/
 	// NeedsFloat64PlanModifierImport are true when at least one
@@ -136,6 +141,13 @@ func newTemplateData(spec TypeSpec) templateData {
 			}
 		}
 	}
+	needsTypesImport := spec.Kind == "tag"
+	for _, p := range spec.Params {
+		if !p.UsesChompedString() {
+			needsTypesImport = true
+			break
+		}
+	}
 	return templateData{
 		TypeSpec:                       spec,
 		GoModelName:                    spec.Kind + ExportedName(spec.Slug) + "Model",
@@ -145,7 +157,7 @@ func newTemplateData(spec TypeSpec) templateData {
 		NeedsValidatorImports:          needsValidatorImports,
 		CommonTypeName:                 "typed" + ExportedName(spec.Kind) + "Common",
 		ModelInterfaceName:             "typed" + ExportedName(spec.Kind) + "Model",
-		NeedsTypesImport:               spec.Kind == "tag" || len(spec.Params) > 0,
+		NeedsTypesImport:               needsTypesImport,
 		NeedsBoolPlanModifierImport:    needsBoolPM,
 		NeedsInt64PlanModifierImport:   needsInt64PM,
 		NeedsFloat64PlanModifierImport: needsFloat64PM,

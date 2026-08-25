@@ -499,3 +499,105 @@ func TestRenderSchema_trimTrailingNewline(t *testing.T) {
 		t.Errorf("html_position (no override) should not get trimTrailingNewlinePlanModifier; full source:\n%s", got)
 	}
 }
+
+// TestRenderSchema_chompedStringCustomType confirms a TrimTrailingNewline
+// String param is emitted with chompedStringType as its schema CustomType,
+// chompedString as its model field type, and newChompedString in
+// FromParams - the plan modifier alone can't keep a heredoc value
+// consistent through a create (see chompedStringType's doc comment), so
+// all three have to travel together.
+func TestRenderSchema_chompedStringCustomType(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "variable",
+		TypeID:       "CustomJsFunction",
+		Slug:         "customjsfunction",
+		ResourceName: "matomo_tagmanager_variable_customjsfunction",
+		Description:  "Executes a custom JavaScript function",
+		Params: []ParamSpec{
+			{MatomoName: "jsFunction", TFName: "js_function", GoFieldName: "JsFunction", GoType: "String", Required: true, TrimTrailingNewline: true},
+		},
+	}
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got := string(src)
+
+	if !regexp.MustCompile(`CustomType:\s+chompedStringType\{\},`).MatchString(got) {
+		t.Errorf("js_function missing CustomType: chompedStringType{}; full source:\n%s", got)
+	}
+	for _, want := range []string{
+		"JsFunction chompedString `tfsdk:\"js_function\"`",
+		`m.JsFunction = newChompedString(p["jsFunction"].Scalar)`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered source missing %q; full source:\n%s", want, got)
+		}
+	}
+	// This type's only parameter is a chomped string, so nothing in the
+	// file references the types package - importing it anyway is an
+	// "imported and not used" compile error.
+	if strings.Contains(got, `"github.com/hashicorp/terraform-plugin-framework/types"`) {
+		t.Errorf("chomped-string-only type should not import types; full source:\n%s", got)
+	}
+}
+
+// An Optional TrimTrailingNewline param decodes an absent key to a null
+// chompedString, mirroring FromParams' omission convention for every other
+// Optional type. No such parameter exists in the override table today, but
+// the template branch has to be right if one is ever added.
+func TestRenderSchema_chompedStringOptional(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "CustomHtml",
+		Slug:         "customhtml",
+		ResourceName: "matomo_tagmanager_tag_customhtml",
+		Description:  "test",
+		Params: []ParamSpec{
+			{MatomoName: "customHtml", TFName: "custom_html", GoFieldName: "CustomHtml", GoType: "String", Required: false, TrimTrailingNewline: true},
+		},
+	}
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got := string(src)
+
+	if !regexp.MustCompile(`CustomType:\s+chompedStringType\{\},`).MatchString(got) {
+		t.Errorf("custom_html missing CustomType: chompedStringType{}; full source:\n%s", got)
+	}
+	for _, want := range []string{
+		"m.CustomHtml = newChompedString(v.Scalar)",
+		"m.CustomHtml = newChompedStringNull()",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered source missing %q; full source:\n%s", want, got)
+		}
+	}
+}
+
+// A String param without the override keeps types.String throughout - the
+// custom type is opt-in via trimTrailingNewlineOverrides, never the default.
+func TestRenderSchema_noChompedStringWithoutOverride(t *testing.T) {
+	spec := TypeSpec{
+		Kind:         "tag",
+		TypeID:       "CustomHtml",
+		Slug:         "customhtml",
+		ResourceName: "matomo_tagmanager_tag_customhtml",
+		Description:  "test",
+		Params: []ParamSpec{
+			{MatomoName: "htmlPosition", TFName: "html_position", GoFieldName: "HtmlPosition", GoType: "String", Required: true},
+		},
+	}
+	src, err := RenderSchema(spec)
+	if err != nil {
+		t.Fatalf("RenderSchema() error = %v", err)
+	}
+	got := string(src)
+	if strings.Contains(got, "chompedString") {
+		t.Errorf("html_position (no override) should not use chompedString; full source:\n%s", got)
+	}
+	if !strings.Contains(got, "HtmlPosition types.String `tfsdk:\"html_position\"`") {
+		t.Errorf("html_position should keep types.String model field; full source:\n%s", got)
+	}
+}

@@ -14,11 +14,27 @@ import (
 // heredoc's closing newline is always part of the string value, even with
 // the `<<-` indent-strip variant; only wrapping it in chomp() removes
 // it), while Matomo's stored value doesn't necessarily retain that
-// trailing newline. Without this, a field configured via heredoc reports
-// a perpetual "diff" on every plan even though nothing about the user's
-// configuration changed - reported for variable_customjsfunction.js_function
-// and tag_customhtml.custom_html, both free-form multi-line code fields
-// users commonly configure via heredoc.
+// trailing newline. Applied to variable_customjsfunction.js_function and
+// tag_customhtml.custom_html, both free-form multi-line code fields users
+// commonly configure via heredoc.
+//
+// This modifier only ever plans the prior state value, never a chomped
+// one. Terraform requires the planned value of a non-Computed attribute
+// to equal either the config value or the prior state value - retaining
+// prior state is explicitly permitted ("the provider wishes to retain the
+// prior value rather than the config value"), but a chomped value is
+// neither, and planning one fails with "Provider produced invalid plan".
+// That also means this modifier can do nothing on create, where there is
+// no prior state to retain; keeping a heredoc value consistent through a
+// create is chompedStringType's job (see its doc comment - it is the
+// attribute's CustomType, and the two work together).
+//
+// With that semantic equality in place, state normally holds the
+// configured value verbatim, newline and all, so this modifier is
+// redundant in the steady state. It still earns its keep for state
+// written before the custom type existed, where the stored value is
+// already chomped: it absorbs that one-time difference at plan time
+// instead of putting a no-op update in the user's plan.
 //
 // Mirrors Terraform's own chomp() function exactly (strip one trailing
 // "\r\n" or "\n", not every trailing newline) rather than trimming all
