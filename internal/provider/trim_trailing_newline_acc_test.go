@@ -6,24 +6,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-// Regression coverage for the two fields carrying
-// trimTrailingNewlinePlanModifier (see trimTrailingNewlineOverrides in
-// tools/gen/spec.go), configured the way the modifier exists for: an HCL
-// heredoc, which always folds its own closing newline into the string
-// value.
+// Regression coverage for the two fields carrying chompedStringType (see
+// trimTrailingNewlineOverrides in tools/gen/spec.go), configured the way
+// that type exists for: an HCL heredoc, which always folds its own closing
+// newline into the string value.
 //
 // Creating such a value used to fail outright with "Provider produced
 // inconsistent result after apply" - Create reads the entity back from
 // Matomo before setting state (see typedTagResource.Create's read-back
 // comment), and Matomo doesn't retain the trailing newline, so the state
-// it wrote could never match a plan that still carried one. The modifier
-// only compared against prior state, of which a create has none, so
-// nothing normalized the planned value and heredoc values could only be
-// created by wrapping them in chomp() by hand.
+// it wrote could never match a plan that still carried one.
+//
+// State ends up holding the configured value verbatim, newline and all:
+// semantic equality resolves the mismatch by keeping the prior (planned)
+// value rather than by rewriting the plan, which is the only thing
+// Terraform permits for an attribute that isn't Computed.
 //
 // Each step's implicit post-apply plan check (TestStep defaults
-// ExpectNonEmptyPlan to false) also re-covers the original perpetual-diff
-// bug these fields were reported for.
+// ExpectNonEmptyPlan to false) also covers the perpetual-diff bug these
+// fields were originally reported for.
 
 func TestAccTagCustomhtml_heredocValueCreatesAndUpdates(t *testing.T) {
 	testAccPreCheck(t)
@@ -36,21 +37,29 @@ func TestAccTagCustomhtml_heredocValueCreatesAndUpdates(t *testing.T) {
 				Config: testAccTagCustomhtmlHeredocConfig("<script>console.log('created');</script>"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					// The heredoc's own trailing newline is chomped, so
-					// state matches what Matomo actually stored.
-					resource.TestCheckResourceAttr(resourceName, "custom_html", "<script>console.log('created');</script>"),
+					resource.TestCheckResourceAttr(resourceName, "custom_html", "<script>console.log('created');</script>\n"),
 				),
 			},
 			{
 				Config: testAccTagCustomhtmlHeredocConfig("<script>console.log('updated');</script>"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "custom_html", "<script>console.log('updated');</script>"),
+					resource.TestCheckResourceAttr(resourceName, "custom_html", "<script>console.log('updated');</script>\n"),
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName: resourceName,
+				ImportState:  true,
+				// An import has no prior value to hold on to, so
+				// custom_html lands in state exactly as Matomo stores it -
+				// chomped - where the applied state above kept the
+				// heredoc's newline. That difference is benign and
+				// self-correcting: on the next plan
+				// trimTrailingNewlinePlanModifier sees the two agree
+				// modulo the newline and plans the prior state, so an
+				// imported resource reports no diff. Nothing else about
+				// the imported state is exempt.
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"custom_html"},
 			},
 		},
 	})
@@ -100,19 +109,22 @@ func TestAccVariableCustomjsfunction_heredocValueCreatesAndUpdates(t *testing.T)
 				Config: testAccVariableCustomjsfunctionHeredocConfig("created"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "js_function", "function() {\n  return 'created';\n}"),
+					resource.TestCheckResourceAttr(resourceName, "js_function", "function() {\n  return 'created';\n}\n"),
 				),
 			},
 			{
 				Config: testAccVariableCustomjsfunctionHeredocConfig("updated"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "js_function", "function() {\n  return 'updated';\n}"),
+					resource.TestCheckResourceAttr(resourceName, "js_function", "function() {\n  return 'updated';\n}\n"),
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName: resourceName,
+				ImportState:  true,
+				// See the customhtml import step above for why js_function
+				// is the one attribute exempt from ImportStateVerify here.
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"js_function"},
 			},
 		},
 	})

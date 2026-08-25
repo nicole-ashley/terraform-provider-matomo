@@ -59,6 +59,19 @@ type ParamSpec struct {
 	TrimTrailingNewline bool
 }
 
+// UsesChompedString reports whether this parameter is emitted with
+// chompedStringType as its schema CustomType (and chompedString as its
+// model field type) rather than a plain types.String. That custom type
+// carries the semantic equality that keeps a heredoc-configured value
+// consistent through create, update and refresh - see chompedStringType's
+// doc comment in internal/provider/chomped_string_type.go for why a plan
+// modifier cannot do that job on its own. Only meaningful for String
+// parameters, so the GoType check is part of the answer rather than an
+// assumption the template has to repeat at each of its four use sites.
+func (p ParamSpec) UsesChompedString() bool {
+	return p.TrimTrailingNewline && p.GoType == "String"
+}
+
 // trimTrailingNewlineOverrides marks free-form multi-line code parameters
 // that users commonly configure via an HCL heredoc, which always
 // includes its own trailing newline in the string value (chomp() is the

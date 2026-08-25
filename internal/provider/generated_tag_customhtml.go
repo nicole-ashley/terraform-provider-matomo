@@ -16,8 +16,8 @@ import (
 
 type tagCustomhtmlModel struct {
 	typedTagCommon
-	CustomHtml   types.String `tfsdk:"custom_html"`
-	HtmlPosition types.String `tfsdk:"html_position"`
+	CustomHtml   chompedString `tfsdk:"custom_html"`
+	HtmlPosition types.String  `tfsdk:"html_position"`
 }
 
 func tagCustomhtmlSchema() schema.Schema {
@@ -78,6 +78,17 @@ func tagCustomhtmlSchema() schema.Schema {
 				Description:   "Execution priority - lower values fire earlier when multiple tags fire on the same trigger. Matomo defaults to 999 when unset.",
 			},
 			"custom_html": schema.StringAttribute{
+				// CustomType: this field is free-form multi-line code,
+				// commonly configured via an HCL heredoc - which always
+				// folds its closing newline into the string value, while
+				// Matomo doesn't retain it. chompedStringType declares
+				// the two forms semantically equal, which is what keeps
+				// create, update and refresh consistent; a plan modifier
+				// can't do it, because Terraform requires a non-Computed
+				// attribute's planned value to equal the config or the
+				// prior state, and a chomped value is neither on create.
+				// See chompedStringType's doc comment for the full story.
+				CustomType:    chompedStringType{},
 				Required:      true,
 				PlanModifiers: []planmodifier.String{trimTrailingNewlinePlanModifier{}},
 				Description:   "This tag is ideal when you need to add for example custom styles or custom JavaScript or when you are looking for a specific tag which is not yet supported. With this tag you can append any HTML to the bottom of your page, add styles, or execute JavaScript. Note: You can replace content within the HTML with variables by putting a variable name in curly brackets like this {{PageUrl}}.",
@@ -149,7 +160,7 @@ func (m *tagCustomhtmlModel) ToParams() matomo.ParamsMap {
 // empty" diff on every generated resource with an unset Optional field
 // (confirmed against a real acceptance-test run).
 func (m *tagCustomhtmlModel) FromParams(p matomo.ParamsMap) {
-	m.CustomHtml = types.StringValue(p["customHtml"].Scalar)
+	m.CustomHtml = newChompedString(p["customHtml"].Scalar)
 	if v, ok := p["htmlPosition"]; ok {
 		m.HtmlPosition = types.StringValue(v.Scalar)
 	} else {
